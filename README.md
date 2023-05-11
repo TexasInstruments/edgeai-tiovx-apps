@@ -1,2 +1,2 @@
-# Edge AI GStreamer Apps
-> Repository to host GStreamer based Edge AI applications for TI devices
+# Edge AI TIOVX Apps
+> Repository to host TIOVX based Edge AI applications for TI devices
