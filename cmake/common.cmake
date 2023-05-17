@@ -96,7 +96,8 @@ include_directories(${PROJECT_SOURCE_DIR}
                     )
 
 set(COMMON_LINK_LIBS
-    # edgeai_common
+    edgeai_utils
+    edgeai_tiovx_apps_common
     edgeai-tiovx-kernels
     edgeai-tiovx-modules
     edgeai-apps-utils

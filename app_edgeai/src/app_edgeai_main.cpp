@@ -30,23 +30,78 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Standard headers */
+#include <signal.h>
+#include <stdlib.h>
+#include <string>
+
+/* Module headers */
+#include <common/include/edgeai_cmd_line_parse.h>
+#include <common/include/edgeai_utils.h>
+#include <utils/include/edgeai_perfstats.h>
+#include <common/include/edgeai_demo.h>
+
 extern "C" 
 {
 #include <tiovx_utils.h>
 }
 
-#include <stdlib.h>
-#include <tiovx_dl_pre_proc_module.h>
-#include <string>
-
-namespace ti::edgeai::common
-{
-
-} // namespace ti::edgeai::common
-
 using namespace ti::edgeai::common;
 
-int32_t main()
+static EdgeAIDemo *gDemo = nullptr;
+
+static void sigHandler(int32_t sig)
 {
+    (void)sig;
+
+    if (gDemo)
+    {
+        gDemo->sendExitSignal();
+    }
+}
+
+int32_t main(int argc, char * argv[])
+{
+    CmdlineArgs cmdArgs;
+
+    /* Register SIGINT handler. */
+    signal(SIGINT, sigHandler);
+
+    /* Parse the command line options. */
+    cmdArgs.parse(argc, argv);
+
+    /* Parse the input configuration file. */
+    const YAML::Node &yaml = YAML::LoadFile(cmdArgs.configFile);
+
+    gDemo = new EdgeAIDemo(yaml);
+
+    auto const &title = yaml["title"].as<string>();
+
+    /* Configure the curses display. */
+    Statistics::enableCursesReport(cmdArgs.enableCurses, cmdArgs.verbose, title.c_str());
+
+    /* Configure the performance report. */
+    ti::utils::enableReport(true);
+
+    /* Wait for the threads to exit. */
+    gDemo->waitForExit();
+
+    /* Dump openVX graph as dot file. */
+    if(cmdArgs.dumpDot)
+    {
+        gDemo->dumpGraphAsDot();
+    }
+
+    /* Disable the performance report. */
+    ti::utils::disableReport();
+
+    /* Wait for the perf loggin thread to exit. */
+    ti::utils::waitForPerfThreadExit();
+
+    /* Disable curser report. */
+    Statistics::disableCursesReport();
+
+    delete gDemo;
+
     return 0;
 }
