@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -38,8 +38,6 @@
 
 /* Third-party headers. */
 #include <yaml-cpp/yaml.h>
-
-/* Module headers. */
 
 /**
  * \defgroup group_edgeai_demo_config Demo configuration processing.
@@ -163,6 +161,14 @@ namespace ti::edgeai::common
              */
             string                              m_source;
 
+            /** Vector to store names of image files in case the 
+             *  input is directory containing multiple images 
+             */
+            vector<string>                      m_multiImageVect{};
+
+            /** Counter for indexing  m_multiImageVect. */
+            uint32_t                            m_multiImageVectCnt{0};
+
             /* Unique name assigned to input in config file. */
             string                              m_name;
 
@@ -171,7 +177,7 @@ namespace ti::edgeai::common
              * multiple times, it is done once during initialization and
              * stored for later use.
              */
-            string                              m_srcType{"camera"};
+            string                              m_srcType{"image"};
 
             /** Input data width. */
             int32_t                             m_width{};
@@ -179,11 +185,8 @@ namespace ti::edgeai::common
             /** Input data height. */
             int32_t                             m_height{};
 
-            /** Start index for multiple file input. */
-            int32_t                             m_index{};
-
             /** Data format for camera input. */
-            string                              m_format{"auto"};
+            string                              m_format{"NV12"};
 
             /** Loop file input after EOF. */
             bool                                m_loop{true};
@@ -276,14 +279,8 @@ namespace ti::edgeai::common
              */
             string                          m_sink;
 
-            /** If the Mosaic element has been added to graph. */
-            bool                            m_mosaicAdded{false};
-
-            /** Mosaic Sink num whose property is to be set. */
-            int32_t                         m_numMosaicSink{0};
-
-            /** If the Display element has been added to pipeline. */
-            bool                            m_dispElementAdded{false};
+            /** Sink type derived from m_sink. */
+            string                          m_sinkType{"image"};
 
             /** Output display width. */
             int32_t                         m_width{};
@@ -295,36 +292,6 @@ namespace ti::edgeai::common
              * This field is ignored for sinks other than Display
              */
             int32_t                         m_connector{};
-
-            /** Host ip for udp sink.
-             * This field is ignored for sinks other than remote
-             */
-            string                          m_host{"0.0.0.0"};
-
-            /** Port for udp sink.
-             * This field is ignored for sinks other than remote
-             */
-            int32_t                         m_port{8081};
-
-            /** Payloader for remote sink.
-             * This field is ignored for sinks other than remote
-             */
-            string                          m_payloader{"rtph264pay"};
-
-            /** gop size for encoder.
-             */
-            int32_t                         m_gopSize{30};
-
-            /** bitrate for encoder.
-             */
-            int32_t                         m_bitrate{10000000};
-
-            /** Use performance overlay.
-             */
-            bool                            m_overlayPerformance{false};
-
-            /** Output buffer. */
-            // GstWrapperBuffer                m_outBuff;
 
             /** Instance Id for a specific instance of output. */
             int32_t                         m_instId;
@@ -346,9 +313,6 @@ namespace ti::edgeai::common
 
             /** Set if mosaic is enabled */
             bool                            m_mosaicEnabled{true};
-
-            /** Output image format. */
-            string                          m_imageFmt{"RGB"};
     };
 
     /**
@@ -381,9 +345,6 @@ namespace ti::edgeai::common
         public:
             /** Path to the model. */
             string                  m_modelPath;
-
-            /** Path to the filename with classnames. */
-            string                  m_labelsPath;
 
             /** Alpha value used for blending the sementic segmentation output. */
             float                   m_alpha{0.5f};
@@ -421,16 +382,6 @@ namespace ti::edgeai::common
             int32_t initialize(map<string, ModelInfo*>   &modelMap,
                                map<string, InputInfo*>   &inputMap,
                                map<string, OutputInfo*>  &outputMap);
-
-            /** Function for waiting on the exit of all the inference pipes
-             * created as a part of this flow.
-             */
-            void waitForExit();
-
-            /** Function for seding exit signal to each of the inference pipes
-             * created as a part of this flow.
-             */
-            void sendExitSignal();
 
             /**
              * Helper function to dump the configuration information.

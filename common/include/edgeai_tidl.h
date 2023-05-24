@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,34 +30,53 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
-#define _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
+#ifndef _TI_EDGEAI_TIDL_H_
+#define _TI_EDGEAI_TIDL_H_
 
-/* Standard headers. */
 #include <string>
 
-/* Module headers. */
-#include <utils/include/ti_logger.h>
+#include <TI/tivx.h>
+#include <TI/j7_tidl.h>
+#include <tiovx_tidl_module.h>
 
 namespace ti::edgeai::common
 {
-    using namespace ti::utils;
+    using namespace std;
 
-    class CmdlineArgs
+    class tidlInf
     {
         public:
-            void parse(int32_t argc, char *argv[]);
+            /* Default constructor. Use the compiler generated default one. */
+            tidlInf();
 
-            /** Path to YAML config file. */
-            std::string         configFile;
+            /* Destructor. */
+            ~tidlInf();
 
-            /** Dump openVX graph as dot file. */
-            bool                dumpDot{false};
+            /**
+             * Helper function to dump the configuration information.
+             */
+            void        dumpInfo();
 
-             /** Logging level. */
-            LogLevel            logLevel{WARN};
+            /** Helper function to parse TIDL Inference configuration. */
+            int32_t     getConfig(const string &modelBasePath, vx_context context);
+
+            /**
+             * Function to read and parse IO.bin file from model zoo Path
+             * @param context OpenVX context
+             * @return OpenVX user data object for tivxTIDLJ7Params
+             */
+            vx_user_data_object readConfig(vx_context context);
+
+        public:
+            /* Data structure passed to TIDL module */
+            TIOVXTIDLModuleObj      tidlObj;
+            
+            sTIDL_IOBufDesc_t       *ioBufDesc;
+
+        private:
+            string                  network_file_path{""};
     };
+    
+}
 
-} // namespace ti::edgeai::common
-
-#endif /* _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_ */
+#endif // _TI_EDGEAI_TIDL_H_

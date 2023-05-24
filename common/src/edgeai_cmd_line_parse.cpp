@@ -48,13 +48,11 @@ static void showUsage(const char *name)
     printf("# POSITIONAL PARAMETERS:\n");
     printf("#  config_file - Path to the configuration file.\n");
     printf("# OPTIONAL PARAMETERS:\n");
-    printf("#  [--no-curses  |-n Disable curses report.]\n");
     printf("#  [--log-level  |-l Logging level to enable. [0: DEBUG 1:INFO 2:WARN 3:ERROR]. Default is 2.\n");
     printf("#  [--dump-dot   |-d Dump OpenVX Graph as dot file.]\n");
-    printf("#  [--verbose    |-v]\n");
     printf("#  [--help       |-h]\n");
     printf("# \n");
-    printf("# (C) Texas Instruments 2021\n");
+    printf("# (C) Texas Instruments 2023\n");
     printf("# \n");
     printf("# EXAMPLE:\n");
     printf("#    %s ../configs/single_input_single_inference.yaml.\n", name);
@@ -70,14 +68,12 @@ CmdlineArgs::parse(int32_t        argc,
     int32_t opt;
     static struct option long_options[] = {
         {"help",      no_argument,       0, 'h' },
-        {"verbose",   no_argument,       0, 'v' },
-        {"no-curses", no_argument,       0, 'n' },
         {"dump-dot",  no_argument,       0, 'd' },
         {"log-level", required_argument, 0, 'l' },
         {0,           0,                 0,  0  }
     };
 
-    while ((opt = getopt_long(argc, argv,"-hdvnl:",
+    while ((opt = getopt_long(argc, argv,"-hdl:",
                    long_options, &longIndex )) != -1)
     {
         switch (opt)
@@ -88,14 +84,6 @@ CmdlineArgs::parse(int32_t        argc,
 
             case 'l' :
                 logLevel = static_cast<LogLevel>(strtol(optarg, NULL, 0));
-                break;
-
-            case 'n' :
-                enableCurses = false;
-                break;
-
-            case 'v' :
-                verbose = true;
                 break;
 
             case 'd' :
