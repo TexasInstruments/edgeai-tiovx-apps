@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,34 +30,38 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
-#define _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
+#ifndef _TI_EDGEAI_OVX_WRAPPER_H_
+#define _TI_EDGEAI_OVX_WRAPPER_H_
 
-/* Standard headers. */
-#include <string>
-
-/* Module headers. */
+/* Module Headers */
 #include <utils/include/ti_logger.h>
+
+/* OpenVX Headers */
+#include <TI/tivx.h>
 
 namespace ti::edgeai::common
 {
+
     using namespace ti::utils;
 
-    class CmdlineArgs
+    class ovxGraph
     {
         public:
-            void parse(int32_t argc, char *argv[]);
+            /* Constructor. */
+            ovxGraph();
 
-            /** Path to YAML config file. */
-            std::string         configFile;
+            /* Destructor. */
+            ~ovxGraph();
+        
+        public:
+            /* OpenVX Context */
+            vx_context context;
+            
+            /* OpenVX Graph */
+            vx_graph   graph;
 
-            /** Dump openVX graph as dot file. */
-            bool                dumpDot{false};
-
-             /** Logging level. */
-            LogLevel            logLevel{WARN};
     };
 
-} // namespace ti::edgeai::common
+}
 
-#endif /* _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_ */
+#endif // _TI_EDGEAI_OVX_WRAPPER_H_

@@ -64,9 +64,14 @@ namespace ti::edgeai::common
             EdgeAIDemo(const YAML::Node    &yaml);
 
             /**
-            * Dumps openVX graph as dot file
-            */
+             * Dumps openVX graph as dot file
+             */
             void dumpGraphAsDot();
+
+            /**
+             * Starts the demo
+             */
+            int32_t startDemo();
 
             /**
              * Sets a flag for the threads to exit at the next opportunity.

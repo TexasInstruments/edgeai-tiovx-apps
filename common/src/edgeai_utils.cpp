@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -41,296 +41,86 @@
 #include <utils/include/ti_logger.h>
 #include <common/include/edgeai_utils.h>
 
+/* OpenVX headers */
+#include <tiovx_tidl_module.h>
+
 namespace ti::edgeai::common
 {
 using namespace ti::utils;
 
-// Please keep the following array and map consistent in terms of the
-// number anf names of the elements
-const string gStatKeys[] = {"dl-inference"};
-const string gMetricKeys[] = {"total time", "framerate"};
-
-/**
- * Hold the processing time of different operations
- */
-struct ProcTime
+vx_size getTensorDataType(vx_int32 tidl_type)
 {
-    float       average{0.0f};
-    uint64_t    samples{0};
-};
+    vx_size openvx_type = VX_TYPE_INVALID;
 
-struct Metrics
-{
-    float       value{0.0f};
-    string      unit{"ms"};
-    uint64_t    samples{0};
-};
-
-using MapProcTime = map<string, ProcTime>;
-using MapMetrics  = map<string, Metrics>;
-
-struct StatEntry
-{
-    /** Name of the input source. */
-    string      m_inputName;
-
-    /** Type of the model.
-     * - classification
-     * - detection
-     * = segmentation
-     */
-    string      m_modelType;
-
-    /** Name of the model. */
-    string      m_modelName;
-
-    /** Processing time details. */
-    MapProcTime m_proc{};
-
-    /** Metrics context. */
-    MapMetrics  m_metrics{};
-};
-
-/* Initialize the status. */
-MapStatEntry Statistics::m_stats{};
-bool Statistics::m_printCurses = false;
-bool Statistics::m_printStdout = !Statistics::m_printCurses;
-thread Statistics::m_reportingThread;
-
-int32_t Statistics::addEntry(uint32_t       key,
-                             const string  &inputName,
-                             const string  &modelType,
-                             const string  &modelPath)
-{
-    int32_t status = 0;
-
-    /* Check if an entry for this key already exists. */
-    if (m_stats.find(key) != m_stats.end())
+    if (tidl_type == TIDL_UnsignedChar)
     {
-        LOG_ERROR("An entry for the key [%d] already exists.\n");
-        status = -1;
+        openvx_type = VX_TYPE_UINT8;
+    }
+    else if(tidl_type == TIDL_SignedChar)
+    {
+        openvx_type = VX_TYPE_INT8;
+    }
+    else if(tidl_type == TIDL_UnsignedShort)
+    {
+        openvx_type = VX_TYPE_UINT16;
+    }
+    else if(tidl_type == TIDL_SignedShort)
+    {
+        openvx_type = VX_TYPE_INT16;
+    }
+    else if(tidl_type == TIDL_UnsignedWord)
+    {
+        openvx_type = VX_TYPE_UINT32;
+    }
+    else if(tidl_type == TIDL_SignedWord)
+    {
+        openvx_type = VX_TYPE_INT32;
+    }
+    else if(tidl_type == TIDL_SinglePrecFloat)
+    {
+        openvx_type = VX_TYPE_FLOAT32;
     }
 
-    if (status == 0)
-    {
-        string      fName = modelPath;
-        StatEntry   s;
-
-        /* Delete the trailing '/' if present. This will lead to an empty
-         * string in the call to filename() below, if not deleted.
-         */
-        if (fName.back() == '/')
-        {
-            fName.pop_back();
-        }
-
-        s.m_modelName = "Model Name:   " + string(filesystem::path(fName).filename());
-        s.m_modelType = "Model Type:   " + modelType;
-        s.m_inputName = "Input Source: " + inputName;
-
-        /* Initialize the maps. */
-        for (auto const &tag : gStatKeys)
-        {
-            s.m_proc[tag] = ProcTime();
-        }
-
-        for (auto const &tag : gMetricKeys)
-        {
-            s.m_metrics[tag] = Metrics();
-        }
-
-        m_stats[key] = s;
-    }
-
-    return status;
+    return openvx_type;
 }
 
-int32_t Statistics::reportProcTime(uint32_t         key,
-                                   const string    &tag,
-                                   float            value)
+void getClassNames(const string &modelBasePath, char (*classnames)[256])
 {
-    StatEntry  *e;
-    ProcTime   *p;
-    int32_t     status = 0;
+    const string        &datasetFile = modelBasePath + "/dataset.yaml";
 
-    if (m_stats.find(key) == m_stats.end())
+    if (!filesystem::exists(datasetFile))
     {
-        LOG_ERROR("Key [%d] not found.\n", key);
-        status = -1;
+        printf("The file [%s] does not exist.\n", datasetFile.c_str());
+        return;
     }
 
-    if (status == 0)
+    const YAML::Node    yaml = YAML::LoadFile(datasetFile.c_str());
+
+    const YAML::Node   &categories = yaml["categories"];
+
+    // Validate the parsed yaml configuration
+    if (!categories)
     {
-        e = &m_stats[key];
-        p = &e->m_proc[tag];
+        printf("Parameter categories missing in dataset file.\n");
+        return;
+    }
 
-        p->average = (p->average * p->samples + value)/(p->samples + 1);
-        p->samples++;
+    string     name, none_str;
+    int32_t    id;
 
-        if (m_printStdout)
+    strcpy(classnames[0], const_cast<char*>(string("None").c_str()));
+
+    for (YAML::Node data : categories)
+    {
+        id = data["id"].as<int32_t>();
+        name = data["name"].as<std::string>();
+
+        if (data["supercategory"])
         {
-            printf("[UTILS] [%s] Time for '%s': %5.2f ms (avg %5.2f ms)\n",
-                    e->m_modelName.c_str(),
-                    tag.c_str(), value, p->average);
-        }
-    }
-
-    return status;
-}
-
-int32_t Statistics::reportMetric(uint32_t       key,
-                                 const string  &tag,
-                                 const string  &unit,
-                                 float          value)
-{
-    StatEntry  *e;
-    Metrics    *m;
-    int32_t     status = 0;
-
-    if (m_stats.find(key) == m_stats.end())
-    {
-        LOG_ERROR("Key [%d] not found.\n", key);
-        status = -1;
-    }
-
-    if (status == 0)
-    {
-        e = &m_stats[key];
-        m = &e->m_metrics[tag];
-
-        m->value = (m->value * m->samples + value)/(m->samples + 1);
-        m->unit  = unit;
-
-        m->samples++;
-
-        if (m_printStdout)
-        {
-            printf("[UTILS] [%s] Metric '%s': %5.2f %s\n",
-                    e->m_modelName.c_str(),
-                    tag.c_str(), m->value, m->unit.c_str());
-        }
-    }
-
-    return status;
-}
-
-static inline void drawDataRow(int32_t     &row,
-                               const char  *title,
-                               float        data1,
-                               const char  *data1Unit,
-                               int32_t      data2,
-                               int32_t      lastPos)
-{
-    mvprintw(row, 1, "| %-29s:", title);
-    attron(A_BOLD);
-    mvprintw(row, 34, "%8.2f %s", data1, data1Unit);
-    attroff(A_BOLD);
-    mvprintw(row, 46, " from %5d samples", data2);
-    mvprintw(row, lastPos, "|");
-    row++;
-}
-
-void Statistics::reportingLoop(const string &demoName)
-{
-    int32_t     len;
-    int32_t     maxLen = 65;
-    uint64_t    samples;
-    auto       &statsDb = m_stats;
-
-    initscr();
-    cbreak();
-    noecho();
-    keypad(stdscr, true);
-
-    /* Compute the length of a data row. It is of the form
-     * | .............. |
-     *  ^              ^
-     * which means that we need a space at the either end of the string
-     * and hence +2 below.
-     */
-    len = 0;
-    for (uint64_t i = 0; i < statsDb.size(); i++)
-    {
-        auto const s = &statsDb[i];
-        int32_t ml = s->m_modelName.length() + 2;
-        int32_t nl = s->m_inputName.length() + 2;
-
-        len = std::max({len, ml, nl});
-    }
-
-    /* Set the length to fit the data nicely. */
-    len = std::max(len, maxLen);
-
-    const string   &border = '+' + string(len, '-') + '+';
-    const string   &fmt = "| %-" + to_string(len-1) + "s|";
-
-    while (m_printCurses)
-    {
-        clear();
-        int row = 1;
-
-        mvprintw(row++, 1, border.c_str());
-        mvprintw(row++, 1, fmt.c_str(), demoName.c_str());
-        mvprintw(row++, 1, border.c_str());
-
-        for (uint64_t i = 0; i < statsDb.size(); i++)
-        {
-            auto const s = &statsDb[i];
-
-            mvprintw(row++, 1, border.c_str());
-            mvprintw(row++, 1, fmt.c_str(), s->m_inputName.c_str());
-            mvprintw(row++, 1, fmt.c_str(), s->m_modelName.c_str());
-            mvprintw(row++, 1, fmt.c_str(), s->m_modelType.c_str());
-            mvprintw(row++, 1, border.c_str());
-
-            for (auto &key : gStatKeys)
-            {
-                auto const *p = &s->m_proc[key];
-                float avg = p->average;
-
-                samples = p->samples;
-                drawDataRow(row, key.c_str(), avg, "ms", samples, len+2);
-            }
-
-            for (auto &key : gMetricKeys)
-            {
-                auto const *m = &s->m_metrics[key];
-
-                drawDataRow(row, key.c_str(), m->value,
-                            m->unit.c_str(), m->samples, len+2);
-            }
-
-            mvprintw(row++, 1, border.c_str());
+            name = data["supercategory"].as<std::string>() + "/" + name;
         }
 
-        refresh();
-        this_thread::sleep_for(chrono::milliseconds(1000));
-    }
-
-    echo();
-    nocbreak();
-    endwin();
-}
-
-void Statistics::enableCursesReport(bool            state,
-                                    bool            verbose,
-                                    const string   &demoName)
-{
-    m_printCurses = state;
-    m_printStdout = !state && verbose;
-
-    if (state)
-    {
-        m_reportingThread = std::thread(reportingLoop, demoName);
-    }
-}
-
-void Statistics::disableCursesReport()
-{
-    m_printCurses = false;
-    if (m_reportingThread.joinable())
-    {
-        m_reportingThread.join();
+        strcpy(classnames[id], const_cast<char*>(name.c_str()));
     }
 }
 

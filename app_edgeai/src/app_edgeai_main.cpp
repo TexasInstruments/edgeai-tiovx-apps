@@ -37,12 +37,11 @@
 
 /* Module headers */
 #include <common/include/edgeai_cmd_line_parse.h>
-#include <common/include/edgeai_utils.h>
-#include <utils/include/edgeai_perfstats.h>
 #include <common/include/edgeai_demo.h>
 
 extern "C" 
 {
+#include <app_init.h>
 #include <tiovx_utils.h>
 }
 
@@ -62,6 +61,13 @@ static void sigHandler(int32_t sig)
 
 int32_t main(int argc, char * argv[])
 {
+    int status = appInit();
+    if(status == -1)
+    {
+        printf("app_init failed \n");
+        exit(-1);
+    }
+
     CmdlineArgs cmdArgs;
 
     /* Register SIGINT handler. */
@@ -75,13 +81,7 @@ int32_t main(int argc, char * argv[])
 
     gDemo = new EdgeAIDemo(yaml);
 
-    auto const &title = yaml["title"].as<string>();
-
-    /* Configure the curses display. */
-    Statistics::enableCursesReport(cmdArgs.enableCurses, cmdArgs.verbose, title.c_str());
-
-    /* Configure the performance report. */
-    ti::utils::enableReport(true);
+    gDemo->startDemo();
 
     /* Wait for the threads to exit. */
     gDemo->waitForExit();
@@ -92,16 +92,9 @@ int32_t main(int argc, char * argv[])
         gDemo->dumpGraphAsDot();
     }
 
-    /* Disable the performance report. */
-    ti::utils::disableReport();
-
-    /* Wait for the perf loggin thread to exit. */
-    ti::utils::waitForPerfThreadExit();
-
-    /* Disable curser report. */
-    Statistics::disableCursesReport();
-
     delete gDemo;
+
+    appDeInit();
 
     return 0;
 }

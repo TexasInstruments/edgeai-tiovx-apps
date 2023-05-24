@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_UTILS_H_
-#define _TI_EDGEAI_UTILS_H_
+#ifndef _TI_EDGEAI_TIOVX_UTILS_H_
+#define _TI_EDGEAI_TIOVX_UTILS_H_
 
 /* Standard headers. */
 #include <string>
@@ -40,106 +40,30 @@
 /* Third-party headers. */
 #include <yaml-cpp/yaml.h>
 
-#define MAX_SCALE_FACTOR           4
+/* OpenVX headers */
+#include <TI/tivx.h>
 
 using namespace std;
 
 namespace ti::edgeai::common
 {
-    /* Forward declaration. */
-    struct StatEntry;
-
-    using MapStatEntry   = map<uint32_t, StatEntry>;
-
-    /** Statistics database. */
     /**
-     * \brief Class for holding the performance information during the DL
-     *        model inference runs.
+     * Helper function to convert TIDL data types to OpenVX data types
      *
-     * \ingroup group_edgeai_common
+     * @param tidl_type TIDL data type
+     *
+     * @return OpenVX data type
      */
-    class Statistics
-    {
-        public:
-            /** Vector of ststistics objects. */
-            static MapStatEntry m_stats;
+    vx_size getTensorDataType(vx_int32 tidl_type);
 
-            /** Flag to control curses report thread */
-            static bool m_printCurses;
-
-            /** Flag to control STDOUT prints if curses is disabled*/
-            static bool m_printStdout;
-
-            /** Reporting thread identifier. */
-            static thread m_reportingThread;
-
-            /** Function for registering the model to track statistics specific
-             * to this model.
-             *
-             * @param key Identifier for retrieving the appropriate record.
-             * @param inputName Name String representation of the input
-             * @param modelType Type of the model
-             * @param modelName Name of the model to start tracking statistics
-             *                  for.
-             */
-            static int32_t addEntry(uint32_t        key,
-                                    const string   &inputName,
-                                    const string   &modelType,
-                                    const string   &modelName);
-
-            /**
-             * Utility Function for reporting processing time measurements
-             * It will update the last average with the new sample value
-             *
-             * @param key Idetfier for retrieving the appropriate record.
-             * @param tag unique string to represent the processing time of certain operation
-             * @param value processing time measured in milliseconds
-             */
-            static int32_t reportProcTime(uint32_t      key,
-                                          const string &tag,
-                                          float         value);
-
-            /**
-             * Utility Function for reporting performence metrics
-             * It will update the last average with the new sample value
-             *
-             * @param key Idetfier for retrieving the appropriate record.
-             * @param tag unique string to represent each metric
-             * @param unit unit of measurment
-             * @param value measured value
-             */
-            static int32_t reportMetric(uint32_t        key,
-                                        const string   &tag,
-                                        const string   &unit,
-                                        float           value);
-            /**
-             * Thread callback function which prints a table of reported processing times
-             * using ncurses library.
-             *
-             * The number of columns displayed is dynamically computed based on the length
-             * of the modelpath.
-             */
-             static void reportingLoop(const string &demoName);
-            /**
-             * Control if the processing time should be printed to the console or shown
-             * in a nice looking, table using ncurses library. If you use the curses method,
-             * only the processing time is shown and other debug prints will not be visible.
-             * If you do not use the curses library, all the processing time are simply
-             * printed to the console. It's a choice between debug prints v/s demo appearance.
-             *
-             * @param state passing true will start the curses thread
-             * @param verbose Verbose flag for controlling the output prints to the screen
-             * @param demoName Demo name to display
-             */
-            static void enableCursesReport(bool            state,
-                                           bool            verbose,
-                                           const string   &demoName);
-
-            /**
-             * Disables the curses process printing to the output, if enabled.
-             */
-            static void disableCursesReport();
-    };
+    /**
+     * Helper function to parse classnames from model directory
+     *
+     * @param modelBasePath Path to model directory
+     *
+     * @param classnames Classnames will be stored in this buffer
+     */
+    void getClassNames(const string &modelBasePath, char (*classnames)[256]);
 
     /**
      * Helper function to convert string to fraction
@@ -148,7 +72,7 @@ namespace ti::edgeai::common
      *
      * @return string representation of fraction (Ex: "1/2")
      */
-    const std::string to_fraction(std::string& num);
+    const string to_fraction(string& num);
 
     /**
      * Helper function to check if string is numeric
@@ -157,9 +81,9 @@ namespace ti::edgeai::common
      *
      * @return true if string is purely numeric, else false
      */
-    template<typename Numeric> bool _is_number(const std::string& s);
+    template<typename Numeric> bool _is_number(const string& s);
 
 } // namespace ti::edgeai::common
 
-#endif /* _TI_EDGEAI_UTILS_H_ */
+#endif /* _TI_EDGEAI_TIOVX_UTILS_H_ */
 

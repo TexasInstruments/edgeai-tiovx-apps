@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,34 +30,58 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
-#define _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
+/* Module headers */
+#include <common/include/edgeai_ovx_wrapper.h>
 
-/* Standard headers. */
-#include <string>
+/* OpenVX headers */
+#include <TI/tivx_img_proc_kernels.h>
+#include <TI/dl_kernels.h>
+#include <TI/hwa_kernels.h>
+#include <edgeai_tiovx_target_kernels.h>
 
-/* Module headers. */
-#include <utils/include/ti_logger.h>
+#include<stdio.h>
 
 namespace ti::edgeai::common
 {
-    using namespace ti::utils;
 
-    class CmdlineArgs
+/* Constructor */
+ovxGraph::ovxGraph()
+{
+    /* Create OpenVX Context */
+    context = vxCreateContext();
+    int32_t status = vxGetStatus((vx_reference) context);
+
+    if(status != VX_SUCCESS)
     {
-        public:
-            void parse(int32_t argc, char *argv[]);
+        LOG_ERROR("OpenVX context creation failed \n");
+        exit(-1);
+    }
 
-            /** Path to YAML config file. */
-            std::string         configFile;
+    /* Load all the kernels needed for application */
+    tivxHwaLoadKernels(context);
+    tivxImgProcLoadKernels(context);
+    tivxEdgeaiImgProcLoadKernels(context);
+    tivxTIDLLoadKernels(context);
+}
 
-            /** Dump openVX graph as dot file. */
-            bool                dumpDot{false};
+/* Destructor */
+ovxGraph::~ovxGraph()
+{
+    LOG_DEBUG("ovxGraph Destructor \n");
 
-             /** Logging level. */
-            LogLevel            logLevel{WARN};
-    };
+    /* Unload all the kernels needed for application */
+    tivxHwaUnLoadKernels(context);
+    tivxImgProcUnLoadKernels(context);
+    tivxEdgeaiImgProcUnLoadKernels(context);
+    tivxTIDLUnLoadKernels(context);
+
+    /* Release OpenVX context */
+    int32_t status = vxReleaseContext(&context);
+    if(status != VX_SUCCESS)
+    {
+        LOG_ERROR("OpenVX context release failed \n");
+    }
+
+}
 
 } // namespace ti::edgeai::common
-
-#endif /* _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_ */

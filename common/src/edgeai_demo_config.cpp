@@ -32,6 +32,7 @@
 /* Standard headers. */
 #include <algorithm>
 #include <filesystem>
+#include <iostream>
 
 /* Module headers. */
 #include <utils/include/ti_stl_helpers.h>
@@ -39,25 +40,18 @@
 #include <common/include/edgeai_utils.h>
 #include <common/include/edgeai_demo_config.h>
 
-#define TI_DEFAULT_LDC_WIDTH       1920
-#define TI_DEFAULT_LDC_HEIGHT      1080
-
 namespace ti::edgeai::common
 {
 using namespace std;
 using namespace ti::edgeai::common;
 using namespace ti::utils;
 
-uint32_t C7_CORE_ID_INDEX = 0;
-uint32_t ISP_TARGET_INDEX = 0;
-uint32_t LDC_TARGET_INDEX = 0;
-
-static char gFilePath[2048];
-
 int32_t InputInfo::m_numInstances = 0;
 
 InputInfo::InputInfo(const YAML::Node &node)
 {
+    string  srcExt;
+
     m_instId = m_numInstances++;
 
     m_source    = node["source"].as<string>();
@@ -67,11 +61,6 @@ InputInfo::InputInfo(const YAML::Node &node)
 
     /* Change framerate to string representation of fraction. 0.5 = "1/2". */
     m_framerate = to_fraction(m_framerate);
-
-    if (node["index"])
-    {
-        m_index = node["index"].as<int32_t>();
-    }
 
     if (node["format"])
     {
@@ -98,6 +87,44 @@ InputInfo::InputInfo(const YAML::Node &node)
         m_sen_id = node["sen-id"].as<string>();
     }
 
+    srcExt = filesystem::path(m_source).extension();
+
+    if (filesystem::exists(m_source))
+    {
+        if(filesystem::is_directory(m_source))
+        {
+            m_srcType = "images_directory";
+            for(const auto &filename : filesystem::directory_iterator(m_source))
+            {
+                string file(filename.path());
+                string imgExt = filesystem::path(file).extension();
+
+                if(imgExt == ".nv12" || imgExt == ".yuv")
+                {
+                    m_multiImageVect.push_back(file);
+                }
+            }
+            if (m_multiImageVect.size() == 0)
+            {
+                LOG_ERROR("Directory [%s] does not have supported images [.nv12,.yuv]\n", m_source.c_str());
+                throw runtime_error("Invalid source.\n");
+            }
+        }
+        else if (srcExt == ".nv12" || srcExt == ".yuv")
+        {
+            m_srcType = "image";
+        }
+        else
+        {
+            m_srcType = "camera";
+        }
+    }
+    else
+    {
+        LOG_ERROR("Invalid source.\n");
+        throw runtime_error("Invalid source.\n");
+    }
+
 }
 
 void InputInfo::dumpInfo(const char *prefix) const
@@ -106,7 +133,6 @@ void InputInfo::dumpInfo(const char *prefix) const
     LOG_INFO("%sInputInfo::width         = %d\n", prefix, m_width);
     LOG_INFO("%sInputInfo::height        = %d\n", prefix, m_height);
     LOG_INFO("%sInputInfo::framerate     = %s\n", prefix, m_framerate.c_str());
-    LOG_INFO("%sInputInfo::index         = %d\n", prefix, m_index);
 }
 
 InputInfo::~InputInfo()
@@ -120,6 +146,8 @@ OutputInfo::OutputInfo(const YAML::Node    &node,
                        const string        &title):
     m_title(title)
 {
+    string sinkExt;
+
     m_instId = m_numInstances++;
 
     m_sink   = node["sink"].as<string>();
@@ -130,30 +158,23 @@ OutputInfo::OutputInfo(const YAML::Node    &node,
     {
         m_connector = node["connector"].as<int32_t>();
     }
-    if (node["host"])
+
+    sinkExt = filesystem::path(m_sink).extension();
+
+    if (sinkExt == ".nv12" || sinkExt == ".yuv")
     {
-        m_host = node["host"].as<string>();
+        m_sinkType = "image";
     }
-    if (node["port"])
+    else if(m_sink == "display")
     {
-        m_port = node["port"].as<int32_t>();
+        m_sinkType = "display";
     }
-    if (node["payloader"])
+    else
     {
-        m_payloader = node["payloader"].as<string>();
+        LOG_ERROR("Invalid sink.\n");
+        throw runtime_error("Invalid sink.\n");
     }
-    if (node["gop-size"])
-    {
-        m_gopSize = node["gop-size"].as<int32_t>();
-    }
-    if (node["bitrate"])
-    {
-        m_bitrate = node["bitrate"].as<int32_t>();
-    }
-    if (node["overlay-performance"])
-    {
-        m_overlayPerformance = node["overlay-performance"].as<bool>();
-    }
+
     LOG_DEBUG("CONSTRUCTOR\n");
 }
 
@@ -249,11 +270,6 @@ ModelInfo::ModelInfo(const YAML::Node &node)
 {
     m_modelPath  = node["model_path"].as<string>();
 
-    if (node["labels_path"])
-    {
-        m_labelsPath = node["labels_path"].as<string>();
-    }
-
     if (node["alpha"])
     {
         m_alpha = node["alpha"].as<float>();
@@ -275,7 +291,6 @@ ModelInfo::ModelInfo(const YAML::Node &node)
 void ModelInfo::dumpInfo(const char *prefix) const
 {
     LOG_INFO("%sModelInfo::modelPath     = %s\n", prefix, m_modelPath.c_str());
-    LOG_INFO("%sModelInfo::labelsPath    = %s\n", prefix, m_labelsPath.c_str());
     LOG_INFO("%sModelInfo::vizThreshold  = %f\n", prefix, m_vizThreshold);
     LOG_INFO("%sModelInfo::alpha         = %f\n", prefix, m_alpha);
     LOG_INFO("%sModelInfo::topN          = %d\n", prefix, m_topN);
@@ -372,7 +387,7 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
         if (mosaicInfo->m_width > inputInfo->m_width ||
             mosaicInfo->m_height > inputInfo->m_height)
         {
-            LOG_ERROR("Flow output resolution cannot be"
+            LOG_ERROR("Flow output resolution cannot be "
                         "greater than input resolution.\n");
             status = -1;
             break;
@@ -428,14 +443,6 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
     }
 
     return status;
-}
-
-void FlowInfo::waitForExit()
-{
-}
-
-void FlowInfo::sendExitSignal()
-{
 }
 
 void FlowInfo::dumpInfo(const char *prefix) const

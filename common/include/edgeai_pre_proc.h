@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,34 +30,40 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
-#define _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_
+#ifndef _TI_EDGEAI_PRE_PROC_H_
+#define _TI_EDGEAI_PRE_PROC_H_
 
-/* Standard headers. */
 #include <string>
 
-/* Module headers. */
-#include <utils/include/ti_logger.h>
+#include <tiovx_dl_pre_proc_module.h>
+#include <TI/j7_tidl.h>
 
 namespace ti::edgeai::common
 {
-    using namespace ti::utils;
+    using namespace std;
 
-    class CmdlineArgs
+    class preProc
     {
         public:
-            void parse(int32_t argc, char *argv[]);
+            /* Default constructor. Use the compiler generated default one. */
+            preProc();
 
-            /** Path to YAML config file. */
-            std::string         configFile;
+            /* Destructor. */
+            ~preProc();
 
-            /** Dump openVX graph as dot file. */
-            bool                dumpDot{false};
+            /**
+             * Helper function to dump the configuration information.
+             */
+            void        dumpInfo();
 
-             /** Logging level. */
-            LogLevel            logLevel{WARN};
+            /** Helper function to parse pre process configuration. */
+            int32_t     getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBufDesc);
+
+        public:
+            /* Data structure passed to pre process module */
+            TIOVXDLPreProcModuleObj     dlPreProcObj;
+            
     };
+}
 
-} // namespace ti::edgeai::common
-
-#endif /* _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_ */
+#endif // _TI_EDGEAI_PRE_PROC_H_
