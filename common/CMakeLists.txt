@@ -13,6 +13,7 @@ set(EDGEAI_COMMON_SRCS
     src/edgeai_post_proc.cpp
     src/edgeai_tidl.cpp
     src/edgeai_pre_proc.cpp
+    src/edgeai_msc.cpp
     )
 
 build_lib(${PROJECT_NAME} EDGEAI_COMMON_SRCS STATIC)

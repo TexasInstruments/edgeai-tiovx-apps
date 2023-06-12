@@ -127,11 +127,31 @@ int32_t preProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBuf
         {
             dlPreProcObj.input.width = cropNode[0].as<int32_t>();
             dlPreProcObj.input.height = cropNode[1].as<int32_t>();
+
+            cropHeight = cropNode[0].as<int32_t>();
+            cropWidth  = cropNode[1].as<int32_t>();
         }
         else if (cropNode.Type() == YAML::NodeType::Scalar)
         {
             dlPreProcObj.input.width = cropNode.as<int32_t>();
             dlPreProcObj.input.height = cropNode.as<int32_t>();
+
+            cropHeight = cropNode.as<int32_t>();
+            cropWidth  = cropNode.as<int32_t>();
+        }
+
+        // Read the width and height values
+        const YAML::Node &resizeNode = preProc["resize"];
+
+        if (resizeNode.Type() == YAML::NodeType::Sequence)
+        {
+            resizeHeight = resizeNode[0].as<int32_t>();
+            resizeWidth  = resizeNode[1].as<int32_t>();
+        }
+        else if (resizeNode.Type() == YAML::NodeType::Scalar)
+        {
+            resizeHeight = resizeNode.as<int32_t>();
+            resizeWidth  = resizeHeight;
         }
 
         // Read the data layout
@@ -195,14 +215,14 @@ int32_t preProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBuf
         dlPreProcObj.input.bufq_depth = 1;
         dlPreProcObj.input.color_format = VX_DF_IMAGE_NV12;
 
-        /* TIDL node output is NCHW so output tensor dimensions */
+        /* TIDL node input is NCHW so output tensor dimensions */
         if(dlPreProcObj.params.channel_order == 0)
         {
             dlPreProcObj.output.dim_sizes[0] = ioBufDesc->inWidth[0]  + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0];
             dlPreProcObj.output.dim_sizes[1] = ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0];
             dlPreProcObj.output.dim_sizes[2] = ioBufDesc->inNumChannels[0];
         }
-        else /* TIDL node output is NHWC so output tensor dimensions */
+        else /* TIDL node input is NHWC so output tensor dimensions */
         {
             dlPreProcObj.output.dim_sizes[0] = ioBufDesc->inNumChannels[0];
             dlPreProcObj.output.dim_sizes[1] = ioBufDesc->inWidth[0]  + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0];

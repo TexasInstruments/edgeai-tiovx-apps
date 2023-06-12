@@ -209,16 +209,6 @@ int32_t postProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBu
             dlPostProcObj.params.od_prms.scaleY = static_cast<float>(imageHeight)/(ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0]);
         }
 
-        // if (postProc["shuffle_indices"])
-        // {
-        //     const YAML::Node indicesNode = postProc["shuffle_indices"];
-
-        //     for (uint8_t i = 0; i < indicesNode.size(); i++)
-        //     {
-        //         resultIndices[i] = indicesNode[i].as<int32_t>();
-        //     }
-        // }
-
         const YAML::Node   &metric = yaml["metric"];
 
         if (metric && metric["label_offset_pred"])

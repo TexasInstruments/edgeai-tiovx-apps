@@ -30,71 +30,42 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Standard headers */
-#include <signal.h>
-#include <stdlib.h>
-#include <string>
+#ifndef _TI_EDGEAI_MSC_H_
+#define _TI_EDGEAI_MSC_H_
 
-/* Module headers */
-#include <common/include/edgeai_cmd_line_parse.h>
-#include <common/include/edgeai_demo.h>
+#include <tiovx_multi_scaler_module.h>
+#include <common/include/edgeai_pre_proc.h>
 
-extern "C" 
+namespace ti::edgeai::common
 {
-#include <app_init.h>
-#include <tiovx_utils.h>
+    using namespace std;
+
+    class multiScaler
+    {
+        public:
+            /* Default constructor. Use the compiler generated default one. */
+            multiScaler();
+
+            /* Destructor. */
+            ~multiScaler();
+
+            /**
+             * Helper function to dump the configuration information.
+             */
+            void        dumpInfo();
+
+            /** Helper function to parse MSC configuration. */
+            int32_t     getConfig(int32_t input_wd, int32_t input_ht, int32_t post_proc_wd, int32_t post_proc_ht, preProc *pre_proc_obj);
+
+        public:
+            /* Data structure passed to MSC module */
+            TIOVXMultiScalerModuleObj     multiScalerObj1;
+            
+            TIOVXMultiScalerModuleObj     multiScalerObj2;
+
+            /* True of multiSclaerObj2 is to be used. */
+            bool                          useSecondaryMsc{false};
+    };
 }
 
-using namespace ti::edgeai::common;
-
-static EdgeAIDemo *gDemo = nullptr;
-
-static void sigHandler(int32_t sig)
-{
-    (void)sig;
-
-    if (gDemo)
-    {
-        gDemo->sendExitSignal();
-    }
-}
-
-int32_t main(int argc, char * argv[])
-{
-    int status = appInit();
-    if(status == -1)
-    {
-        printf("app_init failed \n");
-        exit(-1);
-    }
-
-    CmdlineArgs cmdArgs;
-
-    /* Register SIGINT handler. */
-    signal(SIGINT, sigHandler);
-
-    /* Parse the command line options. */
-    cmdArgs.parse(argc, argv);
-
-    /* Parse the input configuration file. */
-    const YAML::Node &yaml = YAML::LoadFile(cmdArgs.configFile);
-
-    gDemo = new EdgeAIDemo(yaml);
-
-    /* Dump openVX graph as dot file. */
-    if(cmdArgs.dumpDot)
-    {
-        gDemo->dumpGraphAsDot();
-    }
-
-    gDemo->startDemo();
-
-    /* Wait for the threads to exit. */
-    gDemo->waitForExit();
-
-    delete gDemo;
-
-    appDeInit();
-
-    return 0;
-}
+#endif // _TI_EDGEAI_MSC_H_
