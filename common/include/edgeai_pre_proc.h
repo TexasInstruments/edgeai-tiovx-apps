@@ -62,6 +62,12 @@ namespace ti::edgeai::common
         public:
             /* Data structure passed to pre process module */
             TIOVXDLPreProcModuleObj     dlPreProcObj;
+
+            /* These will be used in msc */
+            int32_t                     cropHeight{0};
+            int32_t                     cropWidth{0};
+            int32_t                     resizeHeight{0};
+            int32_t                     resizeWidth{0};
             
     };
 }

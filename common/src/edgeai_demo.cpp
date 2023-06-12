@@ -42,6 +42,7 @@
 #include <common/include/edgeai_tidl.h>
 #include <common/include/edgeai_post_proc.h>
 #include <common/include/edgeai_pre_proc.h>
+#include <common/include/edgeai_msc.h>
 
 /* OpenVX headers */
 #include <tiovx_utils.h>
@@ -115,6 +116,9 @@ class EdgeAIDemoImpl
         /** Vector of post process objects */
         vector<postProc*>                   m_postProcObjs{};
 
+        /** Vector of multiscaler objects */
+        vector<multiScaler*>                m_multiScalerObjs{};
+
         /** Demo configuration. */
         DemoConfig                          m_config;
 
@@ -160,31 +164,25 @@ int32_t EdgeAIDemoImpl::startDemo()
             auto const &input = m_config.m_inputMap[flow->m_inputId];
             if(input->m_srcType == "image")
             {
-                readImage(const_cast<char*>(input->m_source.c_str()), m_preProcObjs[0]->dlPreProcObj.input.image_handle[0]); 
+                readImage(const_cast<char*>(input->m_source.c_str()), m_multiScalerObjs[0]->multiScalerObj1.input.image_handle[0]); 
                 m_runLoop = input->m_loop;
             }
             else if(input->m_srcType == "images_directory")
             {
-
-                readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()), m_preProcObjs[0]->dlPreProcObj.input.image_handle[0]);
+                readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()), m_multiScalerObjs[0]->multiScalerObj1.input.image_handle[0]);
                 input->m_multiImageVectCnt++;
                 if (input->m_multiImageVectCnt == input->m_multiImageVect.size())
                 {
-                    LOG_ERROR(" ------ HERE ----------- \n");
                     input->m_multiImageVectCnt = 0;
                     m_runLoop = input->m_loop;
                 }
             }
         }
         
-
-        /*
-            vxGraphParameterEnqueueReadyRef
-        */
-
+        /*  vxGraphParameterEnqueueReadyRef */
         vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph, 
-                m_preProcObjs[0]->dlPreProcObj.input.graph_parameter_index, 
-                (vx_reference*)&m_preProcObjs[0]->dlPreProcObj.input.image_handle[0], 1);
+                m_multiScalerObjs[0]->multiScalerObj1.input.graph_parameter_index, 
+                (vx_reference*)&m_multiScalerObjs[0]->multiScalerObj1.input.image_handle[0], 1);
         vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
                 m_postProcObjs[0]->dlPostProcObj.output_image.graph_parameter_index,
                 (vx_reference*)&m_postProcObjs[0]->dlPostProcObj.output_image.image_handle[0], 1);
@@ -204,20 +202,15 @@ int32_t EdgeAIDemoImpl::startDemo()
             exit(-1);
         }
 
-        /*
-            vxGraphParameterDequeueDoneRef
-        */
-
+        /*  vxGraphParameterDequeueDoneRef  */
         vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-                            m_preProcObjs[0]->dlPreProcObj.input.graph_parameter_index,
+                            m_multiScalerObjs[0]->multiScalerObj1.input.graph_parameter_index,
                             (vx_reference*)&input_o, 1, &num_refs);
         vxGraphParameterDequeueDoneRef(m_ovxGraph->graph, 
                             m_postProcObjs[0]->dlPostProcObj.output_image.graph_parameter_index, 
                             (vx_reference*)&output_o, 1, &num_refs);
 
-        /* 
-            Write Output to file
-        */
+        /*  Write Output to file    */
         for (auto &[name,flow] : m_config.m_flowMap)
         {
             auto const &outputIds = flow->m_outputIds;
@@ -226,15 +219,14 @@ int32_t EdgeAIDemoImpl::startDemo()
                 OutputInfo  *output = m_config.m_outputMap[outputIds[i]];
                 if(output->m_sinkType == "image")
                 {
-                    string name = output->m_sink + to_string(cnt);
-                    writeImage(const_cast<char*>(name.c_str()), m_postProcObjs[i]->dlPostProcObj.output_image.image_handle[0]);
+                    string output_filename = output->m_sink + to_string(cnt);
+
+                    writeImage(const_cast<char*>(output_filename.c_str()), m_postProcObjs[i]->dlPostProcObj.output_image.image_handle[0]);
                 }
             }
         }
         cnt++;
     }
-
-    LOG_ERROR("m_ovxGraph->graph == %p \n", m_ovxGraph->graph);
 
     return status;
 }
@@ -261,8 +253,9 @@ int32_t EdgeAIDemoImpl::setupFlows()
                          m_config.m_inputMap,
                          m_config.m_outputMap);
 
-        auto const &modelIds = flow->m_modelIds;
-        auto const &outputIds = flow->m_outputIds;
+        auto const &modelIds    = flow->m_modelIds;
+        auto const &outputIds   = flow->m_outputIds;
+        auto const &input       = m_config.m_inputMap[flow->m_inputId];
 
         if(modelIds.size() != outputIds.size())
         {
@@ -273,12 +266,12 @@ int32_t EdgeAIDemoImpl::setupFlows()
         /* outputIds is a vector of all outputs used for a unique input */
         for(uint i=0; i < modelIds.size(); i++)
         {
-            preProc     *pre_proc_obj = new preProc;
-            tidlInf     *tidl_inf_obj = new tidlInf;
-            postProc    *post_proc_obj = new postProc;
+            preProc         *pre_proc_obj     = new preProc;
+            tidlInf         *tidl_inf_obj     = new tidlInf;
+            postProc        *post_proc_obj    = new postProc;
+            multiScaler     *multi_scaler_obj = new multiScaler;
             
             ModelInfo   *model = m_config.m_modelMap[modelIds[i]];
-            // OutputInfo  *output = m_config.m_outputMap[outputIds[i]];
 
             /* Get Configuration of TIDL module by parsing params.yaml  */
             tidl_inf_obj->getConfig(model->m_modelPath, m_ovxGraph->context);
@@ -303,12 +296,41 @@ int32_t EdgeAIDemoImpl::setupFlows()
             status = tiovx_dl_post_proc_module_init(m_ovxGraph->context, &post_proc_obj->dlPostProcObj);
 
             m_postProcObjs.push_back(post_proc_obj);
+
+            /* Get Configuration of MSC module by parsing params.yaml  */
+            multi_scaler_obj->getConfig(input->m_width, input->m_height, flow->m_sensorDimVec[i][0], flow->m_sensorDimVec[i][1], pre_proc_obj);
+            status = tiovx_multi_scaler_module_init(m_ovxGraph->context, &multi_scaler_obj->multiScalerObj1);
+            if (multi_scaler_obj->useSecondaryMsc)
+            {
+                status = tiovx_multi_scaler_module_init(m_ovxGraph->context, &multi_scaler_obj->multiScalerObj2);
+            }
+
+            m_multiScalerObjs.push_back(multi_scaler_obj);
         }
     }
 
     if(status == VX_SUCCESS)
     {
-        tiovx_dl_pre_proc_module_create(m_ovxGraph->graph, &m_preProcObjs[0]->dlPreProcObj, NULL, TIVX_TARGET_MPU_0);
+        status = tiovx_multi_scaler_module_create(m_ovxGraph->graph, &m_multiScalerObjs[0]->multiScalerObj1, NULL, TIVX_TARGET_VPAC_MSC1);
+        if(status == VX_SUCCESS && m_multiScalerObjs[0]->useSecondaryMsc)
+        {
+            status = tiovx_multi_scaler_module_create(m_ovxGraph->graph, &m_multiScalerObjs[0]->multiScalerObj2, 
+                                                        m_multiScalerObjs[0]->multiScalerObj1.output[0].arr[0], TIVX_TARGET_VPAC_MSC2);
+        }
+    }
+
+    if(status == VX_SUCCESS)
+    {
+        if(m_multiScalerObjs[0]->useSecondaryMsc)
+        {
+            status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph, &m_preProcObjs[0]->dlPreProcObj, 
+                                                     m_multiScalerObjs[0]->multiScalerObj2.output[0].arr[0], TIVX_TARGET_MPU_0);
+        }
+        else
+        {
+            status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph, &m_preProcObjs[0]->dlPreProcObj, 
+                                                     m_multiScalerObjs[0]->multiScalerObj1.output[0].arr[0], TIVX_TARGET_MPU_0);
+        }
     }
 
     if(status == VX_SUCCESS)
@@ -318,21 +340,21 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
     if(status == VX_SUCCESS)
     {
-        tiovx_dl_post_proc_module_create(m_ovxGraph->graph, &m_postProcObjs[0]->dlPostProcObj, m_preProcObjs[0]->dlPreProcObj.input.arr[0], m_tidlInfObjs[0]->tidlObj.output, TIVX_TARGET_MPU_0);
+        tiovx_dl_post_proc_module_create(m_ovxGraph->graph, &m_postProcObjs[0]->dlPostProcObj, m_multiScalerObjs[0]->multiScalerObj1.output[1].arr[0], m_tidlInfObjs[0]->tidlObj.output, TIVX_TARGET_MPU_0);
     }
 
-    // add_graph_parameter by node index
+    /* add_graph_parameter by node index */
 
     vx_int32 graph_parameter_index = 0;
     vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[8];
 
     if((vx_status)VX_SUCCESS == status)
     {
-        status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_preProcObjs[0]->dlPreProcObj.node, 1);
-        m_preProcObjs[0]->dlPreProcObj.input.graph_parameter_index = graph_parameter_index;
+        status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_multiScalerObjs[0]->multiScalerObj1.node, 0);
+        m_multiScalerObjs[0]->multiScalerObj1.input.graph_parameter_index = graph_parameter_index;
         graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
         graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-        graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_preProcObjs[0]->dlPreProcObj.input.image_handle[0];
+        graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_multiScalerObjs[0]->multiScalerObj1.input.image_handle[0];
         graph_parameter_index++;
     }
 
@@ -346,7 +368,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
         graph_parameter_index++;
     }
 
-    // Schedule Graph
+    /* Schedule Graph */
 
     if((vx_status)VX_SUCCESS == status)
     {
@@ -356,16 +378,20 @@ int32_t EdgeAIDemoImpl::setupFlows()
                     graph_parameters_queue_params_list);
     }
 
-    /*  
-        VERIFY GRAPH
-    */
+    /* VERIFY GRAPH */
 
     if((vx_status)VX_SUCCESS == status)
     {
         status = vxVerifyGraph(m_ovxGraph->graph);
     }
 
-    LOG_ERROR("m_ovxGraph->graph == %p \n", m_ovxGraph->graph);
+    tiovx_multi_scaler_module_update_filter_coeffs(&m_multiScalerObjs[0]->multiScalerObj1);
+    tiovx_multi_scaler_module_update_crop_params(&m_multiScalerObjs[0]->multiScalerObj1);
+    if (m_multiScalerObjs[0]->useSecondaryMsc)
+    {
+        tiovx_multi_scaler_module_update_filter_coeffs(&m_multiScalerObjs[0]->multiScalerObj2);
+        tiovx_multi_scaler_module_update_crop_params(&m_multiScalerObjs[0]->multiScalerObj2);
+    }
 
     return status;
 }
@@ -375,6 +401,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
  */
 void EdgeAIDemoImpl::dumpGraphAsDot()
 {
+    tivxExportGraphToDot(m_ovxGraph->graph, const_cast<vx_char*>(string(".").c_str()), const_cast<vx_char*>(string("edgeai_tiovx_apps_graph").c_str()));
 }
 
 /**
@@ -385,7 +412,6 @@ void EdgeAIDemoImpl::dumpGraphAsDot()
 void EdgeAIDemoImpl::sendExitSignal()
 {
     m_runLoop = false;
-    printf(" ----------------- INTERRUPT \n");
 }
 
 /**
@@ -399,6 +425,18 @@ void EdgeAIDemoImpl::waitForExit()
 EdgeAIDemoImpl::~EdgeAIDemoImpl()
 {
     LOG_DEBUG("EdgeAIDemoImpl Destructor \n");
+
+    for(auto &iter : m_multiScalerObjs)
+    {
+        tiovx_multi_scaler_module_delete(&iter->multiScalerObj1);
+        tiovx_multi_scaler_module_deinit(&iter->multiScalerObj1);
+        if(iter->useSecondaryMsc)
+        {
+            tiovx_multi_scaler_module_delete(&iter->multiScalerObj2);
+            tiovx_multi_scaler_module_deinit(&iter->multiScalerObj2);
+        }
+        delete iter;
+    }
 
     for(auto &iter : m_preProcObjs)
     {
@@ -423,7 +461,9 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 
     if(m_ovxGraph->graph != NULL)
     {
+        LOG_ERROR("Before vxReleaseGraph \n");
         vxReleaseGraph(&m_ovxGraph->graph);
+        LOG_ERROR("After vxReleaseGraph \n");
     }
 
     delete m_ovxGraph;
