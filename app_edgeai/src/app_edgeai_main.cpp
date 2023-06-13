@@ -64,7 +64,7 @@ int32_t main(int argc, char * argv[])
     int status = appInit();
     if(status == -1)
     {
-        printf("app_init failed \n");
+        LOG_ERROR("app_init failed \n");
         exit(-1);
     }
 

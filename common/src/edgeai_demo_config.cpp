@@ -57,10 +57,14 @@ InputInfo::InputInfo(const YAML::Node &node)
     m_source    = node["source"].as<string>();
     m_width     = node["width"].as<int32_t>();
     m_height    = node["height"].as<int32_t>();
-    m_framerate = node["framerate"].as<string>();
 
-    /* Change framerate to string representation of fraction. 0.5 = "1/2". */
-    m_framerate = to_fraction(m_framerate);
+    if (node["framerate"])
+    {
+        m_framerate = node["framerate"].as<string>();
+
+        /* Change framerate to string representation of fraction. 0.5 = "1/2". */
+        m_framerate = to_fraction(m_framerate);
+    }
 
     if (node["format"])
     {
@@ -109,6 +113,11 @@ InputInfo::InputInfo(const YAML::Node &node)
                 LOG_ERROR("Directory [%s] does not have supported images [.nv12,.yuv]\n", m_source.c_str());
                 throw runtime_error("Invalid source.\n");
             }
+
+            std::sort(m_multiImageVect.begin(),m_multiImageVect.end(),[](const string & a, const string & b) -> bool
+            {
+                return a < b;
+            });
         }
         else if (srcExt == ".nv12" || srcExt == ".yuv")
         {
@@ -164,6 +173,10 @@ OutputInfo::OutputInfo(const YAML::Node    &node,
     if (sinkExt == ".nv12" || sinkExt == ".yuv")
     {
         m_sinkType = "image";
+    }
+    else if(filesystem::is_directory(m_sink))
+    {
+        m_sinkType = "images_directory";
     }
     else if(m_sink == "display")
     {
