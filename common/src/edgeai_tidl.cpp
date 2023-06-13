@@ -43,15 +43,15 @@
 #include <utils/include/ti_logger.h>
 #include <common/include/edgeai_utils.h>
 
-/* OpenVX headers */
-
 namespace ti::edgeai::common
 {
 using namespace ti::utils;
 
 static inline bool ends_with(std::string const & value, std::string const & ending)
 {
-    if (ending.size() > value.size()) return false;
+    if (ending.size() > value.size())
+        return false;
+
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
