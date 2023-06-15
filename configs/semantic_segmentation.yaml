@@ -21,12 +21,12 @@ models:
 outputs:
     output0:
         sink: /opt/edgeai-test-data/output/output_image.nv12
-        width: 1280
-        height: 720
+        width: 1920
+        height: 1080
     output1:
         sink: /opt/edgeai-test-data/output/
-        width: 1280
-        height: 720
+        width: 1920
+        height: 1080
 
 flows:
-    flow0: [input1,model1,output1]
+    flow0: [input1,model1,output1,[320,180,1280,720]]
