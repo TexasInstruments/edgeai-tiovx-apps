@@ -349,8 +349,8 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
 
         ModelInfo          *model = modelMap[s.model];
         string              inputName;
-        int32_t             sensorWidth{0};
-        int32_t             sensorHeight{0};
+        int32_t             mosaicWidth{0};
+        int32_t             mosaicHeight{0};
 
         string modelName = model->m_modelPath;
 
@@ -431,13 +431,13 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
         }
         /* Check ends here. */
 
-        if (mosaicInfo->m_width > sensorWidth)
+        if (mosaicInfo->m_width > mosaicWidth)
         {
-            sensorWidth = mosaicInfo->m_width;
+            mosaicWidth = mosaicInfo->m_width;
         }
-        if (mosaicInfo->m_height > sensorHeight)
+        if (mosaicInfo->m_height > mosaicHeight)
         {
-            sensorHeight = mosaicInfo->m_height;
+            mosaicHeight = mosaicInfo->m_height;
         }
 
         if (status == -1)
@@ -445,7 +445,9 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
             break;
         }
         
-        m_sensorDimVec.push_back({sensorWidth,sensorHeight});
+        m_mosaicInfoVec.push_back({mosaicInfo->m_posX, mosaicInfo->m_posY,
+                                    mosaicWidth, mosaicHeight,
+                                    outputInfo->m_width, outputInfo->m_height});
 
         vector <OutputInfo *> outputs;
         auto    out = mosaicInfo->m_outputInfo;

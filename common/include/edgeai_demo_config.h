@@ -410,7 +410,7 @@ namespace ti::edgeai::common
             map<string,vector<OutputInfo*>>     m_outputMap;
 
             /** List of Dimension for sensor paths of flow. */
-            vector<vector<int32_t>>             m_sensorDimVec;
+            vector<vector<int32_t>>             m_mosaicInfoVec;
 
             /** Input frame rate. */
             string                              m_framerate{0};
