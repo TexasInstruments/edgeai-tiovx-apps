@@ -38,6 +38,7 @@
 #include <TI/dl_kernels.h>
 #include <TI/hwa_kernels.h>
 #include <edgeai_tiovx_target_kernels.h>
+#include <TI/video_io_kernels.h>
 
 #include<stdio.h>
 
@@ -58,6 +59,7 @@ ovxGraph::ovxGraph()
     }
 
     /* Load all the kernels needed for application */
+    tivxVideoIOLoadKernels(context);
     tivxHwaLoadKernels(context);
     tivxImgProcLoadKernels(context);
     tivxEdgeaiImgProcLoadKernels(context);
@@ -70,6 +72,7 @@ ovxGraph::~ovxGraph()
     LOG_DEBUG("ovxGraph Destructor \n");
 
     /* Unload all the kernels needed for application */
+    tivxVideoIOUnLoadKernels(context);
     tivxHwaUnLoadKernels(context);
     tivxImgProcUnLoadKernels(context);
     tivxEdgeaiImgProcUnLoadKernels(context);
