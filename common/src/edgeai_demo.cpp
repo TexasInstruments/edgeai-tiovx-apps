@@ -50,6 +50,11 @@
 #include <tiovx_utils.h>
 #include <tiovx_display_module.h>
 
+extern "C"
+{
+#include <utils/grpx/include/app_grpx.h>
+}
+
 /**
  * \defgroup group_edgeai_common Master demo code
  *
@@ -138,6 +143,48 @@ class EdgeAIDemoImpl
         bool                                m_runLoop{true};
 
 };
+
+static void app_draw_perf_graphics(Draw2D_Handle *draw2d_obj, Draw2D_BufInfo *draw2d_buf_info, uint32_t update_type)
+{
+    uint16_t width, height, startx, starty;
+    uint16_t borderx, bordery;
+    uint16_t logoy;
+
+    borderx = 100;
+    bordery = 0;
+    logoy = 0;
+
+    if(update_type==0)
+    {
+        appGrpxShowLogo(borderx, logoy);
+    }
+    else
+    {
+        /* CPU load is at bottom left of screen */
+        appGrpxGetDimCpuLoad(&width, &height);
+
+        startx = borderx;
+        starty = draw2d_buf_info->bufHeight - height - bordery;
+
+        appGrpxShowCpuLoad(startx, starty);
+
+        startx = startx + width + borderx;
+
+        /* HWA load is at left of CPU load */
+        appGrpxGetDimHwaLoad(&width, &height);
+
+        appGrpxShowHwaLoad(startx, starty);
+
+        startx = startx + width + borderx;
+
+        /* DDR load is at left of HWA load */
+        appGrpxGetDimDdrLoad(&width, &height);
+
+        appGrpxShowDdrLoad(startx, starty);
+    }
+
+    return;
+}
 
 EdgeAIDemoImpl::EdgeAIDemoImpl(const YAML::Node    &yaml)
 {
@@ -319,6 +366,9 @@ int32_t EdgeAIDemoImpl::setupFlows()
     vector<vector<vector<int32_t>>> commonMosaicInfo{};
     vector<vector<int32_t>>         postProcMosaicConn{};
 
+    /* Performance overlay params */
+    app_grpx_init_prms_t grpx_prms;
+
     for(int i = 0; i < OutputInfo::m_numInstances; i++)
     {
         commonMosaicInfo.push_back({});
@@ -351,7 +401,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
         {
             throw runtime_error("Size of modelIds is not equal to size of outputIds \n");
         }
-        
+
         /* modelIds is a vector of all models used for a unique input */
         /* outputIds is a vector of all outputs used for a unique input */
         for(uint i=0; i < modelIds.size(); i++)
@@ -405,6 +455,9 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
             if(output->m_sinkType == "display" && m_displayObj == NULL)
             {
+                /*
+                    DISPLAY INIT
+                */
                 m_displayObj = new TIOVXDisplayModuleObj;
                 tiovx_display_module_params_init(m_displayObj);
                 m_displayObj->input_width = output->m_width;
@@ -420,6 +473,15 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
                 /* Save the inst Id of output which goes to display */
                 m_dispMosaicIdx = output->m_instId;
+
+                /*
+                    PERFORMANCE OVERLAY INIT
+                */
+                appGrpxInitParamsInit(&grpx_prms, m_ovxGraph->context);
+                grpx_prms.width = output->m_width;
+                grpx_prms.height = output->m_height;
+                grpx_prms.draw_callback = app_draw_perf_graphics;
+                appGrpxInit(&grpx_prms);
             }
         }
     }
@@ -606,6 +668,7 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 
     if(m_displayObj != NULL)
     {
+        appGrpxDeInit();
         tiovx_display_module_delete(m_displayObj);
     }
 
