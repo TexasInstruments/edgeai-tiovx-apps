@@ -33,6 +33,7 @@
 /* Standard headers. */
 #include <filesystem>
 #include <iostream>
+#include <unistd.h>
 
 /* Module headers. */
 #include <common/include/edgeai_utils.h>
@@ -47,6 +48,7 @@
 
 /* OpenVX headers */
 #include <tiovx_utils.h>
+#include <tiovx_display_module.h>
 
 /**
  * \defgroup group_edgeai_common Master demo code
@@ -123,6 +125,12 @@ class EdgeAIDemoImpl
         /** Vector of mosaic objects */
         vector<imgMosaic*>                  m_imgMosaicObjs{};
 
+        /** Module display object */
+        TIOVXDisplayModuleObj               *m_displayObj{NULL};
+
+        /** Flag to store which mosaic that goes to display */
+        uint                                m_dispMosaicIdx{0};
+
         /** Demo configuration. */
         DemoConfig                          m_config;
 
@@ -159,7 +167,6 @@ int32_t EdgeAIDemoImpl::startDemo()
     int status = 0;
     uint32_t num_refs;
     vx_image input_o, output_o;
-    // vx_image background_o;
 
     /*  cnt is the counter which gets appended to the output filename.
         Especially used for processing multiple images from a directory. */
@@ -209,12 +216,14 @@ int32_t EdgeAIDemoImpl::startDemo()
         }
         for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
         {
+            if(i == m_dispMosaicIdx && m_displayObj != NULL)
+            {
+                continue;
+            }
+
             vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
                     m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
                     (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0], 1);
-            // vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-            //         m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
-            //         (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0], 1);
         }
 
         /*
@@ -241,12 +250,14 @@ int32_t EdgeAIDemoImpl::startDemo()
         }
         for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
         {
+            if(i == m_dispMosaicIdx && m_displayObj != NULL)
+            {
+                continue;
+            }
+
             vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
                                 m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
                                 (vx_reference*)&output_o, 1, &num_refs);
-            // vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-            //                     m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
-            //                     (vx_reference*)&background_o, 1, &num_refs);
         }
 
         /*  Write Output to file    */
@@ -291,6 +302,8 @@ int32_t EdgeAIDemoImpl::startDemo()
 
         /* Increment cnt */
         cnt++;
+
+        sleep(1);
     }
 
     return status;
@@ -389,6 +402,25 @@ int32_t EdgeAIDemoImpl::setupFlows()
             /* Mosaic */
             commonMosaicInfo[output->m_instId].push_back(flow->m_mosaicInfoVec[i]);
             postProcMosaicConn[output->m_instId].push_back(m_postProcObjs.size() - 1);
+
+            if(output->m_sinkType == "display" && m_displayObj == NULL)
+            {
+                m_displayObj = new TIOVXDisplayModuleObj;
+                tiovx_display_module_params_init(m_displayObj);
+                m_displayObj->input_width = output->m_width;
+                m_displayObj->input_height = output->m_height;
+                m_displayObj->input_color_format = VX_DF_IMAGE_NV12;
+
+                m_displayObj->params.outWidth = output->m_width;
+                m_displayObj->params.outHeight = output->m_height;
+                m_displayObj->params.posX = (1920-output->m_width)/2;
+                m_displayObj->params.posY = (1080-output->m_height)/2;
+
+                tiovx_display_module_init(m_ovxGraph->context, m_displayObj);
+
+                /* Save the inst Id of output which goes to display */
+                m_dispMosaicIdx = output->m_instId;
+            }
         }
     }
 
@@ -438,7 +470,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
         if(status == VX_SUCCESS)
         {
-            tiovx_tidl_module_create(m_ovxGraph->context,
+            status = tiovx_tidl_module_create(m_ovxGraph->context,
                                         m_ovxGraph->graph,
                                         &m_tidlInfObjs[i]->tidlObj,
                                         m_preProcObjs[i]->dlPreProcObj.output.arr);
@@ -446,7 +478,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
         if(status == VX_SUCCESS)
         {
-            tiovx_dl_post_proc_module_create(m_ovxGraph->graph,
+            status = tiovx_dl_post_proc_module_create(m_ovxGraph->graph,
                                             &m_postProcObjs[i]->dlPostProcObj,
                                             m_multiScalerObjs[i]->multiScalerObj1.output[1].arr[0],
                                             m_tidlInfObjs[i]->tidlObj.output, TIVX_TARGET_MPU_0);
@@ -464,6 +496,13 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                 &m_imgMosaicObjs[i]->imgMosaicObj,
                                 NULL,
                                 m_imgMosaicObjs[i]->mosaic_input_arr, TIVX_TARGET_VPAC_MSC1);
+    }
+
+    if(m_displayObj != NULL)
+    {
+        status = tiovx_display_module_create(m_ovxGraph->graph, m_displayObj,
+                                        m_imgMosaicObjs[m_dispMosaicIdx]->imgMosaicObj.output_image[0],
+                                        TIVX_TARGET_DISPLAY1);
     }
 
     for(uint i=0; i < m_multiScalerObjs.size(); i++)
@@ -484,6 +523,11 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
     for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
     {
+        if(i == m_dispMosaicIdx && m_displayObj != NULL)
+        {
+            continue;
+        }
+
         if((vx_status)VX_SUCCESS == status)
         {
             /* Output image index of Mosaic Node is 1 */
@@ -495,16 +539,6 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0];
             graph_parameter_index++;
         }
-        // if((vx_status)VX_SUCCESS == status)
-        // {   /* Background image index of Mosaic Node is 2 */
-        //     status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_imgMosaicObjs[i]->imgMosaicObj.node, 2);
-        //     m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index = graph_parameter_index;
-        //     graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
-        //     graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-        //     graph_parameters_queue_params_list[graph_parameter_index].refs_list = 
-        //         (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0];
-        //     graph_parameter_index++;
-        // }
     }
 
     /* Schedule Graph */
@@ -570,6 +604,11 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 
     /* Delete openVX modules */
 
+    if(m_displayObj != NULL)
+    {
+        tiovx_display_module_delete(m_displayObj);
+    }
+
     for(auto &iter : m_multiScalerObjs)
     {
         tiovx_multi_scaler_module_delete(&iter->multiScalerObj1);
@@ -607,6 +646,12 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
     }
 
     /* Deinit openVX modules */
+
+    if(m_displayObj != NULL)
+    {
+        tiovx_display_module_deinit(m_displayObj);
+        delete m_displayObj;
+    }
 
     for(auto &iter : m_multiScalerObjs)
     {

@@ -5,12 +5,12 @@ inputs:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps/0000.nv12
         width: 1280
         height: 720
-        loop: False
+        loop: True
     input1:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps/
         width: 1280
         height: 720
-        loop: False
+        loop: True
 models:
     model0:
         model_path: /opt/model_zoo/TFL-CL-0000-mobileNetV1-mlperf
@@ -20,13 +20,17 @@ models:
         topN: 5
 outputs:
     output0:
-        sink: /opt/edgeai-test-data/output/output_image.nv12
+        sink: display
         width: 1920
         height: 1080
     output1:
+        sink: /opt/edgeai-test-data/output/output_image.nv12
+        width: 1920
+        height: 1080
+    output2:
         sink: /opt/edgeai-test-data/output/
         width: 1920
         height: 1080
 
 flows:
-    flow0: [input1,model1,output1,[320,180,1280,720]]
+    flow0: [input1,model1,output0,[320,180,1280,720]]
