@@ -96,6 +96,8 @@ include_directories(${PROJECT_SOURCE_DIR}
                     SYSTEM ${TARGET_FS}/usr/include/edgeai-apps-utils
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/video_io/kernels/include/
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/imaging
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/imaging/kernels/include/
                     )
 
 set(COMMON_LINK_LIBS

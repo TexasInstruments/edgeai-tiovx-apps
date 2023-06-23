@@ -39,6 +39,7 @@
 #include <TI/hwa_kernels.h>
 #include <edgeai_tiovx_target_kernels.h>
 #include <TI/video_io_kernels.h>
+#include <TI/j7_kernels_imaging_aewb.h>
 
 #include<stdio.h>
 
@@ -64,6 +65,7 @@ ovxGraph::ovxGraph()
     tivxImgProcLoadKernels(context);
     tivxEdgeaiImgProcLoadKernels(context);
     tivxTIDLLoadKernels(context);
+    tivxImagingLoadKernels(context);
 }
 
 /* Destructor */
@@ -77,6 +79,7 @@ ovxGraph::~ovxGraph()
     tivxImgProcUnLoadKernels(context);
     tivxEdgeaiImgProcUnLoadKernels(context);
     tivxTIDLUnLoadKernels(context);
+    tivxImagingUnLoadKernels(context);
 
     /* Release OpenVX context */
     int32_t status = vxReleaseContext(&context);

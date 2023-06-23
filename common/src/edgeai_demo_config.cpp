@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -66,6 +66,11 @@ InputInfo::InputInfo(const YAML::Node &node)
         m_framerate = to_fraction(m_framerate);
     }
 
+    if (node["camera-id"])
+    {
+        m_cameraId = node["camera-id"].as<int32_t>();
+    }
+
     if (node["format"])
     {
         m_format = node["format"].as<string>();
@@ -93,7 +98,11 @@ InputInfo::InputInfo(const YAML::Node &node)
 
     srcExt = filesystem::path(m_source).extension();
 
-    if (filesystem::exists(m_source))
+    if(m_source == "camera")
+    {
+        m_srcType = "camera";
+    }
+    else if (filesystem::exists(m_source))
     {
         if(filesystem::is_directory(m_source))
         {
@@ -125,7 +134,8 @@ InputInfo::InputInfo(const YAML::Node &node)
         }
         else
         {
-            m_srcType = "camera";
+            LOG_ERROR("Invalid source.\n");
+            throw runtime_error("Invalid source.\n");
         }
     }
     else
@@ -336,7 +346,8 @@ FlowInfo::FlowInfo(FlowConfig &flowConfig)
 
 int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
                              map<string, InputInfo*>   &inputMap,
-                             map<string, OutputInfo*>  &outputMap)
+                             map<string, OutputInfo*>  &outputMap,
+                             bool                       isMultiCam)
 {
     auto                          &inputInfo = inputMap[m_inputId];
     int32_t                       cnt = 0;
@@ -444,10 +455,19 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
         {
             break;
         }
-        
-        m_mosaicInfoVec.push_back({mosaicInfo->m_posX, mosaicInfo->m_posY,
-                                    mosaicWidth, mosaicHeight,
-                                    outputInfo->m_width, outputInfo->m_height});
+
+        if(inputInfo->m_source == "camera" && isMultiCam)
+        { 
+            m_mosaicInfoVec.push_back({mosaicInfo->m_posX, mosaicInfo->m_posY,
+                                        mosaicWidth, mosaicHeight,
+                                        outputInfo->m_width, outputInfo->m_height, 1});
+        }
+        else
+        { 
+            m_mosaicInfoVec.push_back({mosaicInfo->m_posX, mosaicInfo->m_posY,
+                                        mosaicWidth, mosaicHeight,
+                                        outputInfo->m_width, outputInfo->m_height, 0});
+        }
 
         vector <OutputInfo *> outputs;
         auto    out = mosaicInfo->m_outputInfo;

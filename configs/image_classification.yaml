@@ -2,15 +2,21 @@ title: "Image Classification"
 log_level: 2
 inputs:
     input0:
+        source: camera
+        width: 1920
+        height: 1080
+        camera-id: 0
+    input1:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps/0000.nv12
         width: 1280
         height: 720
         loop: True
-    input1:
+    input2:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps/
         width: 1280
         height: 720
         loop: True
+
 models:
     model0:
         model_path: /opt/model_zoo/TFL-CL-0000-mobileNetV1-mlperf
@@ -33,4 +39,4 @@ outputs:
         height: 1080
 
 flows:
-    flow0: [input1,model1,output0,[320,180,1280,720]]
+    flow0: [input2,model0,output0,[320,180,1280,720]]

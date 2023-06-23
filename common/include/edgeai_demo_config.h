@@ -179,6 +179,9 @@ namespace ti::edgeai::common
              */
             string                              m_srcType{"image"};
 
+            /* Channel Id for camera input from fusion board */
+            int32_t                             m_cameraId{0};
+
             /** Input data width. */
             int32_t                             m_width{};
 
@@ -381,7 +384,8 @@ namespace ti::edgeai::common
 
             int32_t initialize(map<string, ModelInfo*>   &modelMap,
                                map<string, InputInfo*>   &inputMap,
-                               map<string, OutputInfo*>  &outputMap);
+                               map<string, OutputInfo*>  &outputMap,
+                               bool                      isMultiCam);
 
             /**
              * Helper function to dump the configuration information.

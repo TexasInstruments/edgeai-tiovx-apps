@@ -54,12 +54,15 @@ int32_t imgMosaic::getConfig(vector<vector<int>> mosaicInfo)
 {
     int32_t status = 0;
     uint    i;
+    int     cam_input_sel = -1;
+    int     cam_channel_sel = 0;
+    int     file_input_sel = -1;
 
     /*  
         mosaicInfo  will contain information about mosaics for
         same output across all the flows 
         Each element of mosaic info is a vector of below format
-        <start_x, start_y, window_width, window_height, output_width, output_height, output_id>
+        <start_x, start_y, window_width, window_height, output_width, output_height, is_multi_cam_input>
     */
     imgMosaicObj.out_width    = mosaicInfo[0][4];
     imgMosaicObj.out_height   = mosaicInfo[0][5];
@@ -85,12 +88,33 @@ int32_t imgMosaic::getConfig(vector<vector<int>> mosaicInfo)
         imgMosaicObj.params.windows[i].startY  = mosaicInfo[i][1];
         imgMosaicObj.params.windows[i].width   = mosaicInfo[i][2];
         imgMosaicObj.params.windows[i].height  = mosaicInfo[i][3];
-        imgMosaicObj.params.windows[i].input_select   = i;
-        imgMosaicObj.params.windows[i].channel_select = 0;
+        //imgMosaicObj.params.windows[i].input_select   = i;
+        //imgMosaicObj.params.windows[i].channel_select = 0;
+
+        /* 
+           is_cam_input - If input is camera then for multi channel, input_select remains same
+           but channel select changes
+        */
+        if(mosaicInfo[i][6] == 1)
+        {
+            if(cam_input_sel == -1)
+                cam_input_sel = i;
+            imgMosaicObj.params.windows[i].input_select   = cam_input_sel;
+            imgMosaicObj.params.windows[i].channel_select = cam_channel_sel;
+            cam_channel_sel++;
+        }
+        else
+        {
+            if(file_input_sel == -1)
+                file_input_sel = i;
+            imgMosaicObj.params.windows[i].input_select   = file_input_sel;
+            imgMosaicObj.params.windows[i].channel_select = 0;
+            file_input_sel++;
+        }
     }
 
     /* Number of time to clear the output buffer before it gets reused */
-    imgMosaicObj.params.clear_count  = 4;
+    imgMosaicObj.params.clear_count  = 4; // CAPTURE BUFQ DEPTH
     
     return status;
 }

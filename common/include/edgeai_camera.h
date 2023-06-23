@@ -30,46 +30,58 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_MSC_H_
-#define _TI_EDGEAI_MSC_H_
+#ifndef _TI_EDGEAI_CAPTURE_H_
+#define _TI_EDGEAI_CAPTURE_H_
 
-#include <tiovx_multi_scaler_module.h>
-#include <common/include/edgeai_pre_proc.h>
+#include <stdint.h>
+#include <vector>
+
+/* OpenVX Headers */
+#include <tiovx_capture_module.h>
+#include <tiovx_sensor_module.h>
+#include <tiovx_viss_module.h>
+#include <tiovx_ldc_module.h>
+#include <tiovx_aewb_module.h>
 
 namespace ti::edgeai::common
 {
     using namespace std;
 
-    class multiScaler
+    class camera
     {
         public:
             /* Default constructor. Use the compiler generated default one. */
-            multiScaler();
+            camera();
 
             /* Destructor. */
-            ~multiScaler();
+            ~camera();
 
             /**
              * Helper function to dump the configuration information.
              */
             void        dumpInfo();
 
-            /** Helper function to parse MSC configuration. */
-            int32_t     getConfig(int32_t input_wd, int32_t input_ht, int32_t post_proc_wd, int32_t post_proc_ht, preProc *pre_proc_obj);
+            /** Helper function to parse mosaic configuration. */
+            int32_t     getConfig(int32_t chMask);
 
         public:
-            /* Data structure passed to MSC module */
-            TIOVXMultiScalerModuleObj     multiScalerObj1;
-            
-            /* This is option second MSC used when need to scale by a factor more than 4  */
-            TIOVXMultiScalerModuleObj     multiScalerObj2;
+            /* Data structure passed to mosaic module */
+            TIOVXCaptureModuleObj    captureObj;
 
-            /* True of multiSclaerObj2 is to be used. */
-            bool                          useSecondaryMsc{false};
+            /* Data structure passed to mosaic module */
+            SensorObj                sensorObj;
 
-            /* Flag to indicate if tiovx MSC node is first in subflow */
-            bool                          isFirstNode{true};
+            /* Data structure passed to viss module */
+            TIOVXVISSModuleObj       vissObj;
+
+            /* Data structure passed to AEWB module */
+            TIOVXAewbModuleObj       aewbObj;
+
+            /* Data structure passed to ldc module */
+            TIOVXLDCModuleObj        ldcObj;
+
     };
-}
 
-#endif // _TI_EDGEAI_MSC_H_
+} // namespace ti::edgeai::common
+
+#endif // _TI_EDGEAI_CAPTURE_H_
