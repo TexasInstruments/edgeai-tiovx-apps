@@ -1,4 +1,4 @@
-title: "Single Input Multi Infer"
+title: "Single Input Multi Inference"
 log_level: 2
 inputs:
     input0:
@@ -44,6 +44,6 @@ outputs:
         height: 1080
 
 flows:
-    flow0: [input0,model0,output0,[320,180,640,360]]
-    flow1: [input0,model2,output0,[960,180,640,360]]
+    flow0: [input0,model0,output0,[320,150,640,360]]
+    flow1: [input0,model2,output0,[960,150,640,360]]
     flow2: [input0,model3,output0,[640,540,640,360]]

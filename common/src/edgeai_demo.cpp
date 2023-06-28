@@ -67,6 +67,52 @@ extern "C"
 namespace ti::edgeai::common
 {
 
+static void app_draw_perf_graphics(Draw2D_Handle *draw2d_obj, Draw2D_BufInfo *draw2d_buf_info, uint32_t update_type)
+{
+    uint16_t cpuWidth = 0;
+    uint16_t cpuHeight = 0;
+
+    uint16_t hwaWidth = 0;
+    uint16_t hwaHeight = 0;
+
+    uint16_t ddrWidth = 0;
+    uint16_t ddrHeight = 0;
+
+    uint16_t startX, startY;
+
+    if (draw2d_obj == NULL)
+    {
+        return;
+    }
+
+    if(update_type==0)
+    {
+        appGrpxShowLogo(0, 0);
+    }
+    else
+    {
+        /* Get height and width for cpu,hwa & ddr graphs*/
+        appGrpxGetDimCpuLoad(&cpuWidth, &cpuHeight);
+        appGrpxGetDimHwaLoad(&hwaWidth, &hwaHeight);
+        appGrpxGetDimDdrLoad(&ddrWidth, &ddrHeight);
+
+        /* Draw the graphics. */
+        startX = (draw2d_buf_info->bufWidth - (cpuWidth + hwaWidth + ddrWidth)) / 2;
+        startY = draw2d_buf_info->bufHeight - cpuHeight;
+        appGrpxShowCpuLoad(startX, startY);
+
+        startX = startX + cpuWidth;
+        startY = draw2d_buf_info->bufHeight - hwaHeight;
+        appGrpxShowHwaLoad(startX, startY);
+
+        startX = startX + hwaWidth;
+        startY = draw2d_buf_info->bufHeight - ddrHeight;
+        appGrpxShowDdrLoad(startX, startY);
+    }
+
+    return;
+}
+
 class EdgeAIDemoImpl
 {
     public:
@@ -157,48 +203,6 @@ class EdgeAIDemoImpl
 
 };
 
-static void app_draw_perf_graphics(Draw2D_Handle *draw2d_obj, Draw2D_BufInfo *draw2d_buf_info, uint32_t update_type)
-{
-    uint16_t width, height, startx, starty;
-    uint16_t borderx, bordery;
-    uint16_t logoy;
-
-    borderx = 100;
-    bordery = 0;
-    logoy = 0;
-
-    if(update_type==0)
-    {
-        appGrpxShowLogo(borderx, logoy);
-    }
-    else
-    {
-        /* CPU load is at bottom left of screen */
-        appGrpxGetDimCpuLoad(&width, &height);
-
-        startx = borderx;
-        starty = draw2d_buf_info->bufHeight - height - bordery;
-
-        appGrpxShowCpuLoad(startx, starty);
-
-        startx = startx + width + borderx;
-
-        /* HWA load is at left of CPU load */
-        appGrpxGetDimHwaLoad(&width, &height);
-
-        appGrpxShowHwaLoad(startx, starty);
-
-        startx = startx + width + borderx;
-
-        /* DDR load is at left of HWA load */
-        appGrpxGetDimDdrLoad(&width, &height);
-
-        appGrpxShowDdrLoad(startx, starty);
-    }
-
-    return;
-}
-
 EdgeAIDemoImpl::EdgeAIDemoImpl(const YAML::Node    &yaml)
 {
     int32_t status;
@@ -226,7 +230,7 @@ int32_t EdgeAIDemoImpl::startDemo()
     */
     int                 status = 0;
     uint32_t            num_refs;
-    vx_image            input_o, output_o;
+    vx_image            input_o, output_o, background_o;
     vx_object_array     input_obj_arr;
     bool                camera_first_deq_done = false;
 
@@ -311,6 +315,10 @@ int32_t EdgeAIDemoImpl::startDemo()
             vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
                     m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
                     (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0], 1);
+
+            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                    m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
+                    (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0], 1);
         }
 
         /*  vxGraphParameterDequeueDoneRef  */
@@ -343,6 +351,9 @@ int32_t EdgeAIDemoImpl::startDemo()
             vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
                                 m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
                                 (vx_reference*)&output_o, 1, &num_refs);
+            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
+                                m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
+                                (vx_reference*)&background_o, 1, &num_refs);
         }
 
         /*  Write Output to file    */
@@ -412,8 +423,10 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
     /*  */
     vector<vector<vector<int32_t>>> commonMosaicInfo{};
+    vector<vector<string>>          commonMosaicTitle{};
     vector<vector<int32_t>>         postProcMosaicConn{};
     
+    string                          modelName{};
     int32_t                         cameraChMask = 0;
     bool                            isMultiCam = false;
 
@@ -423,6 +436,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     for(int i = 0; i < OutputInfo::m_numInstances; i++)
     {
         commonMosaicInfo.push_back({});
+        commonMosaicTitle.push_back({});
         postProcMosaicConn.push_back({});
     }
 
@@ -576,8 +590,19 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 }
             }
 
-            /* Mosaic  */
+            /* Mosaic */
             commonMosaicInfo[output->m_instId].push_back(flow->m_mosaicInfoVec[i]);
+
+            /* Push all model names for particular output. This will be used 
+               to render text above mosaic windows.*/
+            modelName = model->m_modelPath;
+            if (modelName.back() == '/')
+            {
+                modelName.pop_back();
+            }
+            modelName = std::filesystem::path(modelName).filename();
+            commonMosaicTitle[output->m_instId].push_back(modelName);
+
             postProcMosaicConn[output->m_instId].push_back(m_postProcObjs.size() - 1);
 
             if(output->m_sinkType == "display" && m_displayObj == NULL)
@@ -593,6 +618,8 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
                 m_displayObj->params.outWidth = output->m_width;
                 m_displayObj->params.outHeight = output->m_height;
+
+                /* It is assumed that rtos display has fixed resolution of 1920x1080.*/
                 m_displayObj->params.posX = (1920-output->m_width)/2;
                 m_displayObj->params.posY = (1080-output->m_height)/2;
 
@@ -601,12 +628,11 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 /* Save the inst Id of output which goes to display */
                 m_dispMosaicIdx = output->m_instId;
 
-                /*
-                    PERFORMANCE OVERLAY INIT
-                */
+                /* PERFORMANCE OVERLAY */
                 appGrpxInitParamsInit(&grpx_prms, m_ovxGraph->context);
-                grpx_prms.width = output->m_width;
-                grpx_prms.height = output->m_height;
+                /* It is assumed that rtos display has fixed resolution of 1920x1080.*/
+                grpx_prms.width = 1920;
+                grpx_prms.height = 1080;
                 grpx_prms.draw_callback = app_draw_perf_graphics;
                 appGrpxInit(&grpx_prms);
             }
@@ -622,7 +648,9 @@ int32_t EdgeAIDemoImpl::setupFlows()
     {
         imgMosaic *img_mosaic_obj = new imgMosaic;
         img_mosaic_obj->getConfig(commonMosaicInfo[i]);
-        status = tiovx_img_mosaic_module_init(m_ovxGraph->context, &img_mosaic_obj->imgMosaicObj);
+        status = tiovx_img_mosaic_module_init(m_ovxGraph->context,
+                                              &img_mosaic_obj->imgMosaicObj);
+        img_mosaic_obj->setBackground(m_config.m_title,commonMosaicTitle[i]);
         m_imgMosaicObjs.push_back(img_mosaic_obj);
     }
 
@@ -737,7 +765,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
         }
         status = tiovx_img_mosaic_module_create(m_ovxGraph->graph,
                                 &m_imgMosaicObjs[i]->imgMosaicObj,
-                                NULL,
+                                m_imgMosaicObjs[i]->imgMosaicObj.background_image[0],
                                 m_imgMosaicObjs[i]->mosaic_input_arr, TIVX_TARGET_VPAC_MSC1);
     }
 
@@ -792,6 +820,19 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0];
             graph_parameter_index++;
         }
+
+        if((vx_status)VX_SUCCESS == status)
+        {
+            /* Background image index of Mosaic Node is 2 */
+            status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_imgMosaicObjs[i]->imgMosaicObj.node, 2);
+            m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index = graph_parameter_index;
+            graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list =
+                (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0];
+            graph_parameter_index++;
+        }
+
     }
 
     /* Schedule Graph */
