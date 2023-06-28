@@ -35,6 +35,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <string>
 
 /* OpenVX Headers */
 #include <tiovx_img_mosaic_module.h>
@@ -60,6 +61,9 @@ namespace ti::edgeai::common
             /** Helper function to parse mosaic configuration. */
             int32_t     getConfig(vector<vector<int>> mosaicInfo);
 
+            /** Function to set mosaic baground buffer. */
+            void        setBackground(string title, vector<string> mosaicTitle);
+
         public:
             /* Data structure passed to mosaic module */
             TIOVXImgMosaicModuleObj    imgMosaicObj;
@@ -69,6 +73,10 @@ namespace ti::edgeai::common
                 Input to mosaic module is array of vx_object_array
             */
             vx_object_array            mosaic_input_arr[TIVX_IMG_MOSAIC_MAX_INPUTS] = {NULL};
+
+        private:
+            /* Vector to store all mosaic co-ordinates and size*/
+            vector<vector<int>>        m_mosaicInfo{};
     };
 
 } // namespace ti::edgeai::common

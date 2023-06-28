@@ -518,7 +518,7 @@ FlowInfo::~FlowInfo()
 int32_t DemoConfig::parse(const YAML::Node &yaml)
 {
     int32_t status = 0;
-    auto const &title = yaml["title"].as<string>();
+    m_title = yaml["title"].as<string>();
 
     for (auto &n : yaml["flows"])
     {
@@ -570,7 +570,7 @@ int32_t DemoConfig::parse(const YAML::Node &yaml)
                 break;
             }
 
-            m_outputMap[output] = new OutputInfo(yaml["outputs"][output],title);
+            m_outputMap[output] = new OutputInfo(yaml["outputs"][output],m_title);
 
             /* Validate Dimension */
             if (m_outputMap[output]->m_width <= 0)

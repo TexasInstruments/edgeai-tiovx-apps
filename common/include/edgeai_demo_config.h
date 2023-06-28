@@ -465,6 +465,9 @@ namespace ti::edgeai::common
             /** Map of all flows defined. */
             map<string, FlowInfo*>      m_flowMap;
 
+            /** Title to be overlaid with display. */
+            string                      m_title;
+
         private:
             /** Vector of input order. */
             vector<string>              m_inputOrder;
