@@ -67,6 +67,7 @@ extern "C"
 namespace ti::edgeai::common
 {
 
+/* Callback function for drawing performance stats on display. */
 static void app_draw_perf_graphics(Draw2D_Handle *draw2d_obj, Draw2D_BufInfo *draw2d_buf_info, uint32_t update_type)
 {
     uint16_t cpuWidth = 0;
@@ -186,13 +187,13 @@ class EdgeAIDemoImpl
         /** Mapping from camera input to its corresponding MSC object */
         vector<int>                         m_camMscIdxMap{};
 
-        /** For multple flows having camera input, init and create just one set of nodes */
+        /** For multiple flows having camera input, init and create just one set of nodes */
         bool                                m_camNodesInit{false};
 
         /** Number of camera input present across the flows */
         int                                 m_numCam{0};
 
-        /** Flag to store which mosaic that goes to display */
+        /** Flag to store which mosaic goes to display */
         uint                                m_dispMosaicIdx{0};
 
         /** Demo configuration. */
@@ -223,215 +224,20 @@ EdgeAIDemoImpl::EdgeAIDemoImpl(const YAML::Node    &yaml)
     
 }
 
-int32_t EdgeAIDemoImpl::startDemo()
-{
-    /*
-        RUN GRAPH
-    */
-    int                 status = 0;
-    uint32_t            num_refs;
-    vx_image            input_o, output_o, background_o;
-    vx_object_array     input_obj_arr;
-    bool                camera_first_deq_done = false;
-
-    /*  cnt is the counter which gets appended to the output filename.
-        Especially used for processing multiple images from a directory. */
-    uint32_t cnt = 0;
-
-    if(m_cameraObj != NULL)
-    {
-        status = tiovx_sensor_module_start(&m_cameraObj->sensorObj);
-        for(int buf_id = 0; buf_id < m_cameraObj->captureObj.out_bufq_depth; buf_id++)
-        {
-            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-                    m_cameraObj->captureObj.graph_parameter_index,
-                    (vx_reference*)&m_cameraObj->captureObj.image_arr[buf_id], 1);
-        }
-    }
-
-    while(m_runLoop)
-    {
-        /*  msc_cnt will be a counter to use the appropriate MSC objects
-            across all the flows and its sub flows */
-        int msc_cnt = 0;
-        for (auto &[name,flow] : m_config.m_flowMap)
-        {
-            auto const &input = m_config.m_inputMap[flow->m_inputId];
-
-            for(uint i = 0; i < flow->m_subFlowConfigs.size(); i++)
-            {
-                if(input->m_srcType == "image")
-                {
-                    readImage(const_cast<char*>(input->m_source.c_str()),
-                        m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
-                    m_runLoop = input->m_loop;
-                }
-                else if(input->m_srcType == "images_directory")
-                {
-                    readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()),
-                        m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
-                }
-                msc_cnt++;
-            }
-            if(input->m_srcType == "images_directory")
-            {
-                input->m_multiImageVectCnt++;
-                if (input->m_multiImageVectCnt == input->m_multiImageVect.size())
-                {
-                    input->m_multiImageVectCnt = 0;
-                    m_runLoop = input->m_loop;
-                }
-            }
-        }
-        
-        /*  vxGraphParameterEnqueueReadyRef */
-        if(m_cameraObj != NULL)
-        {
-            if(camera_first_deq_done)
-            {
-                vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-                        m_cameraObj->captureObj.graph_parameter_index,
-                        (vx_reference*)&input_obj_arr, 1);
-            }
-        }
-
-        for(uint i = 0; i < m_multiScalerObjs.size(); i++)
-        {
-            if(m_multiScalerObjs[i]->isFirstNode)
-            {
-                vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-                        m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
-                        (vx_reference*)&m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0], 1);
-            }
-        }
-
-        for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
-        {
-            if(i == m_dispMosaicIdx && m_displayObj != NULL)
-            {
-                continue;
-            }
-
-            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-                    m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
-                    (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0], 1);
-
-            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-                    m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
-                    (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0], 1);
-        }
-
-        /*  vxGraphParameterDequeueDoneRef  */
-        
-        if(m_cameraObj != NULL)
-        {
-            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-                        m_cameraObj->captureObj.graph_parameter_index,
-                        (vx_reference*)&input_obj_arr, 1, &num_refs);
-            camera_first_deq_done = true;
-        }
-
-        for(uint i = 0; i < m_multiScalerObjs.size(); i++)
-        {
-            if(m_multiScalerObjs[i]->isFirstNode)
-            {
-                vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-                                    m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
-                                    (vx_reference*)&input_o, 1, &num_refs);
-            }
-        }
-
-        for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
-        {
-            if(i == m_dispMosaicIdx && m_displayObj != NULL)
-            {
-                continue;
-            }
-
-            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-                                m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
-                                (vx_reference*)&output_o, 1, &num_refs);
-            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-                                m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
-                                (vx_reference*)&background_o, 1, &num_refs);
-        }
-
-        /*  Write Output to file    */
-
-        /*  out_cnt will be a counter to use the appropriate post_proc objects
-            across all the flows and its sub flows */
-
-        for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
-        {
-            string sink = "";
-            string sink_type = "";
-            for (auto &[name,flow] : m_config.m_flowMap)
-            {
-                auto const &outputIds = flow->m_outputIds;
-                for(uint j=0; j < outputIds.size(); j++)
-                {
-                    OutputInfo  *output = m_config.m_outputMap[outputIds[j]];
-                    if ((uint)output->m_instId == i)
-                    {
-                        sink = output->m_sink;
-                        sink_type = output->m_sinkType;
-                        break;
-                    }
-                }
-                if (sink != "")
-                {
-                    break;
-                }
-            }
-
-            if(sink_type == "image")
-            {
-                writeImage(const_cast<char*>(sink.c_str()), m_imgMosaicObjs[i]->imgMosaicObj.output_image[0]);
-            }
-            else if(sink_type == "images_directory")
-            {
-                string mosaicId = "mosaic" + to_string(i);
-                string output_filename = sink + "/output_image_" + mosaicId + "_" + to_string(cnt) + ".nv12";
-                writeImage(const_cast<char*>(output_filename.c_str()), m_imgMosaicObjs[i]->imgMosaicObj.output_image[0]);
-            }
-        }
-
-        /* Increment cnt */
-        cnt++;
-
-        /* HACK: If no camera input then sleep of 1 second to maintain FPS for image input */
-        if(m_numCam == 0)
-        {
-            sleep(1);
-        }
-    }
-
-    if(m_cameraObj != NULL)
-    {
-        status = tiovx_sensor_module_stop(&m_cameraObj->sensorObj);
-    }
-    
-    return status;
-}
-
 int32_t EdgeAIDemoImpl::setupFlows()
 {
     int32_t status = 0;
 
     vx_int32 graph_parameter_index = 0;
     vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[16];
+    app_grpx_init_prms_t grpx_prms;
 
-    /*  */
     vector<vector<vector<int32_t>>> commonMosaicInfo{};
     vector<vector<string>>          commonMosaicTitle{};
     vector<vector<int32_t>>         postProcMosaicConn{};
-    
     string                          modelName{};
     int32_t                         cameraChMask = 0;
     bool                            isMultiCam = false;
-
-    /* Performance overlay params */
-    app_grpx_init_prms_t grpx_prms;
 
     for(int i = 0; i < OutputInfo::m_numInstances; i++)
     {
@@ -443,7 +249,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create graph structure */
     m_ovxGraph  = new ovxGraph;
 
-    /* CREATE GRAPH */
+    /* Create graph */
     m_ovxGraph->graph = vxCreateGraph(m_ovxGraph->context);
     status = vxGetStatus((vx_reference)m_ovxGraph->graph);
 
@@ -452,16 +258,14 @@ int32_t EdgeAIDemoImpl::setupFlows()
         throw runtime_error("Graph Creation failed \n");
     }
 
-    /*  Loop to initialize the flow and obtain cameraChMask
-        used to get num of cameras enabled  */
+    /* Get channel mask for sensor node. */
     for (auto const &[name,flow] : m_config.m_flowMap)
     {
         auto const &input = m_config.m_inputMap[flow->m_inputId];
 
-        /* 
-            Example:
-            cameraChMask = 00001101 means cameras connected to port (or m_cameraId)
-            0, 2 and 3 of fusion board
+        /**
+         * cameraChMask = 00001101 means cameras connected to port 
+         *  (or m_cameraId) 0, 2 and 3 of fusion board
          */
         if(input->m_source == "camera")
         {
@@ -471,32 +275,49 @@ int32_t EdgeAIDemoImpl::setupFlows()
     }
 
     if (m_numCam > 1)
+    {
         isMultiCam = true;
+    }
 
-    /* When there is at least one camera input */
+    /**
+     * Make camera object and initialize camera related nodes only if atleast
+     * one camera is input across the flows.
+     */
     if(cameraChMask != 0)
     {
         m_cameraObj = new camera;
         m_cameraObj->getConfig(cameraChMask);
         if(status == VX_SUCCESS)
         {
-            status = tiovx_sensor_module_init(&m_cameraObj->sensorObj, const_cast<char*>(string("sensor_obj").c_str()));
+            status = tiovx_sensor_module_init(&m_cameraObj->sensorObj,
+                                              const_cast<char*>(string("sensor_obj").c_str()));
         }
         if(status == VX_SUCCESS)
         {
-            status = tiovx_capture_module_init(m_ovxGraph->context, &m_cameraObj->captureObj, &m_cameraObj->sensorObj);
+            status = tiovx_capture_module_init(m_ovxGraph->context,
+                                               &m_cameraObj->captureObj,
+                                               &m_cameraObj->sensorObj);
         }
         if(status == VX_SUCCESS)
         {
-            status = tiovx_viss_module_init(m_ovxGraph->context,  &m_cameraObj->vissObj, &m_cameraObj->sensorObj);
+            status = tiovx_viss_module_init(m_ovxGraph->context,
+                                            &m_cameraObj->vissObj,
+                                            &m_cameraObj->sensorObj);
         }
         if(status == VX_SUCCESS)
         {
-            status = tiovx_aewb_module_init(m_ovxGraph->context, &m_cameraObj->aewbObj, &m_cameraObj->sensorObj, const_cast<char*>(string("aewb_obj").c_str()), 0, m_cameraObj->sensorObj.num_cameras_enabled);
+            status = tiovx_aewb_module_init(m_ovxGraph->context,
+                                            &m_cameraObj->aewbObj,
+                                            &m_cameraObj->sensorObj,
+                                            const_cast<char*>(string("aewb_obj").c_str()),
+                                            0,
+                                            m_cameraObj->sensorObj.num_cameras_enabled);
         }
         if(status == VX_SUCCESS)
         {
-            status = tiovx_ldc_module_init(m_ovxGraph->context, &m_cameraObj->ldcObj, &m_cameraObj->sensorObj);
+            status = tiovx_ldc_module_init(m_ovxGraph->context,
+                                           &m_cameraObj->ldcObj,
+                                           &m_cameraObj->sensorObj);
         }
     }
 
@@ -516,8 +337,6 @@ int32_t EdgeAIDemoImpl::setupFlows()
             throw runtime_error("Size of modelIds is not equal to size of outputIds \n");
         }
 
-        /* modelIds is a vector of all models used for a unique input */
-        /* outputIds is a vector of all outputs used for a unique input */
         for(uint i=0; i < modelIds.size(); i++)
         {
             preProc         *pre_proc_obj     = new preProc;
@@ -525,76 +344,104 @@ int32_t EdgeAIDemoImpl::setupFlows()
             postProc        *post_proc_obj    = new postProc;
             multiScaler     *multi_scaler_obj = new multiScaler;
             
+            /**
+            * modelIds is a vector of all models used for a unique input
+            * outputIds is a vector of all outputs used for a unique input
+            */
             ModelInfo   *model = m_config.m_modelMap[modelIds[i]];
             OutputInfo  *output = m_config.m_outputMap[outputIds[i]];
             
-            /*  Init modules if input source is not camera and 
-                if input source is camera and modules are not alreasy initiaized ofr it */
+            /* Init modules (for camera input just init once). */
             if(input->m_source != "camera" || m_camNodesInit != true)
             {
-                /* Get Configuration of TIDL module by parsing params.yaml  */
+                /* Get config for TIDL module. */
                 tidl_inf_obj->getConfig(model->m_modelPath, m_ovxGraph->context);
+
                 if(input->m_srcType == "camera")
                 {
                     tidl_inf_obj->tidlObj.num_cameras = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
-                status = tiovx_tidl_module_init(m_ovxGraph->context, &tidl_inf_obj->tidlObj, const_cast<vx_char*>(string("tidl_obj").c_str()));
+                status = tiovx_tidl_module_init(m_ovxGraph->context,
+                                                &tidl_inf_obj->tidlObj,
+                                                const_cast<vx_char*>(string("tidl_obj").c_str()));
 
                 m_tidlInfObjs.push_back(tidl_inf_obj);
                 
-                /* Get Configuration of Pre Process module by parsing params.yaml  */
+                /* Get config for Pre Process module. */
                 pre_proc_obj->getConfig(model->m_modelPath, tidl_inf_obj->ioBufDesc);
+
                 if(input->m_srcType == "camera")
                 {
                     pre_proc_obj->dlPreProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
-                status = tiovx_dl_pre_proc_module_init(m_ovxGraph->context, 
-                                                    &pre_proc_obj->dlPreProcObj);
+                status = tiovx_dl_pre_proc_module_init(m_ovxGraph->context,
+                                                       &pre_proc_obj->dlPreProcObj);
 
                 m_preProcObjs.push_back(pre_proc_obj);
 
-                /* Get Configuration of Post Process Module by parsing params.yaml  */
-                /* flow->m_mosaicInfoVec[i][0] is width of the output */
-                /* flow->m_mosaicInfoVec[i][0] is height of the output */
-                post_proc_obj->getConfig(model->m_modelPath, tidl_inf_obj->ioBufDesc, flow->m_mosaicInfoVec[i][2], flow->m_mosaicInfoVec[i][3]);
+                /* Get config for Post Process Module. */
+                post_proc_obj->getConfig(model->m_modelPath,
+                                         tidl_inf_obj->ioBufDesc,
+                                         flow->m_mosaicInfoVec[i][2],
+                                         flow->m_mosaicInfoVec[i][3]);
+
                 post_proc_obj->dlPostProcObj.params.oc_prms.num_top_results = model->m_topN;
                 post_proc_obj->dlPostProcObj.params.od_prms.viz_th = model->m_vizThreshold;
                 post_proc_obj->dlPostProcObj.params.ss_prms.alpha = model->m_alpha;
+
                 if(input->m_srcType == "camera")
                 {
                     post_proc_obj->dlPostProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
-                status = tiovx_dl_post_proc_module_init(m_ovxGraph->context, &post_proc_obj->dlPostProcObj);
+                status = tiovx_dl_post_proc_module_init(m_ovxGraph->context,
+                                                        &post_proc_obj->dlPostProcObj);
 
                 m_postProcObjs.push_back(post_proc_obj);
 
-                /* Get Configuration of MSC module by parsing params.yaml  */
-                multi_scaler_obj->getConfig(input->m_width, input->m_height, flow->m_mosaicInfoVec[i][2], flow->m_mosaicInfoVec[i][3], pre_proc_obj);
+                /* Get config for multiscaler module. */
+                multi_scaler_obj->getConfig(input->m_width,
+                                            input->m_height,
+                                            flow->m_mosaicInfoVec[i][2],
+                                            flow->m_mosaicInfoVec[i][3],
+                                            pre_proc_obj);
+
                 if(input->m_srcType == "camera")
                 {
                     multi_scaler_obj->multiScalerObj1.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                     multi_scaler_obj->multiScalerObj2.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
-                status = tiovx_multi_scaler_module_init(m_ovxGraph->context, &multi_scaler_obj->multiScalerObj1);
+
+                status = tiovx_multi_scaler_module_init(m_ovxGraph->context,
+                                                        &multi_scaler_obj->multiScalerObj1);
                 if (multi_scaler_obj->useSecondaryMsc)
                 {
-                    status = tiovx_multi_scaler_module_init(m_ovxGraph->context, &multi_scaler_obj->multiScalerObj2);
+                    status = tiovx_multi_scaler_module_init(m_ovxGraph->context,
+                                                            &multi_scaler_obj->multiScalerObj2);
                 }
 
                 m_multiScalerObjs.push_back(multi_scaler_obj);
 
-                /* m_multiScalerObjs.size() will give current MSC index */
+                /**
+                 * This vector will contain index of all multiScalerObj which
+                 * will take input from the camera nodes.
+                 */
                 if(input->m_srcType == "camera")
                 {
                     m_camMscIdxMap.push_back(m_multiScalerObjs.size()-1);
                 }
             }
 
-            /* Mosaic */
+            /**
+             * This map contains mosaic info (posX,posY,width,height...) about
+             * all inputs that will end up being a part of single mosaic that
+             * will eventually go to this particulat output.
+             */
             commonMosaicInfo[output->m_instId].push_back(flow->m_mosaicInfoVec[i]);
 
-            /* Push all model names for particular output. This will be used 
-               to render text above mosaic windows.*/
+            /**
+             * Push all model names for particular output.
+             * Used to render text above mosaic windows.
+             */
             modelName = model->m_modelPath;
             if (modelName.back() == '/')
             {
@@ -603,15 +450,19 @@ int32_t EdgeAIDemoImpl::setupFlows()
             modelName = std::filesystem::path(modelName).filename();
             commonMosaicTitle[output->m_instId].push_back(modelName);
 
+            /**
+             * This map contains index of all post-process nodes that will
+             * be the inputs to a single mosaic. This mosaic will eventually
+             * go to this particular output.
+             */
             postProcMosaicConn[output->m_instId].push_back(m_postProcObjs.size() - 1);
 
             if(output->m_sinkType == "display" && m_displayObj == NULL)
             {
-                /*
-                    DISPLAY INIT
-                */
+                /* Init display module. */
                 m_displayObj = new TIOVXDisplayModuleObj;
                 tiovx_display_module_params_init(m_displayObj);
+
                 m_displayObj->input_width = output->m_width;
                 m_displayObj->input_height = output->m_height;
                 m_displayObj->input_color_format = VX_DF_IMAGE_NV12;
@@ -619,20 +470,21 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 m_displayObj->params.outWidth = output->m_width;
                 m_displayObj->params.outHeight = output->m_height;
 
-                /* It is assumed that rtos display has fixed resolution of 1920x1080.*/
+                /* Rtos display has fixed resolution of 1920x1080.*/
                 m_displayObj->params.posX = (1920-output->m_width)/2;
                 m_displayObj->params.posY = (1080-output->m_height)/2;
 
                 tiovx_display_module_init(m_ovxGraph->context, m_displayObj);
 
-                /* Save the inst Id of output which goes to display */
+                /* Save the instance id of mosaic output which goes to display. */
                 m_dispMosaicIdx = output->m_instId;
 
-                /* PERFORMANCE OVERLAY */
+                /* Overlay preformance */
                 appGrpxInitParamsInit(&grpx_prms, m_ovxGraph->context);
-                /* It is assumed that rtos display has fixed resolution of 1920x1080.*/
+                /* Rtos display has fixed resolution of 1920x1080.*/
                 grpx_prms.width = 1920;
                 grpx_prms.height = 1080;
+                /* Custom callback for perf overlay*/
                 grpx_prms.draw_callback = app_draw_perf_graphics;
                 appGrpxInit(&grpx_prms);
             }
@@ -644,101 +496,137 @@ int32_t EdgeAIDemoImpl::setupFlows()
         }
     }
 
+    /**
+     * Initialize mosaic module with single/multiple inputs.
+     * Information (posX,posY,width,height...) regarding all inputs are
+     * contained in commonMosaicInfo and commonMosaicTitle vectors.
+     */
     for(long unsigned int i = 0; i < commonMosaicInfo.size(); i++)
     {
         imgMosaic *img_mosaic_obj = new imgMosaic;
         img_mosaic_obj->getConfig(commonMosaicInfo[i]);
+
         status = tiovx_img_mosaic_module_init(m_ovxGraph->context,
                                               &img_mosaic_obj->imgMosaicObj);
+
+        /* Set black mosaic background and overlay titles and texts.*/
         img_mosaic_obj->setBackground(m_config.m_title,commonMosaicTitle[i]);
+
         m_imgMosaicObjs.push_back(img_mosaic_obj);
     }
 
-    /* Create openVX nodes for all required modules */
-
+    /* Create all camera related module if needed.*/
     if(m_cameraObj != NULL)
     {
         if(status == VX_SUCCESS)
         {
-            status = tiovx_capture_module_create(m_ovxGraph->graph, &m_cameraObj->captureObj, TIVX_TARGET_CAPTURE1);
+            status = tiovx_capture_module_create(m_ovxGraph->graph,
+                                                 &m_cameraObj->captureObj,
+                                                 TIVX_TARGET_CAPTURE1);
         }
         if(status == VX_SUCCESS)
         {
             status = vxReleaseObjectArray(&m_cameraObj->vissObj.ae_awb_result_arr[0]);
             m_cameraObj->vissObj.ae_awb_result_arr[0] = NULL;
-            status = tiovx_viss_module_create(m_ovxGraph->graph, &m_cameraObj->vissObj, m_cameraObj->captureObj.image_arr[0], NULL, TIVX_TARGET_VPAC_VISS1);
+            status = tiovx_viss_module_create(m_ovxGraph->graph,
+                                              &m_cameraObj->vissObj,
+                                              m_cameraObj->captureObj.image_arr[0],
+                                              NULL,
+                                              TIVX_TARGET_VPAC_VISS1);
         }
         if(status == VX_SUCCESS)
         {
-            status = tiovx_aewb_module_create(m_ovxGraph->graph, &m_cameraObj->aewbObj, m_cameraObj->vissObj.h3a_stats_arr[0]);
+            status = tiovx_aewb_module_create(m_ovxGraph->graph,
+                                              &m_cameraObj->aewbObj,
+                                              m_cameraObj->vissObj.h3a_stats_arr[0]);
         }
         if(status == VX_SUCCESS)
         {
-            status = tiovx_ldc_module_create(m_ovxGraph->graph, &m_cameraObj->ldcObj, m_cameraObj->vissObj.output2.arr[0], TIVX_TARGET_VPAC_LDC1);
+            status = tiovx_ldc_module_create(m_ovxGraph->graph,
+                                             &m_cameraObj->ldcObj,
+                                             m_cameraObj->vissObj.output2.arr[0],
+                                             TIVX_TARGET_VPAC_LDC1);
         }
     }
 
     if(m_cameraObj != NULL)
     {
+        /* Create multiscaler module with appropriate msc connected to ldc node.*/
         for(auto &iter : m_camMscIdxMap)
         {
             if(status == VX_SUCCESS)
             {
                 status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                            &m_multiScalerObjs[iter]->multiScalerObj1,
-                                                            m_cameraObj->ldcObj.output0.arr[0], TIVX_TARGET_VPAC_MSC1);
+                                                          &m_multiScalerObjs[iter]->multiScalerObj1,
+                                                          m_cameraObj->ldcObj.output0.arr[0],
+                                                          TIVX_TARGET_VPAC_MSC1);
+
                 if(status == VX_SUCCESS && m_multiScalerObjs[iter]->useSecondaryMsc)
                 {
                     status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                            &m_multiScalerObjs[iter]->multiScalerObj2,
-                                            m_multiScalerObjs[iter]->multiScalerObj1.output[0].arr[0],
-                                            TIVX_TARGET_VPAC_MSC2);
+                                                              &m_multiScalerObjs[iter]->multiScalerObj2,
+                                                              m_multiScalerObjs[iter]->multiScalerObj1.output[0].arr[0],
+                                                              TIVX_TARGET_VPAC_MSC2);
                 }
 
-                /*  */
+                /* If the input is camera, the multiscaler used with this
+                 * subflow is not the first node.
+                 */
                 m_multiScalerObjs[iter]->isFirstNode = false;
             }
         }
     }
 
-
     for(uint i=0; i < m_multiScalerObjs.size(); i++)
     {
+        /* Create multiscaler module with NULL input in case it is the first node.
+         * readImage will be used to feed the nodes with frames.
+         */
         if(status == VX_SUCCESS && m_multiScalerObjs[i]->isFirstNode)
         {
             status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                        &m_multiScalerObjs[i]->multiScalerObj1,
-                                                        NULL, TIVX_TARGET_VPAC_MSC1);
+                                                      &m_multiScalerObjs[i]->multiScalerObj1,
+                                                      NULL,
+                                                      TIVX_TARGET_VPAC_MSC1);
+
             if(status == VX_SUCCESS && m_multiScalerObjs[i]->useSecondaryMsc)
             {
                 status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                        &m_multiScalerObjs[i]->multiScalerObj2,
-                                        m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
-                                        TIVX_TARGET_VPAC_MSC2);
+                                                          &m_multiScalerObjs[i]->multiScalerObj2,
+                                                          m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
+                                                          TIVX_TARGET_VPAC_MSC2);
             }
         }
     }
 
+    /* Create pre process module. */
     for(uint i=0; i < m_multiScalerObjs.size(); i++)
     {
         if(status == VX_SUCCESS)
         {
+            /**
+             * If two back to back msc is needed , in case pre-proce resolution
+             * is less tha 1/4th original image, the original image will be
+             * resized to 1/4th by the first scaler node and the remaining
+             * scaling needed by pre-process will be scalerd by second scaler node.
+             */
             if(m_multiScalerObjs[i]->useSecondaryMsc)
             {
                 status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph,
-                                                        &m_preProcObjs[i]->dlPreProcObj,
-                                                        m_multiScalerObjs[i]->multiScalerObj2.output[0].arr[0],
-                                                        TIVX_TARGET_MPU_0);
+                                                         &m_preProcObjs[i]->dlPreProcObj,
+                                                         m_multiScalerObjs[i]->multiScalerObj2.output[0].arr[0],
+                                                         TIVX_TARGET_MPU_0);
             }
             else
             {
                 status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph,
-                                                        &m_preProcObjs[i]->dlPreProcObj,
-                                                        m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
-                                                        TIVX_TARGET_MPU_0);
+                                                         &m_preProcObjs[i]->dlPreProcObj,
+                                                         m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
+                                                         TIVX_TARGET_MPU_0);
             }
         }
 
+        /* Create tidl module. */
         if(status == VX_SUCCESS)
         {
             status = tiovx_tidl_module_create(m_ovxGraph->context,
@@ -747,6 +635,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                         m_preProcObjs[i]->dlPreProcObj.output.arr);
         }
 
+        /* Create post process module. */
         if(status == VX_SUCCESS)
         {
             status = tiovx_dl_post_proc_module_create(m_ovxGraph->graph,
@@ -756,28 +645,32 @@ int32_t EdgeAIDemoImpl::setupFlows()
         }
     }
 
+    /* Create mosaic module. */
     for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
     {
+        /* Connect appropriate post process node to its appropriate mosaic node. */
         for(uint j = 0; j < postProcMosaicConn[i].size(); j++)
         {
             int index = postProcMosaicConn[i][j];
             m_imgMosaicObjs[i]->mosaic_input_arr[j] = m_postProcObjs[index]->dlPostProcObj.output_image.arr[0];
         }
         status = tiovx_img_mosaic_module_create(m_ovxGraph->graph,
-                                &m_imgMosaicObjs[i]->imgMosaicObj,
-                                m_imgMosaicObjs[i]->imgMosaicObj.background_image[0],
-                                m_imgMosaicObjs[i]->mosaic_input_arr, TIVX_TARGET_VPAC_MSC1);
+                                                &m_imgMosaicObjs[i]->imgMosaicObj,
+                                                m_imgMosaicObjs[i]->imgMosaicObj.background_image[0],
+                                                m_imgMosaicObjs[i]->mosaic_input_arr,
+                                                TIVX_TARGET_VPAC_MSC1);
     }
 
+    /* Create display module if needed. */
     if(m_displayObj != NULL)
     {
-        status = tiovx_display_module_create(m_ovxGraph->graph, m_displayObj,
-                                        m_imgMosaicObjs[m_dispMosaicIdx]->imgMosaicObj.output_image[0],
-                                        TIVX_TARGET_DISPLAY1);
+        status = tiovx_display_module_create(m_ovxGraph->graph,
+                                             m_displayObj,
+                                             m_imgMosaicObjs[m_dispMosaicIdx]->imgMosaicObj.output_image[0],
+                                             TIVX_TARGET_DISPLAY1);
     }
 
     /* Add graph parameter by node index */
-
     graph_parameter_index = 0;
     if(m_cameraObj != NULL)
     {
@@ -796,8 +689,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
             m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index = graph_parameter_index;
             graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
             graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-            graph_parameters_queue_params_list[graph_parameter_index].refs_list =
-                (vx_reference*)&m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0];
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0];
             graph_parameter_index++;
         }
     }
@@ -816,8 +708,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
             m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index = graph_parameter_index;
             graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
             graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-            graph_parameters_queue_params_list[graph_parameter_index].refs_list =
-                (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0];
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.output_image[0];
             graph_parameter_index++;
         }
 
@@ -828,25 +719,23 @@ int32_t EdgeAIDemoImpl::setupFlows()
             m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index = graph_parameter_index;
             graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
             graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-            graph_parameters_queue_params_list[graph_parameter_index].refs_list =
-                (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0];
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_imgMosaicObjs[i]->imgMosaicObj.background_image[0];
             graph_parameter_index++;
         }
 
     }
 
-    /* Schedule Graph */
-
+    /* Schedule graph */
     if((vx_status)VX_SUCCESS == status)
     {
+        /* Scheduling graph in auto mode. */
         status = vxSetGraphScheduleConfig(m_ovxGraph->graph,
-                    VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO, // or VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL
+                    VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO,
                     graph_parameter_index,
                     graph_parameters_queue_params_list);
     }
 
-    /* VERIFY GRAPH */
-
+    /* Verify graph*/
     if((vx_status)VX_SUCCESS == status)
     {
         status = vxVerifyGraph(m_ovxGraph->graph);
@@ -874,12 +763,214 @@ int32_t EdgeAIDemoImpl::setupFlows()
     return status;
 }
 
+int32_t EdgeAIDemoImpl::startDemo()
+{
+    int                 status = 0;
+    uint32_t            num_refs;
+    vx_image            input_o, output_o, background_o;
+    vx_object_array     input_obj_arr;
+    bool                camera_first_deq_done = false;
+    uint32_t            cnt = 0;
+
+    if(m_cameraObj != NULL)
+    {
+        /* Start sensor module. */
+        status = tiovx_sensor_module_start(&m_cameraObj->sensorObj);
+        for(int buf_id = 0; buf_id < m_cameraObj->captureObj.out_bufq_depth; buf_id++)
+        {
+            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                                            m_cameraObj->captureObj.graph_parameter_index,
+                                            (vx_reference*) &m_cameraObj->captureObj.image_arr[buf_id],
+                                            1);
+        }
+    }
+
+    /* main loop that runs every frame. */
+    while(m_runLoop)
+    {
+        /* msc_cnt is the index of multiScaler obj in vector of objects. */
+        int msc_cnt = 0;
+        for (auto &[name,flow] : m_config.m_flowMap)
+        {
+            auto const &input = m_config.m_inputMap[flow->m_inputId];
+
+            for(uint i = 0; i < flow->m_subFlowConfigs.size(); i++)
+            {
+                if(input->m_srcType == "image")
+                {
+                    readImage(const_cast<char*>(input->m_source.c_str()),
+                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
+                    m_runLoop = input->m_loop;
+                }
+                else if(input->m_srcType == "images_directory")
+                {
+                    readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()),
+                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
+                }
+                msc_cnt++;
+            }
+            if(input->m_srcType == "images_directory")
+            {
+                input->m_multiImageVectCnt++;
+                if (input->m_multiImageVectCnt == input->m_multiImageVect.size())
+                {
+                    input->m_multiImageVectCnt = 0;
+                    m_runLoop = input->m_loop;
+                }
+            }
+        }
+
+        /*  Enqueue graph parameters */
+        if(m_cameraObj != NULL)
+        {
+            if(camera_first_deq_done)
+            {
+                vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                                                m_cameraObj->captureObj.graph_parameter_index,
+                                                (vx_reference*) &input_obj_arr,
+                                                1);
+            }
+        }
+
+        for(uint i = 0; i < m_multiScalerObjs.size(); i++)
+        {
+            if(m_multiScalerObjs[i]->isFirstNode)
+            {
+                vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                                                m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
+                                                (vx_reference*) &m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0],
+                                                1);
+            }
+        }
+
+        for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
+        {
+            if(i == m_dispMosaicIdx && m_displayObj != NULL)
+            {
+                continue;
+            }
+
+            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                                            m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
+                                            (vx_reference*) &m_imgMosaicObjs[i]->imgMosaicObj.output_image[0],
+                                            1);
+
+            vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                                            m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
+                                            (vx_reference*) &m_imgMosaicObjs[i]->imgMosaicObj.background_image[0],
+                                            1);
+        }
+
+        /*  Dequeue graph parameters. */
+        if(m_cameraObj != NULL)
+        {
+            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
+                                           m_cameraObj->captureObj.graph_parameter_index,
+                                           (vx_reference*) &input_obj_arr,
+                                           1,
+                                           &num_refs);
+            camera_first_deq_done = true;
+        }
+
+        for(uint i = 0; i < m_multiScalerObjs.size(); i++)
+        {
+            if(m_multiScalerObjs[i]->isFirstNode)
+            {
+                vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
+                                               m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
+                                               (vx_reference*) &input_o,
+                                               1,
+                                               &num_refs);
+            }
+        }
+
+        for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
+        {
+            if(i == m_dispMosaicIdx && m_displayObj != NULL)
+            {
+                continue;
+            }
+
+            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
+                                           m_imgMosaicObjs[i]->imgMosaicObj.output_graph_parameter_index,
+                                           (vx_reference*) &output_o,
+                                           1,
+                                           &num_refs);
+            vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
+                                           m_imgMosaicObjs[i]->imgMosaicObj.background_graph_parameter_index,
+                                           (vx_reference*) &background_o,
+                                           1,
+                                           &num_refs);
+        }
+
+        /*  Write Output to directory or file if needed. */
+        for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
+        {
+            string sink = "";
+            string sink_type = "";
+            for (auto &[name,flow] : m_config.m_flowMap)
+            {
+                auto const &outputIds = flow->m_outputIds;
+                for(uint j=0; j < outputIds.size(); j++)
+                {
+                    OutputInfo  *output = m_config.m_outputMap[outputIds[j]];
+                    if ((uint)output->m_instId == i)
+                    {
+                        sink = output->m_sink;
+                        sink_type = output->m_sinkType;
+                        break;
+                    }
+                }
+                if (sink != "")
+                {
+                    break;
+                }
+            }
+
+            if(sink_type == "image")
+            {
+                writeImage(const_cast<char*>(sink.c_str()),
+                           m_imgMosaicObjs[i]->imgMosaicObj.output_image[0]);
+            }
+            else if(sink_type == "images_directory")
+            {
+                string mosaicId = "mosaic" + to_string(i);
+                string output_filename = sink +
+                                         "/output_image_" +
+                                         mosaicId +
+                                         "_" +
+                                         to_string(cnt) +
+                                         ".nv12";
+                writeImage(const_cast<char*>(output_filename.c_str()),
+                                             m_imgMosaicObjs[i]->imgMosaicObj.output_image[0]);
+            }
+        }
+        cnt++;
+
+        /* HACK: If no camera input then sleep of 1 second to maintain FPS for image input */
+        if(m_numCam == 0)
+        {
+            sleep(1);
+        }
+    }
+
+    /* Stop camera sensor module. */
+    if(m_cameraObj != NULL)
+    {
+        status = tiovx_sensor_module_stop(&m_cameraObj->sensorObj);
+    }
+
+    return status;
+}
+
 /**
  * Dumps openVX graph as dot file
  */
 void EdgeAIDemoImpl::dumpGraphAsDot()
 {
-    tivxExportGraphToDot(m_ovxGraph->graph, const_cast<vx_char*>(string(".").c_str()), const_cast<vx_char*>(string("edgeai_tiovx_apps_graph").c_str()));
+    tivxExportGraphToDot(m_ovxGraph->graph,
+                         const_cast<vx_char*>(string(".").c_str()),
+                         const_cast<vx_char*>(string("edgeai_tiovx_apps_graph").c_str()));
 }
 
 /**
@@ -892,9 +983,6 @@ void EdgeAIDemoImpl::sendExitSignal()
     m_runLoop = false;
 }
 
-/**
- * This is a blocking call that waits for all the internal threads to exit.
- */
 void EdgeAIDemoImpl::waitForExit()
 {
 }
@@ -904,8 +992,7 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 {
     LOG_DEBUG("EdgeAIDemoImpl Destructor \n");
 
-    /* Delete openVX modules */
-
+    /* Delete all openVX modules */
     if(m_cameraObj != NULL)
     {
         tiovx_capture_module_delete(&m_cameraObj->captureObj);
@@ -956,8 +1043,7 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
         vxReleaseGraph(&m_ovxGraph->graph);
     }
 
-    /* Deinit openVX modules */
-
+    /* Deinit all openVX modules */
     if(m_cameraObj != NULL)
     {
         tiovx_sensor_module_deinit(&m_cameraObj->sensorObj);
@@ -1008,11 +1094,10 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
         delete iter;
     }
 
-    /*
-        Delete application openVX object
-        Also release context in its destructor
-    */
-
+    /**
+     * Delete application openVX object
+     * Also release context in its destructor
+     */
     delete m_ovxGraph;
 }
 
@@ -1054,13 +1139,9 @@ void EdgeAIDemo::sendExitSignal()
     m_impl->sendExitSignal();
 }
 
-/**
- * This is a blocking call that waits for all the internal threads to exit.
- */
 void EdgeAIDemo::waitForExit()
 {
     m_impl->waitForExit();
 }
 
 } // namespace ti::edgeai::common
-

@@ -30,8 +30,8 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_OVX_WRAPPER_H_
-#define _TI_EDGEAI_OVX_WRAPPER_H_
+#ifndef _TI_EDGEAI_TIOVX_WRAPPER_H_
+#define _TI_EDGEAI_TIOVX_WRAPPER_H_
 
 /* Module Headers */
 #include <utils/include/ti_logger.h>
@@ -41,8 +41,13 @@
 
 namespace ti::edgeai::common
 {
-
     using namespace ti::utils;
+
+    /**
+     * \brief Class that wraps the ovenvx related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class ovxGraph
     {
@@ -62,6 +67,6 @@ namespace ti::edgeai::common
 
     };
 
-}
+} // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_OVX_WRAPPER_H_
+#endif // _TI_EDGEAI_TIOVX_WRAPPER_H_

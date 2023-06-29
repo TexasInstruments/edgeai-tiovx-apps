@@ -55,7 +55,8 @@ preProc::~preProc()
     LOG_DEBUG("preProc DESTRUCTOR\n");
 }
 
-int32_t preProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBufDesc)
+int32_t preProc::getConfig(const string         &modelBasePath,
+                           sTIDL_IOBufDesc_t    *ioBufDesc)
 {
     const string        &paramFile = modelBasePath + "/param.yaml";
     int32_t             status = 0;
@@ -80,8 +81,8 @@ int32_t preProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBuf
     const YAML::Node   &preProc = yaml["preprocess"];
 
     /** Validate the parsed yaml configuration and create the configuration
-    * for the inference object creation
-    */
+     *  for the inference object creation
+     */
     if (!preProc)
     {
         LOG_ERROR("Preprocess configuration parameters missing.\n");
@@ -218,23 +219,34 @@ int32_t preProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBuf
         /* TIDL node input is NCHW so output tensor dimensions */
         if(dlPreProcObj.params.channel_order == 0)
         {
-            dlPreProcObj.output.dim_sizes[0] = ioBufDesc->inWidth[0]  + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0];
-            dlPreProcObj.output.dim_sizes[1] = ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0];
+            dlPreProcObj.output.dim_sizes[0] = ioBufDesc->inWidth[0]  +
+                                               ioBufDesc->inPadL[0]   +
+                                               ioBufDesc->inPadR[0];
+
+            dlPreProcObj.output.dim_sizes[1] = ioBufDesc->inHeight[0] +
+                                               ioBufDesc->inPadT[0]   +
+                                               ioBufDesc->inPadB[0];
+
             dlPreProcObj.output.dim_sizes[2] = ioBufDesc->inNumChannels[0];
         }
         else /* TIDL node input is NHWC so output tensor dimensions */
         {
             dlPreProcObj.output.dim_sizes[0] = ioBufDesc->inNumChannels[0];
-            dlPreProcObj.output.dim_sizes[1] = ioBufDesc->inWidth[0]  + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0];
-            dlPreProcObj.output.dim_sizes[2] = ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0];
+
+            dlPreProcObj.output.dim_sizes[1] = ioBufDesc->inWidth[0]  +
+                                               ioBufDesc->inPadL[0]   +
+                                               ioBufDesc->inPadR[0];
+
+            dlPreProcObj.output.dim_sizes[2] = ioBufDesc->inHeight[0] +
+                                               ioBufDesc->inPadT[0]   +
+                                               ioBufDesc->inPadB[0];
         }
 
         dlPreProcObj.output.bufq_depth = 1;
         dlPreProcObj.output.num_dims = 3;
         dlPreProcObj.en_out_tensor_write = 0;
 
-        dlPreProcObj.output.datatype = 
-                getTensorDataType(ioBufDesc->inElementType[0]);
+        dlPreProcObj.output.datatype = getTensorDataType(ioBufDesc->inElementType[0]);
 
     }
     return status;

@@ -95,9 +95,9 @@ CmdlineArgs::parse(int32_t        argc,
                 showUsage(argv[0]);
                 exit(-1);
 
-        } // switch (opt)
+        }
 
-    } // while ((opt = getopt_long(argc, argv
+    }
 
     // Check if the specified configuration file exists
     if (!std::filesystem::exists(configFile))
@@ -111,8 +111,6 @@ CmdlineArgs::parse(int32_t        argc,
     logSetLevel(logLevel);
 
     return;
-
 }
-
 } // namespace ti::edgeai::common
 

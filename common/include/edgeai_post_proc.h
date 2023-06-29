@@ -30,9 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_POST_PROC_H_
-#define _TI_EDGEAI_POST_PROC_H_
+#ifndef _TI_EDGEAI_TIOVX_POST_PROC_H_
+#define _TI_EDGEAI_TIOVX_POST_PROC_H_
 
+/* Standard Headers */
 #include <stdint.h>
 #include <string>
 
@@ -43,6 +44,12 @@
 namespace ti::edgeai::common
 {
     using namespace std;
+
+    /**
+     * \brief Class that wraps the post process related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class postProc
     {
@@ -58,8 +65,18 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse post process configuration. */
-            int32_t     getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBufDesc, int32_t imageWidth, int32_t imageHeight);
+            /** Helper function to parse post process configuration.
+             *
+             * @param modelBasePath path of model directory
+             * @param ioBufDesc io buffer descriptor of the model
+             * @param imageWidth input image width to post process node
+             * @param imageHeight input image height to post process node
+             *
+             */
+            int32_t     getConfig(const string      &modelBasePath,
+                                  sTIDL_IOBufDesc_t *ioBufDesc,
+                                  int32_t           imageWidth,
+                                  int32_t           imageHeight);
 
         public:
             /* Data structure passed to post process module */
@@ -68,10 +85,11 @@ namespace ti::edgeai::common
             /* YUV color map for semantic segmentation */
             uint8_t                     **mYUVColorMap{NULL};
 
+            /* Max unique colors available for semantic segmentation */
             int                         mMaxColorClass{0};
             
     };
 
 } // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_POST_PROC_H_
+#endif // _TI_EDGEAI_TIOVX_POST_PROC_H_

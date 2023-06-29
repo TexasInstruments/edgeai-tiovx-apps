@@ -30,9 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_MOSAIC_H_
-#define _TI_EDGEAI_MOSAIC_H_
+#ifndef _TI_EDGEAI_TIOVX_MOSAIC_H_
+#define _TI_EDGEAI_TIOVX_MOSAIC_H_
 
+/* Standard Headers */
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -43,6 +44,12 @@
 namespace ti::edgeai::common
 {
     using namespace std;
+
+    /**
+     * \brief Class that wraps the mosaic related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class imgMosaic
     {
@@ -58,19 +65,29 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse mosaic configuration. */
+            /** Helper function to parse mosaic configuration.
+              *
+              * @param mosaicInfo vector containing posX, posY, width and height
+              *                   about mosaic.
+              *
+            */
             int32_t     getConfig(vector<vector<int>> mosaicInfo);
 
-            /** Function to set mosaic baground buffer. */
+            /** Function to set mosaic baground buffer.
+              *
+              * @param title Main title text to overlay
+              * @param mosaicTitle 
+              *
+            */
             void        setBackground(string title, vector<string> mosaicTitle);
 
         public:
             /* Data structure passed to mosaic module */
             TIOVXImgMosaicModuleObj    imgMosaicObj;
 
-            /* 
-                Used to pass input to mosaic nodes from previous post proc outputs
-                Input to mosaic module is array of vx_object_array
+            /**
+             * Used to pass input to mosaic nodes from previous post proc outputs.
+             * Input to mosaic module is array of vx_object_array.
             */
             vx_object_array            mosaic_input_arr[TIVX_IMG_MOSAIC_MAX_INPUTS] = {NULL};
 
@@ -81,4 +98,4 @@ namespace ti::edgeai::common
 
 } // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_MOSAIC_H_
+#endif // _TI_EDGEAI_TIOVX_MOSAIC_H_

@@ -47,7 +47,8 @@ namespace ti::edgeai::common
 {
 using namespace ti::utils;
 
-static inline bool ends_with(std::string const & value, std::string const & ending)
+/* Helper function to check if string ends with particular substring. */
+static inline bool ends_with(std::string const &value, std::string const &ending)
 {
     if (ending.size() > value.size())
         return false;
@@ -116,45 +117,26 @@ int32_t tidlInf::getConfig(const string &modelBasePath, vx_context context)
     tidlObj.network_file_path = const_cast<vx_char*>(network_file_path.c_str());
     tidlObj.num_cameras = 1;
     tidlObj.en_out_tensor_write = 0;
-
     tidlObj.input[0].bufq_depth = 1;
 
     for(uint i=0; i < tidlObj.num_output_tensors; i++)
+    {
         tidlObj.output[i].bufq_depth = 1;
+    }
 
     /* Extracting IO Buf Descriptor from config */
-    vxMapUserDataObject(tidlObj.config, 0, sizeof(tivxTIDLJ7Params), &map_id_config,
-                    (void **)&tidlParams, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
-    ioBufDesc = (sTIDL_IOBufDesc_t *)&tidlParams->ioBufDesc;
+    vxMapUserDataObject(tidlObj.config,
+                        0,
+                        sizeof(tivxTIDLJ7Params),
+                        &map_id_config,
+                        (void **) &tidlParams,
+                        VX_READ_ONLY,
+                        VX_MEMORY_TYPE_HOST,
+                        0);
+    ioBufDesc = (sTIDL_IOBufDesc_t *) &tidlParams->ioBufDesc;
     vxUnmapUserDataObject(tidlObj.config, map_id_config);
 
     return status;
-}
-
-void tidlInf::dumpInfo()
-{
-    LOG_INFO("ioBufDesc->inDataFormat[0] == %d, if 1 then BGR, 0 then RGB \n\n", ioBufDesc->inDataFormat[0]);
-
-    LOG_INFO("input data type = %ld \n", getTensorDataType(ioBufDesc->inElementType[0]));
-
-    LOG_INFO("Input tensor dimensions \n");
-    LOG_INFO("ioBufDesc->inWidth[0] + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0] = %d \n", ioBufDesc->inWidth[0] + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0]);
-    LOG_INFO("ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0] = %d \n", ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0]);
-    LOG_INFO("ioBufDesc->inNumChannels[0] = %d \n\n", ioBufDesc->inNumChannels[0]);
-
-    LOG_INFO("ioBufDesc->numInputBuf = %d \n", ioBufDesc->numInputBuf);
-    LOG_INFO("ioBufDesc->numOutputBuf = %d \n\n", ioBufDesc->numOutputBuf);
-
-    LOG_INFO("Output details\n");
-    for(int j=0;j<ioBufDesc->numOutputBuf;j++)
-    {
-        LOG_INFO("Output data type %d = %ld \n\n", j, getTensorDataType(ioBufDesc->outElementType[j]));
-
-        LOG_INFO("Output tensor dimensions \n");
-        LOG_INFO("ioBufDesc->outWidth[%d] + ioBufDesc->outPadL[%d] + ioBufDesc->outPadR[%d] = %d \n", j, j, j, ioBufDesc->outWidth[j] + ioBufDesc->outPadL[j] + ioBufDesc->outPadR[j]);
-        LOG_INFO("ioBufDesc->outHeight[%d] + ioBufDesc->outPadT[%d] + ioBufDesc->outPadB[%d] = %d \n", j, j, j, ioBufDesc->outHeight[j] + ioBufDesc->outPadT[j] + ioBufDesc->outPadB[j]);
-        LOG_INFO("ioBufDesc->outNumChannels[%d] = %d \n\n", j, ioBufDesc->outNumChannels[j]);
-    }
 }
 
 vx_user_data_object tidlInf::readConfig(vx_context context)
@@ -183,7 +165,10 @@ vx_user_data_object tidlInf::readConfig(vx_context context)
 
     if( capacity != sizeof(sTIDL_IOBufDesc_t))
     {
-        LOG_ERROR("Config file size (%d bytes) does not match size of sTIDL_IOBufDesc_t (%d bytes)\n", capacity, (vx_uint32)sizeof(sTIDL_IOBufDesc_t));
+        LOG_ERROR("Config file size (%d bytes) does not match "
+                  "size of sTIDL_IOBufDesc_t (%d bytes)\n",
+                  capacity,
+                  (vx_uint32)sizeof(sTIDL_IOBufDesc_t));
         fclose(fp_config);
         return NULL;
     }
@@ -192,13 +177,22 @@ vx_user_data_object tidlInf::readConfig(vx_context context)
 
     if(VX_SUCCESS == status)
     {
-        config = vxCreateUserDataObject(context, "tivxTIDLJ7Params", sizeof(tivxTIDLJ7Params), NULL );
+        config = vxCreateUserDataObject(context,
+                                        "tivxTIDLJ7Params",
+                                        sizeof(tivxTIDLJ7Params),
+                                        NULL );
         status = vxGetStatus((vx_reference)config);
 
         if (VX_SUCCESS == status)
         {
-            vxMapUserDataObject(config, 0, sizeof(tivxTIDLJ7Params), &map_id,
-                            (void **)&tidlParams, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+            vxMapUserDataObject(config,
+                                0,
+                                sizeof(tivxTIDLJ7Params),
+                                &map_id,
+                                (void **) &tidlParams,
+                                VX_WRITE_ONLY,
+                                VX_MEMORY_TYPE_HOST,
+                                0);
 
             if(tidlParams == NULL)
             {
@@ -209,7 +203,7 @@ vx_user_data_object tidlInf::readConfig(vx_context context)
 
             tivx_tidl_j7_params_init(tidlParams);
 
-            ioBufDesc = (sTIDL_IOBufDesc_t *)&tidlParams->ioBufDesc;
+            ioBufDesc = (sTIDL_IOBufDesc_t *) &tidlParams->ioBufDesc;
 
             read_count = fread(ioBufDesc, capacity, 1, fp_config);
             if(read_count != 1)
@@ -229,6 +223,60 @@ vx_user_data_object tidlInf::readConfig(vx_context context)
     fclose(fp_config);
 
     return config;
+}
+
+void tidlInf::dumpInfo()
+{
+    LOG_INFO("ioBufDesc->inDataFormat[0] == %d, "
+             "if 1 then BGR, 0 then RGB \n\n",
+             ioBufDesc->inDataFormat[0]);
+
+    LOG_INFO("input data type = %ld \n",
+             getTensorDataType(ioBufDesc->inElementType[0]));
+
+    LOG_INFO("Input tensor dimensions \n");
+
+    LOG_INFO("ioBufDesc->inWidth[0] + ioBufDesc->inPadL[0] + "
+             "ioBufDesc->inPadR[0] = %d \n",
+             ioBufDesc->inWidth[0] + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0]);
+
+    LOG_INFO("ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + "
+             "ioBufDesc->inPadB[0] = %d \n",
+             ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0]);
+
+    LOG_INFO("ioBufDesc->inNumChannels[0] = %d \n\n", ioBufDesc->inNumChannels[0]);
+
+    LOG_INFO("ioBufDesc->numInputBuf = %d \n", ioBufDesc->numInputBuf);
+
+    LOG_INFO("ioBufDesc->numOutputBuf = %d \n\n", ioBufDesc->numOutputBuf);
+
+    LOG_INFO("Output details\n");
+    for(int j=0;j<ioBufDesc->numOutputBuf;j++)
+    {
+        LOG_INFO("Output data type %d = %ld \n\n",
+                j,
+                getTensorDataType(ioBufDesc->outElementType[j]));
+
+        LOG_INFO("Output tensor dimensions \n");
+
+        LOG_INFO("ioBufDesc->outWidth[%d] + ioBufDesc->outPadL[%d] + "
+                 "ioBufDesc->outPadR[%d] = %d \n",
+                 j,
+                 j, 
+                 j, 
+                 ioBufDesc->outWidth[j] + ioBufDesc->outPadL[j] + ioBufDesc->outPadR[j]);
+
+        LOG_INFO("ioBufDesc->outHeight[%d] + ioBufDesc->outPadT[%d] + "
+                 "ioBufDesc->outPadB[%d] = %d \n",
+                 j,
+                 j,
+                 j,
+                 ioBufDesc->outHeight[j] + ioBufDesc->outPadT[j] + ioBufDesc->outPadB[j]);
+
+        LOG_INFO("ioBufDesc->outNumChannels[%d] = %d \n\n",
+                 j,
+                 ioBufDesc->outNumChannels[j]);
+    }
 }
 
 } // namespace ti::edgeai::common

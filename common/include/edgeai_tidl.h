@@ -30,9 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIDL_H_
-#define _TI_EDGEAI_TIDL_H_
+#ifndef _TI_EDGEAI_TIOVX_TIDL_H_
+#define _TI_EDGEAI_TIOVX_TIDL_H_
 
+/* Standard Headers */
 #include <string>
 
 #include <TI/tivx.h>
@@ -42,6 +43,12 @@
 namespace ti::edgeai::common
 {
     using namespace std;
+
+    /**
+     * \brief Class that wraps the TIDL related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class tidlInf
     {
@@ -57,12 +64,17 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse TIDL Inference configuration. */
-            int32_t     getConfig(const string &modelBasePath, vx_context context);
-
-            /**
-             * Function to read and parse IO.bin file from model zoo Path
+            /** Helper function to parse TIDL Inference configuration.
+             * @param modelBasePath path of model directory
              * @param context OpenVX context
+             *
+             */
+            int32_t     getConfig(const string  &modelBasePath,
+                                  vx_context    context);
+
+            /** Function to read and parse IO.bin file from model zoo Path
+             * @param context OpenVX context
+             *
              * @return OpenVX user data object for tivxTIDLJ7Params
              */
             vx_user_data_object readConfig(vx_context context);
@@ -71,12 +83,14 @@ namespace ti::edgeai::common
             /* Data structure passed to TIDL module */
             TIOVXTIDLModuleObj      tidlObj;
             
+            /* IO Buffer Descriptor of the model */
             sTIDL_IOBufDesc_t       *ioBufDesc;
 
         private:
+            /* Path to network file of the model */
             string                  network_file_path{""};
     };
     
-}
+} // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_TIDL_H_
+#endif // _TI_EDGEAI_TIOVX_TIDL_H_
