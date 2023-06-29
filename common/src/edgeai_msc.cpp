@@ -50,10 +50,15 @@ multiScaler::~multiScaler()
     LOG_DEBUG("multiScaler DESTRUCTOR\n");
 }
 
-int32_t multiScaler::getConfig(int32_t input_wd, int32_t input_ht, int32_t post_proc_wd, int32_t post_proc_ht, preProc *pre_proc_obj)
+int32_t multiScaler::getConfig(int32_t input_wd,
+                               int32_t input_ht,
+                               int32_t post_proc_wd,
+                               int32_t post_proc_ht,
+                               preProc *pre_proc_obj)
 {
     int32_t status = 0;
-    int32_t crop_start_x = 0, crop_start_y = 0;
+    int32_t crop_start_x = 0;
+    int32_t crop_start_y = 0;
     int32_t resizeHeight = pre_proc_obj->resizeHeight;
     int32_t resizeWidth = pre_proc_obj->resizeWidth;
     int32_t cropHeight = pre_proc_obj->cropHeight;
@@ -68,7 +73,8 @@ int32_t multiScaler::getConfig(int32_t input_wd, int32_t input_ht, int32_t post_
 
     if (input_wd/post_proc_wd > 4 || input_ht/post_proc_ht > 4)
     {
-        LOG_ERROR("Output width or height invalid. MSC cannot handle scaling down by more than 1/4.\n");
+        LOG_ERROR("Output width or height invalid. "
+                  "MSC cannot handle scaling down by more than 1/4.\n");
         status = -1;
         return status;
     }
@@ -82,7 +88,9 @@ int32_t multiScaler::getConfig(int32_t input_wd, int32_t input_ht, int32_t post_
     cropWidth    = input_wd - (2 * crop_start_x);
     cropHeight   = input_ht - (2 * crop_start_y);
 
-    if((cropWidth/pre_proc_obj->cropWidth) > 4 || (cropHeight/pre_proc_obj->cropHeight) > 4)
+    if((cropWidth/pre_proc_obj->cropWidth) > 4
+       ||
+       (cropHeight/pre_proc_obj->cropHeight) > 4)
     {
         multiScalerObj2.num_channels = 1;
         multiScalerObj2.num_outputs = 1;
@@ -145,11 +153,23 @@ int32_t multiScaler::getConfig(int32_t input_wd, int32_t input_ht, int32_t post_
 
     multiScalerObj1.en_multi_scalar_output = 0;
 
-    LOG_DEBUG("multiScalerObj1.input.width = %d, multiScalerObj1.input.height = %d \n",multiScalerObj1.input.width, multiScalerObj1.input.height);
-    LOG_DEBUG("multiScalerObj1.output[0].width = %d, multiScalerObj1.output[0].height = %d \n", multiScalerObj1.output[0].width, multiScalerObj1.output[0].height);
-    LOG_DEBUG("multiScalerObj1.output[1].width = %d, multiScalerObj1.output[1].height = %d \n", multiScalerObj1.output[1].width, multiScalerObj1.output[1].height);
-    LOG_DEBUG("multiScalerObj1.crop_params[0].crop_start_x = %d, multiScalerObj1.crop_params[0].crop_start_y = %d \n", multiScalerObj1.crop_params[0].crop_start_x, multiScalerObj1.crop_params[0].crop_start_y);
-    LOG_DEBUG("multiScalerObj1.crop_params[0].crop_width = %d, multiScalerObj1.crop_params[0].crop_height = %d \n",multiScalerObj1.crop_params[0].crop_width, multiScalerObj1.crop_params[0].crop_height);
+    LOG_DEBUG("multiScalerObj1.input.width = %d, "
+              "multiScalerObj1.input.height = %d \n",
+              multiScalerObj1.input.width, multiScalerObj1.input.height);
+    LOG_DEBUG("multiScalerObj1.output[0].width = %d, "
+              "multiScalerObj1.output[0].height = %d \n",
+              multiScalerObj1.output[0].width, multiScalerObj1.output[0].height);
+    LOG_DEBUG("multiScalerObj1.output[1].width = %d, "
+              "multiScalerObj1.output[1].height = %d \n",
+              multiScalerObj1.output[1].width, multiScalerObj1.output[1].height);
+    LOG_DEBUG("multiScalerObj1.crop_params[0].crop_start_x = %d, "
+              "multiScalerObj1.crop_params[0].crop_start_y = %d \n",
+              multiScalerObj1.crop_params[0].crop_start_x,
+              multiScalerObj1.crop_params[0].crop_start_y);
+    LOG_DEBUG("multiScalerObj1.crop_params[0].crop_width = %d, "
+              "multiScalerObj1.crop_params[0].crop_height = %d \n",
+              multiScalerObj1.crop_params[0].crop_width,
+              multiScalerObj1.crop_params[0].crop_height);
 
     return status;
 }

@@ -67,7 +67,9 @@ int32_t camera::getConfig(int32_t chMask)
     /* VISS Module params init */
     tivx_vpac_viss_params_init(&vissObj.params);
 
-    snprintf(vissObj.dcc_config_file_path, TIVX_FILEIO_FILE_PATH_LENGTH, "/opt/imaging/imx390/dcc_viss_wdr.bin");
+    snprintf(vissObj.dcc_config_file_path,
+             TIVX_FILEIO_FILE_PATH_LENGTH,
+             "/opt/imaging/imx390/dcc_viss_wdr.bin");
 
     vissObj.input.bufq_depth = 1;
 
@@ -96,10 +98,15 @@ int32_t camera::getConfig(int32_t chMask)
     vissObj.h3a_stats_bufq_depth = 1;
 
     /* LDC Module params init */
-    snprintf(ldcObj.dcc_config_file_path, TIVX_FILEIO_FILE_PATH_LENGTH, "/opt/imaging/imx390/dcc_ldc_wdr.bin");
-    snprintf(ldcObj.lut_file_path, TIVX_FILEIO_FILE_PATH_LENGTH, "/opt/edgeai-test-data/raw_images/modules_test/imx390_ldc_lut_1920x1080.bin");
+    snprintf(ldcObj.dcc_config_file_path,
+             TIVX_FILEIO_FILE_PATH_LENGTH,
+             "/opt/imaging/imx390/dcc_ldc_wdr.bin");
 
-    ldcObj.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA; // or TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE
+    snprintf(ldcObj.lut_file_path,
+             TIVX_FILEIO_FILE_PATH_LENGTH,
+             "/opt/edgeai-test-data/raw_images/modules_test/imx390_ldc_lut_1920x1080.bin");
+
+    ldcObj.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA;
     ldcObj.en_out_image_write = 0;
     ldcObj.en_output1 = 0;
 

@@ -30,9 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_CAPTURE_H_
-#define _TI_EDGEAI_CAPTURE_H_
+#ifndef _TI_EDGEAI_TIOVX_CAPTURE_H_
+#define _TI_EDGEAI_TIOVX_CAPTURE_H_
 
+/* Standard Headers */
 #include <stdint.h>
 #include <vector>
 
@@ -46,6 +47,12 @@
 namespace ti::edgeai::common
 {
     using namespace std;
+
+    /**
+     * \brief Class that wraps the imx390 camera related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class camera
     {
@@ -61,7 +68,10 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse mosaic configuration. */
+            /** Helper function to parse mosaic configuration.
+             *
+             * @param chMask channel mask for sensor node.
+             */
             int32_t     getConfig(int32_t chMask);
 
         public:
@@ -84,4 +94,4 @@ namespace ti::edgeai::common
 
 } // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_CAPTURE_H_
+#endif // _TI_EDGEAI_TIOVX_CAPTURE_H_

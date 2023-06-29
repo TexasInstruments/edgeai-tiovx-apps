@@ -64,11 +64,9 @@ int32_t imgMosaic::getConfig(vector<vector<int>> mosaicInfo)
     int     cam_channel_sel = 0;
     int     file_input_sel = -1;
 
-    /*  
-        m_mosaicInfo  will contain information about mosaics for
-        same output across all the flows 
-        Each element of mosaic info is a vector of below format
-        <start_x, start_y, window_width, window_height, output_width, output_height, is_multi_cam_input>
+    /** m_mosaicInfo contains information about mosaics for same output across 
+     *  all the flows. Each element of mosaic info is a vector containing
+    *   <start_x, start_y, window_width, window_height, output_width, output_height, is_multi_cam_input>
     */
     m_mosaicInfo = mosaicInfo;
     imgMosaicObj.out_width    = m_mosaicInfo[0][4];
@@ -96,10 +94,7 @@ int32_t imgMosaic::getConfig(vector<vector<int>> mosaicInfo)
         imgMosaicObj.params.windows[i].width   = m_mosaicInfo[i][2];
         imgMosaicObj.params.windows[i].height  = m_mosaicInfo[i][3];
 
-        /* 
-           is_cam_input - If input is camera then for multi channel, input_select remains same
-           but channel select changes
-        */
+        /** If multi-cam-input input_select remains same but channel increases. */
         if(m_mosaicInfo[i][6] == 1)
         {
             if(cam_input_sel == -1)
@@ -142,8 +137,16 @@ void imgMosaic::setBackground(string title, vector<string> mosaicTitle)
     uint                        titleX;
     uint                        i;
 
-    vxQueryImage(imgMosaicObj.background_image[0], VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
-    vxQueryImage(imgMosaicObj.background_image[0], VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
+    /* Query Background image height and width*/
+    vxQueryImage(imgMosaicObj.background_image[0],
+                 VX_IMAGE_WIDTH,
+                 &img_width,
+                 sizeof(vx_uint32));
+
+    vxQueryImage(imgMosaicObj.background_image[0], 
+                 VX_IMAGE_HEIGHT,
+                 &img_height,
+                 sizeof(vx_uint32));
 
     /* Query Y-plane. */
     rect.start_x = 0;
@@ -188,13 +191,14 @@ void imgMosaic::setBackground(string title, vector<string> mosaicTitle)
     getFont(&text_font, 0.005 * img_width);
     getColor(&bg_color, 0, 0, 0);
 
-    /* Black Background. */
+    /* Set black background. */
     drawRect(&image_holder,0,0,img_width,img_height,&bg_color,-1);
 
-    /* Draw Title. */
+    /* Draw title. */
     titleX = (img_width - (title_font.width * title.length())) / 2;
     drawText(&image_holder,title.c_str(),titleX,10,&title_font,&title_color);
 
+    /* Draw model names above mosaic window. */
     for (i = 0; i < m_mosaicInfo.size(); i++)
     {
         drawText(&image_holder,

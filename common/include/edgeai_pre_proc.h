@@ -30,9 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_PRE_PROC_H_
-#define _TI_EDGEAI_PRE_PROC_H_
+#ifndef _TI_EDGEAI_TIOVX_PRE_PROC_H_
+#define _TI_EDGEAI_TIOVX_PRE_PROC_H_
 
+/* Standard Headers */
 #include <string>
 
 #include <tiovx_dl_pre_proc_module.h>
@@ -41,6 +42,12 @@
 namespace ti::edgeai::common
 {
     using namespace std;
+
+    /**
+     * \brief Class that wraps the pre process related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class preProc
     {
@@ -56,8 +63,14 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse pre process configuration. */
-            int32_t     getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBufDesc);
+            /** Helper function to parse pre process configuration.
+             *
+             * @param modelBasePath path of model directory
+             * @param ioBufDesc io buffer descriptor of the model
+             *
+             */
+            int32_t     getConfig(const string      &modelBasePath,
+                                  sTIDL_IOBufDesc_t *ioBufDesc);
 
         public:
             /* Data structure passed to pre process module */
@@ -70,6 +83,6 @@ namespace ti::edgeai::common
             int32_t                     resizeWidth{0};
             
     };
-}
+} // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_PRE_PROC_H_
+#endif // _TI_EDGEAI_TIOVX_PRE_PROC_H_

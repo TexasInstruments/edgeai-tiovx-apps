@@ -30,15 +30,22 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_MSC_H_
-#define _TI_EDGEAI_MSC_H_
+#ifndef _TI_EDGEAI_TIOVX_MSC_H_
+#define _TI_EDGEAI_TIOVX_MSC_H_
 
+/* Modules Headers */
 #include <tiovx_multi_scaler_module.h>
 #include <common/include/edgeai_pre_proc.h>
 
 namespace ti::edgeai::common
 {
     using namespace std;
+
+    /**
+     * \brief Class that wraps the multiscaler related configuration
+     *
+     * \ingroup group_edgeai_common
+     */
 
     class multiScaler
     {
@@ -54,22 +61,36 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse MSC configuration. */
-            int32_t     getConfig(int32_t input_wd, int32_t input_ht, int32_t post_proc_wd, int32_t post_proc_ht, preProc *pre_proc_obj);
+            /** Helper function to parse MSC configuration.
+             *
+             * @param input_wd Width of the input frame
+             * @param input_ht Height of the input frame
+             * @param post_proc_wd Width of the output frame (for post-process)
+             * @param post_proc_ht Height of the output frame (for post-process)
+             * @param pre_proc_obj Pre-Processing object
+             *
+             */
+            int32_t     getConfig(int32_t input_wd,
+                                  int32_t input_ht,
+                                  int32_t post_proc_wd,
+                                  int32_t post_proc_ht,
+                                  preProc *pre_proc_obj);
 
         public:
             /* Data structure passed to MSC module */
             TIOVXMultiScalerModuleObj     multiScalerObj1;
             
-            /* This is option second MSC used when need to scale by a factor more than 4  */
+            /* Optional second MSC to be used when need to scale by a factor
+             * more than 4.
+             */
             TIOVXMultiScalerModuleObj     multiScalerObj2;
 
-            /* True of multiSclaerObj2 is to be used. */
+            /* True if multiSclaerObj2 is to be used. */
             bool                          useSecondaryMsc{false};
 
             /* Flag to indicate if tiovx MSC node is first in subflow */
             bool                          isFirstNode{true};
     };
-}
+} // namespace ti::edgeai::common
 
-#endif // _TI_EDGEAI_MSC_H_
+#endif // _TI_EDGEAI_TIOVX_MSC_H_

@@ -50,14 +50,14 @@ using namespace ti::utils;
 
 /* Color Map for semantic segmentation */
 uint8_t RGB_COLOR_MAP[26][3] = {{255,0,0},{0,255,0},{73,102,92},
-                        {255,255,0},{0,255,255},{0,99,245},
-                        {255,127,0},{0,255,100},{235,117,117},
-                        {242,15,109},{118,194,167},{255,0,255},
-                        {231,200,255},{255,186,239},{0,110,0},
-                        {0,0,255},{110,0,0},{110,110,0},
-                        {100,0,50},{90,60,0},{255,255,255} ,
-                        {170,0,255},{204,255,0},{78,69,128},
-                        {133,133,74},{0,0,110}};
+                                {255,255,0},{0,255,255},{0,99,245},
+                                {255,127,0},{0,255,100},{235,117,117},
+                                {242,15,109},{118,194,167},{255,0,255},
+                                {231,200,255},{255,186,239},{0,110,0},
+                                {0,0,255},{110,0,0},{110,110,0},
+                                {100,0,50},{90,60,0},{255,255,255} ,
+                                {170,0,255},{204,255,0},{78,69,128},
+                                {133,133,74},{0,0,110}};
 
 postProc::postProc()
 {
@@ -79,7 +79,10 @@ postProc::~postProc()
     LOG_DEBUG("postProc DESTRUCTOR\n");
 }
 
-int32_t postProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBufDesc, int32_t imageWidth, int32_t imageHeight)
+int32_t postProc::getConfig(const string        &modelBasePath,
+                            sTIDL_IOBufDesc_t   *ioBufDesc,
+                            int32_t             imageWidth,
+                            int32_t             imageHeight)
 {
     const string        &paramFile = modelBasePath + "/param.yaml";
     int32_t             status = 0;
@@ -105,8 +108,8 @@ int32_t postProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBu
     const YAML::Node   &postProc = yaml["postprocess"];
 
     /** Validate the parsed yaml configuration and create the configuration
-    * for the inference object creation
-    */
+     *  for the inference object creation
+     */
     if (!session)
     {
         LOG_WARN("Inference configuration parameters  missing.\n");
@@ -205,8 +208,15 @@ int32_t postProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBu
         }
         else
         {
-            dlPostProcObj.params.od_prms.scaleX = static_cast<float>(imageWidth)/(ioBufDesc->inWidth[0] + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0]);
-            dlPostProcObj.params.od_prms.scaleY = static_cast<float>(imageHeight)/(ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0]);
+            dlPostProcObj.params.od_prms.scaleX = static_cast<float>(imageWidth) /
+                                                  (ioBufDesc->inWidth[0] +
+                                                   ioBufDesc->inPadL[0]  +
+                                                   ioBufDesc->inPadR[0]);
+
+            dlPostProcObj.params.od_prms.scaleY = static_cast<float>(imageHeight) /
+                                                  (ioBufDesc->inHeight[0] +
+                                                   ioBufDesc->inPadT[0]   +
+                                                   ioBufDesc->inPadB[0]);
         }
 
         const YAML::Node   &metric = yaml["metric"];
@@ -274,8 +284,13 @@ int32_t postProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBu
             }
 
             dlPostProcObj.params.ss_prms.ioBufDesc = ioBufDesc;
-            dlPostProcObj.params.ss_prms.inDataWidth = ioBufDesc->inWidth[0] + ioBufDesc->inPadL[0] + ioBufDesc->inPadR[0];
-            dlPostProcObj.params.ss_prms.inDataHeight = ioBufDesc->inHeight[0] + ioBufDesc->inPadT[0] + ioBufDesc->inPadB[0];
+            dlPostProcObj.params.ss_prms.inDataWidth = ioBufDesc->inWidth[0]   +
+                                                       ioBufDesc->inPadL[0]    +
+                                                       ioBufDesc->inPadR[0];
+
+            dlPostProcObj.params.ss_prms.inDataHeight = ioBufDesc->inHeight[0] +
+                                                        ioBufDesc->inPadT[0]   +
+                                                        ioBufDesc->inPadB[0];
             dlPostProcObj.params.ss_prms.alpha = 0.4;
             dlPostProcObj.params.ss_prms.YUVColorMap = mYUVColorMap;
             dlPostProcObj.params.ss_prms.MaxColorClass = mMaxColorClass;
@@ -296,8 +311,14 @@ int32_t postProc::getConfig(const string &modelBasePath, sTIDL_IOBufDesc_t *ioBu
             dlPostProcObj.input_tensor[i].datatype = getTensorDataType(ioBufDesc->outElementType[i]);
             dlPostProcObj.input_tensor[i].num_dims = 3;
             
-            dlPostProcObj.input_tensor[i].dim_sizes[0] = ioBufDesc->outWidth[i]  + ioBufDesc->outPadL[i] + ioBufDesc->outPadR[i];
-            dlPostProcObj.input_tensor[i].dim_sizes[1] = ioBufDesc->outHeight[i] + ioBufDesc->outPadT[i] + ioBufDesc->outPadB[i];
+            dlPostProcObj.input_tensor[i].dim_sizes[0] = ioBufDesc->outWidth[i]  +
+                                                         ioBufDesc->outPadL[i]   +
+                                                         ioBufDesc->outPadR[i];
+
+            dlPostProcObj.input_tensor[i].dim_sizes[1] = ioBufDesc->outHeight[i] +
+                                                         ioBufDesc->outPadT[i]   +
+                                                         ioBufDesc->outPadB[i];
+
             dlPostProcObj.input_tensor[i].dim_sizes[2] = ioBufDesc->outNumChannels[i];
         }
 

@@ -43,11 +43,20 @@ namespace ti::edgeai::common
 {
     using namespace ti::utils;
 
+    /**
+     * \brief Class for parsing command line arguments
+     *
+     * \ingroup group_edgeai_common
+     */
+
     class CmdlineArgs
     {
         public:
+
+            /** Helper function to parse cmd args. */
             void parse(int32_t argc, char *argv[]);
 
+        public:
             /** Path to YAML config file. */
             std::string         configFile;
 

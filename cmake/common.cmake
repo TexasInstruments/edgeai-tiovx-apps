@@ -79,26 +79,24 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${PROJECT_SOURCE_DIR}/..
                     ${PROJECT_SOURCE_DIR}/include
                     SYSTEM ${TARGET_FS}/usr/local/include
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps
                     SYSTEM ${TARGET_FS}/usr/include/edgeai-tiovx-modules
+                    SYSTEM ${TARGET_FS}/usr/include/edgeai-tiovx-kernels/
+                    SYSTEM ${TARGET_FS}/usr/include/edgeai-apps-utils
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/img_proc/include/
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include/
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/utils/app_init/include/
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/include
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/kernels/include/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/kernels_j7/include/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/img_proc/include/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/ti_dl/inc
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/ivision
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/utils/include
-                    SYSTEM ${TARGET_FS}/usr/include/edgeai-tiovx-kernels/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/imaging/kernels/include/
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/ti_dl/inc
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/arm-tidl/tiovx_kernels/include/
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/ivision
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/app_utils/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/utils/app_init/include/
-                    SYSTEM ${TARGET_FS}/usr/include/edgeai-apps-utils
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/video_io/kernels/include/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/imaging
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/imaging/kernels/include/
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/arm-tidl/tiovx_kernels/include/
                     )
 
 set(COMMON_LINK_LIBS
