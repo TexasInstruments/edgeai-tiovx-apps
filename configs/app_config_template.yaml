@@ -36,6 +36,9 @@ inputs:
         # If file input need to be looped once all images are displayed.
         loop: True
 
+        #[OPTIONAL] Framerate to read the input image at
+        framerate: 1 #[Default: 1, Allowed:<0-60>]
+
     input2:
         # NV12 Image Source
         source: /opt/edgeai-test-data/images/0000.nv12
@@ -48,6 +51,9 @@ inputs:
 
         # If file input need to be looped
         loop: True
+
+        #[OPTIONAL] Framerate to read the input image at
+        framerate: 1 #[Default: 1, Allowed:<0-60>]
 
 # Inference models. This is a list of models.
 models:

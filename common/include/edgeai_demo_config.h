@@ -164,10 +164,10 @@ namespace ti::edgeai::common
             /** Vector to store names of image files in case the 
              *  input is directory containing multiple images 
              */
-            vector<string>                      m_multiImageVect{};
+            vector<string>                      m_imageVect{};
 
-            /** Counter for indexing  m_multiImageVect. */
-            uint32_t                            m_multiImageVectCnt{0};
+            /** Counter for indexing  m_imageVect. */
+            uint32_t                            m_imageVectCnt{0};
 
             /* Unique name assigned to input in config file. */
             string                              m_name;
@@ -198,7 +198,7 @@ namespace ti::edgeai::common
             int32_t                             m_subdev_id{2};
 
             /** Frame rate. */
-            string                              m_framerate{};
+            int32_t                             m_framerate{1};
 
             /** Instance Id for a specific instance of inputs. */
             int32_t                             m_instId;
@@ -417,7 +417,7 @@ namespace ti::edgeai::common
             vector<vector<int32_t>>             m_mosaicInfoVec;
 
             /** Input frame rate. */
-            string                              m_framerate{0};
+            int32_t                             m_framerate{1};
 
             /** Instance Id for a specific instance. */
             int32_t                             m_instId;

@@ -11,11 +11,13 @@ inputs:
         width: 1280
         height: 720
         loop: True
+        framerate: 1
     input2:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps/
         width: 1280
         height: 720
         loop: True
+        framerate: 1
 
 models:
     model0:

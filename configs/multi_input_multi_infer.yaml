@@ -2,15 +2,22 @@ title: "Multi Input Multi Inference"
 log_level: 2
 inputs:
     input0:
+        source: camera
+        width: 1920
+        height: 1080
+        camera-id: 0
+    input1:
+        source: camera
+        width: 1920
+        height: 1080
+        camera-id: 1
+    input2:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps/
         width: 1280
         height: 720
         loop: True
-    input1:
-        source: /opt/edgeai-test-data/raw_images/tiovx_apps/0001.nv12
-        width: 1280
-        height: 720
-        loop: True
+        framerate: 1
+
 models:
     model0:
         model_path: /opt/model_zoo/TFL-CL-0000-mobileNetV1-mlperf
@@ -40,6 +47,6 @@ outputs:
 
 flows:
     flow0: [input0,model2,output0,[320,150,640,360]]
-    flow1: [input1,model0,output0,[960,150,640,360]]
-    flow2: [input1,model1,output0,[320,540,640,360]]
-    flow3: [input0,model3,output0,[960,540,640,360]]
+    flow1: [input1,model2,output0,[960,150,640,360]]
+    flow2: [input2,model0,output0,[320,540,640,360]]
+    flow3: [input2,model1,output0,[960,540,640,360]]

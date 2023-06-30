@@ -60,10 +60,12 @@ InputInfo::InputInfo(const YAML::Node &node)
 
     if (node["framerate"])
     {
-        m_framerate = node["framerate"].as<string>();
+        m_framerate = node["framerate"].as<int32_t>();
 
-        /* Change framerate to string representation of fraction. 0.5 = "1/2". */
-        m_framerate = to_fraction(m_framerate);
+        if (m_framerate <= 0)
+        {
+            m_framerate = 1;
+        }
     }
 
     if (node["camera-id"])
@@ -114,16 +116,16 @@ InputInfo::InputInfo(const YAML::Node &node)
 
                 if(imgExt == ".nv12" || imgExt == ".yuv")
                 {
-                    m_multiImageVect.push_back(file);
+                    m_imageVect.push_back(file);
                 }
             }
-            if (m_multiImageVect.size() == 0)
+            if (m_imageVect.size() == 0)
             {
                 LOG_ERROR("Directory [%s] does not have supported images [.nv12,.yuv]\n", m_source.c_str());
                 throw runtime_error("Invalid source.\n");
             }
 
-            std::sort(m_multiImageVect.begin(),m_multiImageVect.end(),[](const string & a, const string & b) -> bool
+            std::sort(m_imageVect.begin(),m_imageVect.end(),[](const string & a, const string & b) -> bool
             {
                 return a < b;
             });
@@ -131,6 +133,7 @@ InputInfo::InputInfo(const YAML::Node &node)
         else if (srcExt == ".nv12" || srcExt == ".yuv")
         {
             m_srcType = "image";
+            m_imageVect.push_back(m_source);
         }
         else
         {
@@ -151,7 +154,7 @@ void InputInfo::dumpInfo(const char *prefix) const
     LOG_INFO("%sInputInfo::source        = %s\n", prefix, m_source.c_str());
     LOG_INFO("%sInputInfo::width         = %d\n", prefix, m_width);
     LOG_INFO("%sInputInfo::height        = %d\n", prefix, m_height);
-    LOG_INFO("%sInputInfo::framerate     = %s\n", prefix, m_framerate.c_str());
+    LOG_INFO("%sInputInfo::framerate     = %d\n", prefix, m_framerate);
 }
 
 InputInfo::~InputInfo()

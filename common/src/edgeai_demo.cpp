@@ -34,6 +34,9 @@
 #include <filesystem>
 #include <iostream>
 #include <unistd.h>
+#include <chrono>
+#include <thread>
+#include <mutex>
 
 /* Module headers. */
 #include <common/include/edgeai_utils.h>
@@ -152,6 +155,20 @@ class EdgeAIDemoImpl
         int32_t setupFlows();
 
         /**
+         * Function to read image and input it to msc.
+         * This will run in seperate thread.
+         *
+         * @param input InputInfo to read input from
+         * @param mscIdxs Indices of all msc object to feed this input to
+         * @param sleepMs sleep in miliseconds between reads.
+         *
+         */
+        void readImgThread(InputInfo    *input,
+                           vector<int>  mscIdxs,
+                           vector<int>  mutexIdxs,
+                           uint32_t     sleepMs);
+
+        /**
          * Assignment operator.
          *
          * Assignment is not required and allowed and hence prevent
@@ -199,8 +216,15 @@ class EdgeAIDemoImpl
         /** Demo configuration. */
         DemoConfig                          m_config;
 
-        /* Runs the graph in loop */
+        /** Runs the graph in loop */
         bool                                m_runLoop{true};
+
+        /** Vector to contain thread id of all threads running to read image. */
+        vector<std::thread>                 m_readImgThreadIds{};
+
+    protected:
+        /** Mutex for multi-thread image read control. */
+        vector<std::mutex>                  m_readImgMutexs{};
 
 };
 
@@ -785,40 +809,60 @@ int32_t EdgeAIDemoImpl::startDemo()
         }
     }
 
+    /* Get the number of mutex needed.*/
+    size_t tempCount = 0;
+    for (auto &[name,flow] : m_config.m_flowMap)
+    {
+        auto const  &input = m_config.m_inputMap[flow->m_inputId];
+        if(input->m_srcType == "image" || input->m_srcType == "images_directory")
+        {
+            tempCount += flow->m_subFlowConfigs.size();
+        }
+    }
+    std::vector<std::mutex> tempList(tempCount);
+    m_readImgMutexs.swap(tempList);
+
+    /* Spawn readImage threads. */
+    int                 msc_cnt = 0;
+    int                 mutex_cnt = 0;
+    bool                cam_msc_encountered = false;
+    for (auto &[name,flow] : m_config.m_flowMap)
+    {
+        vector<int> msc_idxs = {};
+        vector<int> mutex_idxs = {};
+        uint32_t    sleepMs = 0;
+        auto const  &input = m_config.m_inputMap[flow->m_inputId];
+
+        if (input->m_srcType == "camera" && !cam_msc_encountered)
+        {
+            msc_cnt++;
+            cam_msc_encountered = true;
+        }
+        else if(input->m_srcType == "image" || input->m_srcType == "images_directory")
+        {
+            for(uint i = 0; i < flow->m_subFlowConfigs.size(); i++)
+            {
+                msc_idxs.push_back(msc_cnt);
+                mutex_idxs.push_back(mutex_cnt);
+                msc_cnt++;
+                mutex_cnt++;
+            }
+
+            sleepMs =  1000 / input->m_framerate;
+            m_readImgThreadIds.push_back(std::thread(&EdgeAIDemoImpl::readImgThread,
+                                                     this,
+                                                     input,
+                                                     msc_idxs,
+                                                     mutex_idxs,
+                                                     sleepMs));
+        }
+
+    }
+
     /* main loop that runs every frame. */
     while(m_runLoop)
     {
-        /* msc_cnt is the index of multiScaler obj in vector of objects. */
-        int msc_cnt = 0;
-        for (auto &[name,flow] : m_config.m_flowMap)
-        {
-            auto const &input = m_config.m_inputMap[flow->m_inputId];
-
-            for(uint i = 0; i < flow->m_subFlowConfigs.size(); i++)
-            {
-                if(input->m_srcType == "image")
-                {
-                    readImage(const_cast<char*>(input->m_source.c_str()),
-                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
-                    m_runLoop = input->m_loop;
-                }
-                else if(input->m_srcType == "images_directory")
-                {
-                    readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()),
-                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
-                }
-                msc_cnt++;
-            }
-            if(input->m_srcType == "images_directory")
-            {
-                input->m_multiImageVectCnt++;
-                if (input->m_multiImageVectCnt == input->m_multiImageVect.size())
-                {
-                    input->m_multiImageVectCnt = 0;
-                    m_runLoop = input->m_loop;
-                }
-            }
-        }
+        mutex_cnt = 0;
 
         /*  Enqueue graph parameters */
         if(m_cameraObj != NULL)
@@ -836,10 +880,14 @@ int32_t EdgeAIDemoImpl::startDemo()
         {
             if(m_multiScalerObjs[i]->isFirstNode)
             {
+                {
+                std::unique_lock<std::mutex> lock(this->m_readImgMutexs[mutex_cnt]);
                 vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
                                                 m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
                                                 (vx_reference*) &m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0],
                                                 1);
+                }
+                mutex_cnt++;
             }
         }
 
@@ -946,12 +994,6 @@ int32_t EdgeAIDemoImpl::startDemo()
             }
         }
         cnt++;
-
-        /* HACK: If no camera input then sleep of 1 second to maintain FPS for image input */
-        if(m_numCam == 0)
-        {
-            sleep(1);
-        }
     }
 
     /* Stop camera sensor module. */
@@ -960,7 +1002,51 @@ int32_t EdgeAIDemoImpl::startDemo()
         status = tiovx_sensor_module_stop(&m_cameraObj->sensorObj);
     }
 
+    for (auto &iter : m_readImgThreadIds)
+    {
+        if (iter.joinable())
+        {
+            iter.join();
+        }
+    }
+
     return status;
+}
+
+
+void EdgeAIDemoImpl::readImgThread(InputInfo    *input,
+                                   vector<int>  mscIdxs,
+                                   vector<int>  mutexIdxs,
+                                   uint32_t     sleepMs)
+{
+    int mscIdx = 0;
+    int mutexIdx = 0;
+    while(m_runLoop)
+    {
+        for (uint i = 0; i < mscIdxs.size(); i++)
+        {
+            mscIdx = mscIdxs[i];
+            mutexIdx = mutexIdxs[i];
+            {
+                std::unique_lock<std::mutex> lock(this->m_readImgMutexs[mutexIdx]);
+                readImage(const_cast<char*>(input->m_imageVect[input->m_imageVectCnt].c_str()),
+                          m_multiScalerObjs[mscIdx]->multiScalerObj1.input.image_handle[0]);
+            }
+        }
+
+        input->m_imageVectCnt++;
+
+        if (input->m_imageVectCnt >= input->m_imageVect.size())
+        {
+            input->m_imageVectCnt = 0;
+            if (!input->m_loop)
+            {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+    }
+    return;
 }
 
 /**

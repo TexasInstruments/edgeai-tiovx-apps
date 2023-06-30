@@ -10,11 +10,13 @@ inputs:
         source: /opt/edgeai-test-data/raw_images/0001.nv12
         width: 1280
         height: 720
+        framerate: 1
         loop: True
     input2:
         source: /opt/edgeai-test-data/raw_images/tiovx_apps
         width: 1280
         height: 720
+        framerate: 1
         loop: True
 models:
     model0:
