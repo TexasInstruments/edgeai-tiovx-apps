@@ -1,0 +1,15 @@
+title: "Capture->Display"
+log_level: 2
+inputs:
+    input0:
+        source: camera
+        width: 1920
+        height: 1080
+        camera-id: 0
+outputs:
+    output0:
+        sink: display
+        width: 1920
+        height: 1080
+flows:
+    flow0: [input0,NULL,output0,[320,150,1280,720]]

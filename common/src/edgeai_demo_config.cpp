@@ -347,8 +347,7 @@ FlowInfo::FlowInfo(FlowConfig &flowConfig)
     LOG_DEBUG("CONSTRUCTOR\n");
 }
 
-int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
-                             map<string, InputInfo*>   &inputMap,
+int32_t FlowInfo::initialize(map<string, InputInfo*>   &inputMap,
                              map<string, OutputInfo*>  &outputMap,
                              bool                       isMultiCam)
 {
@@ -361,19 +360,9 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
     for (auto &s : m_subFlowConfigs)
     {
 
-        ModelInfo          *model = modelMap[s.model];
         string              inputName;
         int32_t             mosaicWidth{0};
         int32_t             mosaicHeight{0};
-
-        string modelName = model->m_modelPath;
-
-        if (modelName.back() == '/')
-        {
-            modelName.pop_back();
-        }
-
-        modelName = std::filesystem::path(modelName).filename();
 
         m_mosaicVec.clear();
         if (s.mosaic_info.size() <= 0)
@@ -545,20 +534,27 @@ int32_t DemoConfig::parse(const YAML::Node &yaml)
             m_inputOrder.push_back(input);
         }
 
-        /* Parse model information. */
-        const string &model = subflow[1].as<string>();
-        if (m_modelMap.find(model) == m_modelMap.end())
+        if (subflow[1].Type() == YAML::NodeType::Null)
         {
-            /* Validate Model */
-            if (!yaml["models"][model])
-            {
-                LOG_ERROR("[%s] Invalid Model [%s] specified.\n",
-                          flow_name.c_str(), model.c_str());
-                status = -1;
-                break;
-            }
-            m_modelMap[model] = new ModelInfo(yaml["models"][model]);
+            m_modelMap["NULL"] = NULL;
         }
+        else
+        {
+            const string &model = subflow[1].as<string>();
+            if (m_modelMap.find(model) == m_modelMap.end())
+            {
+                /* Validate Model */
+                if (!yaml["models"][model])
+                {
+                    LOG_ERROR("[%s] Invalid Model [%s] specified.\n",
+                              flow_name.c_str(), model.c_str());
+                    status = -1;
+                    break;
+                }
+                m_modelMap[model] = new ModelInfo(yaml["models"][model]);
+            }
+        }
+
 
         /* Parse output information. */
         const string &output = subflow[2].as<string>();
@@ -593,6 +589,7 @@ int32_t DemoConfig::parse(const YAML::Node &yaml)
             }
         }
     }
+
     if (status == 0)
     {
         /* Parse flow information. */
@@ -620,7 +617,10 @@ void DemoConfig::dumpInfo() const
     LOG_INFO("DemoConfig::Models:\n");
     for (auto &[name, obj]: m_modelMap)
     {
-        obj->dumpInfo("\t");
+        if (obj != NULL)
+        {
+            obj->dumpInfo("\t");
+        }
     }
 
     LOG_INFO("DemoConfig::Outputs:\n");
@@ -652,13 +652,19 @@ int32_t DemoConfig::parseFlowInfo(const YAML::Node &config)
         string flow_name = "";
         for (auto &i : flows)
         {
+            string          input;
+            string          model_name;
+            string          output;
+            vector<int>     mosaic_info{};
+            SubFlowConfig   subFlowConfig;
+
             const string &s = i.first.as<string>();
             if (find(visited.begin(), visited.end(), s) != visited.end())
             {
                 continue;
             }
 
-            string input = flows[s][0].as<string>();
+            input = flows[s][0].as<string>();
             if (input_name != input)
             {
                 continue;
@@ -671,10 +677,17 @@ int32_t DemoConfig::parseFlowInfo(const YAML::Node &config)
                flow_name = s;
             }
 
-            string model_name = flows[s][1].as<string>();
-            string output     = flows[s][2].as<string>();
-            vector<int> mosaic_info{};
-            SubFlowConfig subFlowConfig;
+            if (flows[s][1].Type() == YAML::NodeType::Null)
+            {
+                model_name = "NULL";
+            }
+            else
+            {
+                model_name = flows[s][1].as<string>();
+            }
+
+            output     = flows[s][2].as<string>();
+
             subFlowConfig.model = model_name;
             subFlowConfig.output = output;
 

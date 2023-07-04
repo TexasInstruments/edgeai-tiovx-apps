@@ -256,18 +256,32 @@ int32_t EdgeAIDemoImpl::setupFlows()
     vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[16];
     app_grpx_init_prms_t grpx_prms;
 
-    vector<vector<vector<int32_t>>> commonMosaicInfo{};
-    vector<vector<string>>          commonMosaicTitle{};
-    vector<vector<int32_t>>         postProcMosaicConn{};
-    string                          modelName{};
+    string                          modelName = "";
     int32_t                         cameraChMask = 0;
     bool                            isMultiCam = false;
+
+    vector<vector<vector<int32_t>>> commonMosaicInfo{};
+    vector<vector<string>>          commonMosaicTitle{};
+    /**
+     * Contains index of all post-proc or msc nodes which connects to mosaic.
+     * ex: {{1,2},{0,3}} means post-proc or msc node at index 1,2 in vecotor
+     * connects to mosaic0 and 0,3 connects to mosaic1.
+     */
+    vector<vector<int32_t>>         commonMosaicInputIdx{};
+
+    /**
+     * true if post-proc node is the input to mosaic.
+     * ex: {{false,true},{true,true}} means post-proc input0 to mosaic0 isnt
+     * coming from post-proc node, rather from msc node.
+     */
+    vector<vector<bool>>            commonMosaicInputType{};
 
     for(int i = 0; i < OutputInfo::m_numInstances; i++)
     {
         commonMosaicInfo.push_back({});
         commonMosaicTitle.push_back({});
-        postProcMosaicConn.push_back({});
+        commonMosaicInputIdx.push_back({});
+        commonMosaicInputType.push_back({});
     }
 
     /* Create graph structure */
@@ -347,8 +361,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
     for (auto const &[name,flow] : m_config.m_flowMap)
     {
-        flow->initialize(m_config.m_modelMap,
-                         m_config.m_inputMap,
+        flow->initialize(m_config.m_inputMap,
                          m_config.m_outputMap,
                          isMultiCam);
 
@@ -363,63 +376,73 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
         for(uint i=0; i < modelIds.size(); i++)
         {
-            preProc         *pre_proc_obj     = new preProc;
-            tidlInf         *tidl_inf_obj     = new tidlInf;
-            postProc        *post_proc_obj    = new postProc;
-            multiScaler     *multi_scaler_obj = new multiScaler;
-            
             /**
             * modelIds is a vector of all models used for a unique input
             * outputIds is a vector of all outputs used for a unique input
             */
             ModelInfo   *model = m_config.m_modelMap[modelIds[i]];
             OutputInfo  *output = m_config.m_outputMap[outputIds[i]];
-            
+
+            multiScaler *multi_scaler_obj = NULL;
+            preProc     *pre_proc_obj     = NULL;
+            tidlInf     *tidl_inf_obj     = NULL;
+            postProc    *post_proc_obj    = NULL ;
+
+            multi_scaler_obj = new multiScaler;
+            if (model != NULL)
+            {
+                pre_proc_obj     = new preProc;
+                tidl_inf_obj     = new tidlInf;
+                post_proc_obj    = new postProc;
+            }
+
             /* Init modules (for camera input just init once). */
             if(input->m_source != "camera" || m_camNodesInit != true)
             {
-                /* Get config for TIDL module. */
-                tidl_inf_obj->getConfig(model->m_modelPath, m_ovxGraph->context);
-
-                if(input->m_srcType == "camera")
+                if (model != NULL)
                 {
-                    tidl_inf_obj->tidlObj.num_cameras = m_cameraObj->sensorObj.num_cameras_enabled;
+                    /* Get config for TIDL module. */
+                    tidl_inf_obj->getConfig(model->m_modelPath, m_ovxGraph->context);
+
+                    if(input->m_srcType == "camera")
+                    {
+                        tidl_inf_obj->tidlObj.num_cameras = m_cameraObj->sensorObj.num_cameras_enabled;
+                    }
+                    status = tiovx_tidl_module_init(m_ovxGraph->context,
+                                                    &tidl_inf_obj->tidlObj,
+                                                    const_cast<vx_char*>(string("tidl_obj").c_str()));
+
+                    /* Get config for Pre Process module. */
+                    pre_proc_obj->getConfig(model->m_modelPath, tidl_inf_obj->ioBufDesc);
+
+                    if(input->m_srcType == "camera")
+                    {
+                        pre_proc_obj->dlPreProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
+                    }
+                    status = tiovx_dl_pre_proc_module_init(m_ovxGraph->context,
+                                                        &pre_proc_obj->dlPreProcObj);
+
+                    /* Get config for Post Process Module. */
+                    post_proc_obj->getConfig(model->m_modelPath,
+                                            tidl_inf_obj->ioBufDesc,
+                                            flow->m_mosaicInfoVec[i][2],
+                                            flow->m_mosaicInfoVec[i][3]);
+
+                    post_proc_obj->dlPostProcObj.params.oc_prms.num_top_results = model->m_topN;
+                    post_proc_obj->dlPostProcObj.params.od_prms.viz_th = model->m_vizThreshold;
+                    post_proc_obj->dlPostProcObj.params.ss_prms.alpha = model->m_alpha;
+
+                    if(input->m_srcType == "camera")
+                    {
+                        post_proc_obj->dlPostProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
+                    }
+                    status = tiovx_dl_post_proc_module_init(m_ovxGraph->context,
+                                                            &post_proc_obj->dlPostProcObj);
+
                 }
-                status = tiovx_tidl_module_init(m_ovxGraph->context,
-                                                &tidl_inf_obj->tidlObj,
-                                                const_cast<vx_char*>(string("tidl_obj").c_str()));
 
                 m_tidlInfObjs.push_back(tidl_inf_obj);
-                
-                /* Get config for Pre Process module. */
-                pre_proc_obj->getConfig(model->m_modelPath, tidl_inf_obj->ioBufDesc);
-
-                if(input->m_srcType == "camera")
-                {
-                    pre_proc_obj->dlPreProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
-                }
-                status = tiovx_dl_pre_proc_module_init(m_ovxGraph->context,
-                                                       &pre_proc_obj->dlPreProcObj);
-
                 m_preProcObjs.push_back(pre_proc_obj);
-
-                /* Get config for Post Process Module. */
-                post_proc_obj->getConfig(model->m_modelPath,
-                                         tidl_inf_obj->ioBufDesc,
-                                         flow->m_mosaicInfoVec[i][2],
-                                         flow->m_mosaicInfoVec[i][3]);
-
-                post_proc_obj->dlPostProcObj.params.oc_prms.num_top_results = model->m_topN;
-                post_proc_obj->dlPostProcObj.params.od_prms.viz_th = model->m_vizThreshold;
-                post_proc_obj->dlPostProcObj.params.ss_prms.alpha = model->m_alpha;
-
-                if(input->m_srcType == "camera")
-                {
-                    post_proc_obj->dlPostProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
-                }
-                status = tiovx_dl_post_proc_module_init(m_ovxGraph->context,
-                                                        &post_proc_obj->dlPostProcObj);
-
                 m_postProcObjs.push_back(post_proc_obj);
 
                 /* Get config for multiscaler module. */
@@ -466,20 +489,36 @@ int32_t EdgeAIDemoImpl::setupFlows()
              * Push all model names for particular output.
              * Used to render text above mosaic windows.
              */
-            modelName = model->m_modelPath;
-            if (modelName.back() == '/')
+            if (model != NULL)
             {
-                modelName.pop_back();
+                modelName = model->m_modelPath;
+                if (modelName.back() == '/')
+                {
+                    modelName.pop_back();
+                }
+                modelName = std::filesystem::path(modelName).filename();
             }
-            modelName = std::filesystem::path(modelName).filename();
+            else
+            {
+                modelName = "";
+            }
             commonMosaicTitle[output->m_instId].push_back(modelName);
 
             /**
-             * This map contains index of all post-process nodes that will
+             * This map contains index of all post-process or msc nodes that will
              * be the inputs to a single mosaic. This mosaic will eventually
              * go to this particular output.
              */
-            postProcMosaicConn[output->m_instId].push_back(m_postProcObjs.size() - 1);
+            if (model != NULL)
+            {
+                commonMosaicInputIdx[output->m_instId].push_back(m_postProcObjs.size() - 1);
+                commonMosaicInputType[output->m_instId].push_back(true);
+            }
+            else
+            {
+                commonMosaicInputIdx[output->m_instId].push_back(m_multiScalerObjs.size() - 1);
+                commonMosaicInputType[output->m_instId].push_back(false);
+            }
 
             if(output->m_sinkType == "display" && m_displayObj == NULL)
             {
@@ -589,7 +628,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 {
                     status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
                                                               &m_multiScalerObjs[iter]->multiScalerObj2,
-                                                              m_multiScalerObjs[iter]->multiScalerObj1.output[0].arr[0],
+                                                              m_multiScalerObjs[iter]->multiScalerObj1.output[1].arr[0],
                                                               TIVX_TARGET_VPAC_MSC2);
                 }
 
@@ -617,7 +656,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
             {
                 status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
                                                           &m_multiScalerObjs[i]->multiScalerObj2,
-                                                          m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
+                                                          m_multiScalerObjs[i]->multiScalerObj1.output[1].arr[0],
                                                           TIVX_TARGET_VPAC_MSC2);
             }
         }
@@ -626,9 +665,8 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create pre process module. */
     for(uint i=0; i < m_multiScalerObjs.size(); i++)
     {
-        if(status == VX_SUCCESS)
-        {
-            /**
+        if(status == VX_SUCCESS && m_preProcObjs[i])
+        {            /**
              * If two back to back msc is needed , in case pre-proce resolution
              * is less tha 1/4th original image, the original image will be
              * resized to 1/4th by the first scaler node and the remaining
@@ -645,13 +683,13 @@ int32_t EdgeAIDemoImpl::setupFlows()
             {
                 status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph,
                                                          &m_preProcObjs[i]->dlPreProcObj,
-                                                         m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
+                                                         m_multiScalerObjs[i]->multiScalerObj1.output[1].arr[0],
                                                          TIVX_TARGET_MPU_0);
             }
         }
 
         /* Create tidl module. */
-        if(status == VX_SUCCESS)
+        if(status == VX_SUCCESS && m_tidlInfObjs[i])
         {
             status = tiovx_tidl_module_create(m_ovxGraph->context,
                                         m_ovxGraph->graph,
@@ -660,11 +698,11 @@ int32_t EdgeAIDemoImpl::setupFlows()
         }
 
         /* Create post process module. */
-        if(status == VX_SUCCESS)
+        if(status == VX_SUCCESS && m_postProcObjs[i])
         {
             status = tiovx_dl_post_proc_module_create(m_ovxGraph->graph,
                                             &m_postProcObjs[i]->dlPostProcObj,
-                                            m_multiScalerObjs[i]->multiScalerObj1.output[1].arr[0],
+                                            m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
                                             m_tidlInfObjs[i]->tidlObj.output, TIVX_TARGET_MPU_0);
         }
     }
@@ -672,11 +710,19 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create mosaic module. */
     for(uint i = 0; i < m_imgMosaicObjs.size(); i++)
     {
-        /* Connect appropriate post process node to its appropriate mosaic node. */
-        for(uint j = 0; j < postProcMosaicConn[i].size(); j++)
+        /* Connect appropriate post-process or msc node to its appropriate mosaic node. */
+        for(uint j = 0; j < commonMosaicInputIdx[i].size(); j++)
         {
-            int index = postProcMosaicConn[i][j];
-            m_imgMosaicObjs[i]->mosaic_input_arr[j] = m_postProcObjs[index]->dlPostProcObj.output_image.arr[0];
+            int index = commonMosaicInputIdx[i][j];
+            bool isInputPostProc = commonMosaicInputType[i][j];
+            if (isInputPostProc)
+            {
+                m_imgMosaicObjs[i]->mosaic_input_arr[j] = m_postProcObjs[index]->dlPostProcObj.output_image.arr[0];
+            }
+            else
+            {
+                m_imgMosaicObjs[i]->mosaic_input_arr[j] = m_multiScalerObjs[index]->multiScalerObj1.output[0].arr[0];
+            }
         }
         status = tiovx_img_mosaic_module_create(m_ovxGraph->graph,
                                                 &m_imgMosaicObjs[i]->imgMosaicObj,
@@ -1104,17 +1150,26 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 
     for(auto &iter : m_preProcObjs)
     {
-        tiovx_dl_pre_proc_module_delete(&iter->dlPreProcObj);
+        if (iter)
+        {
+            tiovx_dl_pre_proc_module_delete(&iter->dlPreProcObj);
+        }
     }
 
     for(auto &iter : m_postProcObjs)
     {
-        tiovx_dl_post_proc_module_delete(&iter->dlPostProcObj);
+        if (iter)
+        {
+            tiovx_dl_post_proc_module_delete(&iter->dlPostProcObj);
+        }
     }
 
     for(auto &iter : m_tidlInfObjs)
     {
-        tiovx_tidl_module_delete(&iter->tidlObj);
+        if (iter)
+        {
+            tiovx_tidl_module_delete(&iter->tidlObj);
+        }
     }
 
     for(auto &iter : m_imgMosaicObjs)
@@ -1158,19 +1213,28 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 
     for(auto &iter : m_preProcObjs)
     {
-        tiovx_dl_pre_proc_module_deinit(&iter->dlPreProcObj);
+        if (iter)
+        {
+            tiovx_dl_pre_proc_module_deinit(&iter->dlPreProcObj);
+        }
         delete iter;
     }
 
     for(auto &iter : m_postProcObjs)
     {
-        tiovx_dl_post_proc_module_deinit(&iter->dlPostProcObj);
+        if (iter)
+        {
+            tiovx_dl_post_proc_module_deinit(&iter->dlPostProcObj);
+        }
         delete iter;
     }
     
     for(auto &iter : m_tidlInfObjs)
     {
-        tiovx_tidl_module_deinit(&iter->tidlObj);
+        if (iter)
+        {
+            tiovx_tidl_module_deinit(&iter->tidlObj);
+        }
         delete iter;
     }
 

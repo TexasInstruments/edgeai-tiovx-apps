@@ -61,20 +61,21 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse MSC configuration.
+            /**
+             * Helper function to parse MSC configuration.
              *
-             * @param input_wd Width of the input frame
-             * @param input_ht Height of the input frame
-             * @param post_proc_wd Width of the output frame (for post-process)
-             * @param post_proc_ht Height of the output frame (for post-process)
-             * @param pre_proc_obj Pre-Processing object
+             * @param inputWidth Width of the input frame
+             * @param inputHeight Height of the input frame
+             * @param firstOutputWidth Width of the first output (maybe for post-process)
+             * @param firstOutputHeight Height of the first output (maybe for post-process)
+             * @param preProcObj Pre-Processing object
              *
              */
-            int32_t     getConfig(int32_t input_wd,
-                                  int32_t input_ht,
-                                  int32_t post_proc_wd,
-                                  int32_t post_proc_ht,
-                                  preProc *pre_proc_obj);
+            int32_t     getConfig(int32_t inputWidth,
+                                  int32_t inputHeight,
+                                  int32_t firstOutputWidth,
+                                  int32_t firstOutputHeight,
+                                  preProc *preProcObj);
 
         public:
             /* Data structure passed to MSC module */

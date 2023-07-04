@@ -382,8 +382,7 @@ namespace ti::edgeai::common
             /** Destructor. */
             ~FlowInfo();
 
-            int32_t initialize(map<string, ModelInfo*>   &modelMap,
-                               map<string, InputInfo*>   &inputMap,
+            int32_t initialize(map<string, InputInfo*>   &inputMap,
                                map<string, OutputInfo*>  &outputMap,
                                bool                      isMultiCam);
 
