@@ -64,14 +64,14 @@ int32_t multiScaler::getConfig(int32_t input_wd,
     int32_t cropHeight = pre_proc_obj->cropHeight;
     int32_t cropWidth = pre_proc_obj->cropWidth;
 
-    if (input_wd < post_proc_wd || input_ht < post_proc_ht)
+    if ( (input_wd < post_proc_wd) || (input_ht < post_proc_ht) )
     {
         LOG_ERROR("Output width or height invalid. MSC cannot handle upscaling.\n");
         status = -1;
         return status;
     }
 
-    if (input_wd/post_proc_wd > 4 || input_ht/post_proc_ht > 4)
+    if ( (input_wd/post_proc_wd > 4) || (input_ht/post_proc_ht > 4) )
     {
         LOG_ERROR("Output width or height invalid. "
                   "MSC cannot handle scaling down by more than 1/4.\n");
@@ -88,14 +88,13 @@ int32_t multiScaler::getConfig(int32_t input_wd,
     cropWidth    = input_wd - (2 * crop_start_x);
     cropHeight   = input_ht - (2 * crop_start_y);
 
-    if((cropWidth/pre_proc_obj->cropWidth) > 4
-       ||
-       (cropHeight/pre_proc_obj->cropHeight) > 4)
+    if( ((cropWidth/pre_proc_obj->cropWidth) > 4) ||
+        ((cropHeight/pre_proc_obj->cropHeight) > 4) )
     {
         multiScalerObj2.num_channels = 1;
         multiScalerObj2.num_outputs = 1;
         multiScalerObj2.input.bufq_depth = 1;
-        for(int out = 0; out < multiScalerObj2.num_outputs; out++)
+        for(int32_t out = 0; out < multiScalerObj2.num_outputs; out++)
         {
             multiScalerObj2.output[out].bufq_depth = 1;
         }
@@ -129,7 +128,7 @@ int32_t multiScaler::getConfig(int32_t input_wd,
     multiScalerObj1.num_channels = 1;
     multiScalerObj1.num_outputs = 2;
     multiScalerObj1.input.bufq_depth = 1;
-    for(int out = 0; out < multiScalerObj1.num_outputs; out++)
+    for(int32_t out = 0; out < multiScalerObj1.num_outputs; out++)
     {
         multiScalerObj1.output[out].bufq_depth = 1;
     }

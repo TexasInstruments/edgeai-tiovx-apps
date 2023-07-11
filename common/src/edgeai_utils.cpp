@@ -126,17 +126,17 @@ void getClassNames(const string &modelBasePath, char (*classnames)[256])
 
 const std::string to_fraction(std::string& num)
 {
-    if(_is_number<int>(num))
+    if(_is_number<int32_t>(num))
     {
         return num+"/1";
     }
     else if(_is_number<double>(num))
     {
-        int dec_pos = num.find(".");
-        int dec_length = num.length() - dec_pos - 1;
+        int32_t dec_pos = num.find(".");
+        int32_t dec_length = num.length() - dec_pos - 1;
         num.erase(dec_pos, 1);
-        int numerator = stoi(num);
-        int denom = pow(10,dec_length);
+        int32_t numerator = stoi(num);
+        int32_t denom = pow(10,dec_length);
         string fps = to_string(numerator)+"/"+to_string(denom);
         return fps;
     }

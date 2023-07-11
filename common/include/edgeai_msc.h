@@ -50,15 +50,13 @@ namespace ti::edgeai::common
     class multiScaler
     {
         public:
-            /* Default constructor. Use the compiler generated default one. */
+            /** Default constructor. Use the compiler generated default one. */
             multiScaler();
 
-            /* Destructor. */
+            /** Destructor. */
             ~multiScaler();
 
-            /**
-             * Helper function to dump the configuration information.
-             */
+            /** Helper function to dump the configuration information. */
             void        dumpInfo();
 
             /** Helper function to parse MSC configuration.
@@ -77,19 +75,21 @@ namespace ti::edgeai::common
                                   preProc *pre_proc_obj);
 
         public:
-            /* Data structure passed to MSC module */
+            /** Data structure passed to MSC module */
             TIOVXMultiScalerModuleObj     multiScalerObj1;
             
-            /* Optional second MSC to be used when need to scale by a factor
-             * more than 4.
+            /** Optional second MSC to be used when need to scale by a factor
+             *  more than 4.
              */
             TIOVXMultiScalerModuleObj     multiScalerObj2;
 
             /* True if multiSclaerObj2 is to be used. */
             bool                          useSecondaryMsc{false};
 
-            /* Flag to indicate if tiovx MSC node is first in subflow */
-            bool                          isFirstNode{true};
+            /** Flag to indicate if tiovx MSC node is first in subflow,
+             *  where a subflow corresonds to a unique model in a flow.
+             */
+            bool                          isHeadNode{true};
     };
 } // namespace ti::edgeai::common
 

@@ -71,7 +71,7 @@ namespace ti::edgeai::common
               *                   about mosaic.
               *
             */
-            int32_t     getConfig(vector<vector<int>> mosaicInfo);
+            int32_t     getConfig(vector<vector<int32_t>> mosaicInfo);
 
             /** Function to set mosaic baground buffer.
               *
@@ -93,7 +93,7 @@ namespace ti::edgeai::common
 
         private:
             /* Vector to store all mosaic co-ordinates and size*/
-            vector<vector<int>>        m_mosaicInfo{};
+            vector<vector<int32_t>>        m_mosaicInfo{};
     };
 
 } // namespace ti::edgeai::common

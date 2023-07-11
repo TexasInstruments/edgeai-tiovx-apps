@@ -55,13 +55,26 @@ namespace ti::edgeai::common
     using namespace std;
     using namespace ti::edgeai::common;
 
+    /**
+     * \brief Structure for holding parameters for specifying pipeline flows.
+     *        Multiple SubFlows can be there in one data flow, where a flow
+     *        is defined as data flowing through {pre-processing, inference,
+     *        post-processing}.
+     *
+     * \ingroup group_edgeai_demo_config
+     */
     struct SubFlowConfig
     {
         string                 model;
         string                 output;
-        vector<int>            mosaic_info;
+        vector<int32_t>        mosaic_info;
     };
 
+    /**
+     * \brief Structure used to initailize FlowInfo.
+     *
+     * \ingroup group_edgeai_demo_config
+     */
     struct FlowConfig
     {
         string                input;
@@ -86,14 +99,19 @@ namespace ti::edgeai::common
              *
              * @param data Integer Vector containing posX,posY,width,height
              */
-            MosaicInfo(vector<int> data);
+            MosaicInfo(vector<int32_t> &data);
 
             /** Destructor. */
             ~MosaicInfo();
 
-        public:
+            /**
+             * Helper function to dump the configuration information.
+             *
+             * @param prefix Prefix to be added to the log outputs.
+             */
             void dumpInfo(const char *prefix="") const;
 
+        public:
             /** Post-process output width. */
             int32_t     m_width{};
 
@@ -363,7 +381,17 @@ namespace ti::edgeai::common
      * \brief Class for holding parameters for specifying pipeline flows. This
      *        class can handle more than one data flow, where a flow is defined
      *        as data flowing through {pre-processing, inference,
-     *        post-processing}.
+     *        post-processing}. Flow will be characterized by a unique input.
+     *        There can be multiple sub flows in a single flow, differentiated by
+     *        each unique model.
+     *        Eg:
+     *        flow0: [input2,model0,output0]
+     *        flow1: [input2,model1,output2]
+     *        flow2: [input0,model0,output2]
+     *        There are two flows in above example, one corresponds to input2
+     *        and other to input0. And there are two subflows in flow
+     *        corresponding to input2, one for model0 and other for model1,
+     *        whereas the flow with input0, just have single subflow.
      *
      * \ingroup group_edgeai_demo_config
      */
@@ -469,11 +497,14 @@ namespace ti::edgeai::common
             string                      m_title;
 
         private:
-            /** Vector of input order. */
-            vector<string>              m_inputOrder;
             /** Function for parsing the flow information.
              */
             int32_t parseFlowInfo(const YAML::Node &config);
+
+        private:
+            /** Vector of input order. */
+            vector<string>              m_inputOrder;
+
     };
 
 } //namespace ti::edgeai::common

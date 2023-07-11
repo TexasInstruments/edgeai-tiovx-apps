@@ -59,12 +59,12 @@ static void sigHandler(int32_t sig)
     }
 }
 
-int32_t main(int argc, char * argv[])
+int main(int32_t argc, char * argv[])
 {
-    int status = appInit();
+    int32_t status = appInit();
     if(status == -1)
     {
-        LOG_ERROR("app_init failed \n");
+        LOG_ERROR("appInit failed \n");
         exit(-1);
     }
 

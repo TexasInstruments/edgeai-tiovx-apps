@@ -77,6 +77,23 @@ namespace ti::edgeai::common
                                   sTIDL_IOBufDesc_t *ioBufDesc,
                                   int32_t           imageWidth,
                                   int32_t           imageHeight);
+        
+        private:
+            /**
+             * Copy Constructor.
+             *
+             * Copy Constructor is not required and allowed and hence prevent
+             * the compiler from generating a default Copy Constructor.
+             */
+            postProc(const postProc& ) = delete;
+
+            /**
+             * Assignment operator.
+             *
+             * Assignment is not required and allowed and hence prevent
+             * the compiler from generating a default assignment operator.
+             */
+            postProc & operator=(const postProc& rhs) = delete;
 
         public:
             /* Data structure passed to post process module */
@@ -86,7 +103,7 @@ namespace ti::edgeai::common
             uint8_t                     **mYUVColorMap{NULL};
 
             /* Max unique colors available for semantic segmentation */
-            int                         mMaxColorClass{0};
+            int32_t                     mMaxColorClass{0};
             
     };
 

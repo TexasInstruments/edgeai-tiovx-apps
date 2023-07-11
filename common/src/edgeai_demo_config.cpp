@@ -112,7 +112,7 @@ InputInfo::InputInfo(const YAML::Node &node)
                 string file(filename.path());
                 string imgExt = filesystem::path(file).extension();
 
-                if(imgExt == ".nv12" || imgExt == ".yuv")
+                if( (imgExt == ".nv12") || (imgExt == ".yuv") )
                 {
                     m_multiImageVect.push_back(file);
                 }
@@ -128,7 +128,7 @@ InputInfo::InputInfo(const YAML::Node &node)
                 return a < b;
             });
         }
-        else if (srcExt == ".nv12" || srcExt == ".yuv")
+        else if ( (srcExt == ".nv12") || (srcExt == ".yuv") )
         {
             m_srcType = "image";
         }
@@ -180,7 +180,7 @@ OutputInfo::OutputInfo(const YAML::Node    &node,
 
     sinkExt = filesystem::path(m_sink).extension();
 
-    if (sinkExt == ".nv12" || sinkExt == ".yuv")
+    if ( (sinkExt == ".nv12") || (sinkExt == ".yuv") )
     {
         m_sinkType = "image";
     }
@@ -217,7 +217,7 @@ int32_t OutputInfo::registerDispParams(const MosaicInfo  *mosaicInfo,
     int32_t             status = 0;
     int32_t             id;
 
-    if (!mosaicInfo->m_mosaicEnabled || !m_mosaicEnabled)
+    if ( (!mosaicInfo->m_mosaicEnabled) || (!m_mosaicEnabled) )
     {
         if (m_mosaicCnt == 0)
         {
@@ -253,7 +253,7 @@ OutputInfo::~OutputInfo()
     LOG_DEBUG("DESTRUCTOR\n");
 }
 
-MosaicInfo::MosaicInfo(vector<int> data)
+MosaicInfo::MosaicInfo(vector<int32_t> &data)
 {
     m_posX     = data[0];
     m_posY     = data[1];
@@ -408,8 +408,8 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
             break;
         }
 
-        if (mosaicInfo->m_width > inputInfo->m_width ||
-            mosaicInfo->m_height > inputInfo->m_height)
+        if ( (mosaicInfo->m_width > inputInfo->m_width) ||
+             (mosaicInfo->m_height > inputInfo->m_height) )
         {
             LOG_ERROR("Flow output resolution cannot be "
                         "greater than input resolution.\n");
@@ -456,7 +456,7 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
             break;
         }
 
-        if(inputInfo->m_source == "camera" && isMultiCam)
+        if( (inputInfo->m_source == "camera") && (isMultiCam) )
         { 
             m_mosaicInfoVec.push_back({mosaicInfo->m_posX, mosaicInfo->m_posY,
                                         mosaicWidth, mosaicHeight,
@@ -670,22 +670,21 @@ int32_t DemoConfig::parseFlowInfo(const YAML::Node &config)
 
             string model_name = flows[s][1].as<string>();
             string output     = flows[s][2].as<string>();
-            vector<int> mosaic_info{};
+            vector<int32_t> mosaic_info{};
             SubFlowConfig subFlowConfig;
             subFlowConfig.model = model_name;
             subFlowConfig.output = output;
 
             if (flows[s].size() > 3)
             {
-                mosaic_info = flows[s][3].as<vector<int>>();
+                mosaic_info = flows[s][3].as<vector<int32_t>>();
             }
             subFlowConfig.mosaic_info = mosaic_info;
 
             flowConfig.subflow_configs.push_back(subFlowConfig);      
         }
 
-        auto const &f = new FlowInfo(flowConfig);
-        m_flowMap[flow_name] = f;
+        m_flowMap[flow_name] = new FlowInfo(flowConfig);
     }
 
     return status;

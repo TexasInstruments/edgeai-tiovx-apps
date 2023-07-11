@@ -69,7 +69,7 @@ postProc::~postProc()
 {
     if(mYUVColorMap != NULL)
     {
-        for(int i = 0; i < mMaxColorClass; ++i)
+        for(int32_t i = 0; i < mMaxColorClass; ++i)
         {
             delete [] mYUVColorMap[i];
         }
@@ -146,12 +146,12 @@ int32_t postProc::getConfig(const string        &modelBasePath,
             LOG_ERROR("Invalid task type defined! \n");
         }
 
-        for(int i=0; i<6; i++)
+        for(int32_t i=0; i<6; i++)
         {
             dlPostProcObj.params.od_prms.formatter[i] = i;
         }
 
-        if (postProc["formatter"] && postProc["formatter"]["src_indices"])
+        if ( (postProc["formatter"]) && (postProc["formatter"]["src_indices"]) )
         {
             const YAML::Node &formatterNode = postProc["formatter"]["src_indices"];
 
@@ -174,8 +174,8 @@ int32_t postProc::getConfig(const string        &modelBasePath,
                 dlPostProcObj.params.od_prms.formatter[4] = formatterNode[0].as<int32_t>();
                 dlPostProcObj.params.od_prms.formatter[5] = formatterNode[1].as<int32_t>();
             }
-            else if ((formatterNode.size() == 6) ||
-                     (formatterNode.size() == 4))
+            else if ( (formatterNode.size() == 6) ||
+                      (formatterNode.size() == 4) )
             {
                 for (uint8_t i = 0; i < formatterNode.size(); i++)
                 {
@@ -188,13 +188,6 @@ int32_t postProc::getConfig(const string        &modelBasePath,
                 status = -1;
             }
         }
-
-        // dlPostProcObj.params.ignoreIndex = -1;
-
-        // if (postProc["ignore_index"] && !postProc["ignore_index"].IsNull())
-        // {
-        //     dlPostProcObj.params.ignoreIndex = postProc["ignore_index"].as<int32_t>();
-        // }
 
         if (postProc["normalized_detections"])
         {
@@ -221,7 +214,7 @@ int32_t postProc::getConfig(const string        &modelBasePath,
 
         const YAML::Node   &metric = yaml["metric"];
 
-        if (metric && metric["label_offset_pred"])
+        if ( (metric) && (metric["label_offset_pred"]) )
         {
             // Read the width and height values
             const YAML::Node &offset = metric["label_offset_pred"];
@@ -234,7 +227,7 @@ int32_t postProc::getConfig(const string        &modelBasePath,
             else if (offset.Type() == YAML::NodeType::Map)
             {
                 bool first_iter = true;
-                int cntr = 0;
+                int32_t cntr = 0;
                 for (const auto& it : offset)
                 {
                     if (it.second.Type() == YAML::NodeType::Scalar)
@@ -272,7 +265,7 @@ int32_t postProc::getConfig(const string        &modelBasePath,
         {
             mMaxColorClass = sizeof(RGB_COLOR_MAP)/sizeof(RGB_COLOR_MAP[0]);
             mYUVColorMap = new uint8_t*[mMaxColorClass];
-            for(int i = 0; i < mMaxColorClass; ++i)
+            for(int32_t i = 0; i < mMaxColorClass; ++i)
             {
                 mYUVColorMap[i] = new uint8_t[3];
                 uint8_t R = RGB_COLOR_MAP[i][0];
@@ -305,7 +298,7 @@ int32_t postProc::getConfig(const string        &modelBasePath,
         dlPostProcObj.input_image.width = imageWidth;
         dlPostProcObj.input_image.height = imageHeight;
 
-        for(uint i=0; i<dlPostProcObj.num_input_tensors; i++)
+        for(uint32_t i=0; i<dlPostProcObj.num_input_tensors; i++)
         {
             dlPostProcObj.input_tensor[i].bufq_depth = 1;
             dlPostProcObj.input_tensor[i].datatype = getTensorDataType(ioBufDesc->outElementType[i]);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -89,6 +89,14 @@ namespace ti::edgeai::common
             ~EdgeAIDemo();
 
         private:
+            /**
+             * Copy Constructor.
+             *
+             * Copy Constructor is not required and allowed and hence prevent
+             * the compiler from generating a default Copy Constructor.
+             */
+            EdgeAIDemo(const EdgeAIDemo& ) = delete;
+
             /**
              * Assignment operator.
              *

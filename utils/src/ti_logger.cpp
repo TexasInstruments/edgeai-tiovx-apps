@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
+ *  Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -122,9 +122,12 @@ void logMsg(LogLevel level, const char *format, ...)
 
         struct tm* timeInfo = localtime(&tv.tv_sec);
 
-        printf("[%02i:%02i:%02i.%03i.%06i]:%s",
-                timeInfo->tm_hour, timeInfo->tm_min,
-                timeInfo->tm_sec, millisec, microsec, gLogStr);
+        if(timeInfo != NULL)
+        {
+            printf("[%02i:%02i:%02i.%03i.%06i]:%s",
+                    timeInfo->tm_hour, timeInfo->tm_min,
+                    timeInfo->tm_sec, millisec, microsec, gLogStr);
+        }
 
         va_end(ap);
     }

@@ -56,13 +56,13 @@ imgMosaic::~imgMosaic()
     LOG_DEBUG("imgMosaic DESTRUCTOR\n");
 }
 
-int32_t imgMosaic::getConfig(vector<vector<int>> mosaicInfo)
+int32_t imgMosaic::getConfig(vector<vector<int32_t>> mosaicInfo)
 {
-    int32_t status = 0;
-    uint    i;
-    int     cam_input_sel = -1;
-    int     cam_channel_sel = 0;
-    int     file_input_sel = -1;
+    int32_t     status = 0;
+    uint32_t    i;
+    int32_t     cam_input_sel = -1;
+    int32_t     cam_channel_sel = 0;
+    int32_t     file_input_sel = -1;
 
     /** m_mosaicInfo contains information about mosaics for same output across 
      *  all the flows. Each element of mosaic info is a vector containing
@@ -134,8 +134,8 @@ void imgMosaic::setBackground(string title, vector<string> mosaicTitle)
     FontProperty                title_font;
     FontProperty                text_font;
     YUVColor                    bg_color;
-    uint                        titleX;
-    uint                        i;
+    uint32_t                    titleX;
+    uint32_t                    i;
 
     /* Query Background image height and width*/
     vxQueryImage(imgMosaicObj.background_image[0],

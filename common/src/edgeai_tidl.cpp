@@ -45,6 +45,9 @@
 
 namespace ti::edgeai::common
 {
+
+#define MAX_NUM_OF_TIDL_OUTPUT_TENSORS 8
+
 using namespace ti::utils;
 
 /* Helper function to check if string ends with particular substring. */
@@ -119,9 +122,12 @@ int32_t tidlInf::getConfig(const string &modelBasePath, vx_context context)
     tidlObj.en_out_tensor_write = 0;
     tidlObj.input[0].bufq_depth = 1;
 
-    for(uint i=0; i < tidlObj.num_output_tensors; i++)
+    if(tidlObj.num_output_tensors < MAX_NUM_OF_TIDL_OUTPUT_TENSORS)
     {
-        tidlObj.output[i].bufq_depth = 1;
+        for(uint32_t i=0; i < tidlObj.num_output_tensors; i++)
+        {
+            tidlObj.output[i].bufq_depth = 1;
+        }
     }
 
     /* Extracting IO Buf Descriptor from config */
@@ -251,7 +257,7 @@ void tidlInf::dumpInfo()
     LOG_INFO("ioBufDesc->numOutputBuf = %d \n\n", ioBufDesc->numOutputBuf);
 
     LOG_INFO("Output details\n");
-    for(int j=0;j<ioBufDesc->numOutputBuf;j++)
+    for(int32_t j=0;j<ioBufDesc->numOutputBuf;j++)
     {
         LOG_INFO("Output data type %d = %ld \n\n",
                 j,
