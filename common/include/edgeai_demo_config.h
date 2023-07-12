@@ -206,14 +206,8 @@ namespace ti::edgeai::common
             /** Input data height. */
             int32_t                             m_height{};
 
-            /** Data format for camera input. */
-            string                              m_format{"NV12"};
-
             /** Loop file input after EOF. */
             bool                                m_loop{true};
-
-            /** v4l subdev id of sensor. */
-            int32_t                             m_subdev_id{2};
 
             /** Frame rate. */
             string                              m_framerate{};
@@ -228,7 +222,10 @@ namespace ti::edgeai::common
             bool                                m_ldc{false};
 
             /** Sensor ID for raw sensor. */
-            string                              m_sen_id{"imx219"};
+            string                              m_sen_id{"imx390"};
+
+            /** VPAC ID */
+            uint8_t                             m_vpac_id{1};
     };
 
     /**

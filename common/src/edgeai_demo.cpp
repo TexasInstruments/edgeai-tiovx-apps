@@ -251,6 +251,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     string                          modelName{""};
     int32_t                         cameraChMask = 0;
     bool                            isMultiCam = false;
+    InputInfo*                      camInputInfo;
 
     for(int32_t i = 0; i < OutputInfo::m_numInstances; i++)
     {
@@ -284,6 +285,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
         {
             cameraChMask = cameraChMask | (1 << input->m_cameraId);
             m_numCam++;
+            camInputInfo = input;
         }
     }
 
@@ -299,7 +301,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     if(cameraChMask != 0)
     {
         m_cameraObj = new camera;
-        m_cameraObj->getConfig(cameraChMask);
+        m_cameraObj->getConfig(camInputInfo, cameraChMask);
         if(status == VX_SUCCESS)
         {
             status = tiovx_sensor_module_init(&m_cameraObj->sensorObj,
@@ -543,6 +545,17 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create all camera related module if needed.*/
     if(m_cameraObj != NULL)
     {
+        string viss_target = TIVX_TARGET_VPAC_VISS1;
+        string ldc_target = TIVX_TARGET_VPAC_LDC1;
+
+#if defined(SOC_J784S4)
+        if(camInputInfo->m_vpac_id == 2)
+        {
+            viss_target = TIVX_TARGET_VPAC2_VISS1;
+            ldc_target = TIVX_TARGET_VPAC2_LDC1;
+        }
+#endif
+
         if(status == VX_SUCCESS)
         {
             status = tiovx_capture_module_create(m_ovxGraph->graph,
@@ -557,7 +570,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                               &m_cameraObj->vissObj,
                                               m_cameraObj->captureObj.image_arr[0],
                                               NULL,
-                                              TIVX_TARGET_VPAC_VISS1);
+                                              viss_target.c_str());
         }
         if(status == VX_SUCCESS)
         {
@@ -570,7 +583,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
             status = tiovx_ldc_module_create(m_ovxGraph->graph,
                                              &m_cameraObj->ldcObj,
                                              m_cameraObj->vissObj.output2.arr[0],
-                                             TIVX_TARGET_VPAC_LDC1);
+                                             ldc_target.c_str());
         }
     }
 

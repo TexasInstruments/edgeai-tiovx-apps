@@ -71,19 +71,9 @@ InputInfo::InputInfo(const YAML::Node &node)
         m_cameraId = node["camera-id"].as<int32_t>();
     }
 
-    if (node["format"])
-    {
-        m_format = node["format"].as<string>();
-    }
-
     if (node["loop"])
     {
         m_loop = node["loop"].as<bool>();
-    }
-
-    if (node["subdev-id"])
-    {
-        m_subdev_id = node["subdev-id"].as<int32_t>();
     }
 
     if (node["ldc"])
@@ -94,6 +84,20 @@ InputInfo::InputInfo(const YAML::Node &node)
     if (node["sen-id"])
     {
         m_sen_id = node["sen-id"].as<string>();
+    }
+
+    if (node["vpac-id"])
+    {
+        m_vpac_id = node["vpac-id"].as<uint8_t>();
+#if defined(SOC_J784S4)
+        if( (m_vpac_id <= 0) || (m_vpac_id > 2) )
+#else
+        if(m_vpac_id != 1)
+#endif
+        {
+            LOG_WARN("Wrong VPAC ID, setting vpac-id as 1 \n");
+            m_vpac_id = 1;
+        }
     }
 
     srcExt = filesystem::path(m_source).extension();

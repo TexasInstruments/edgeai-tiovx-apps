@@ -37,6 +37,9 @@
 #include <stdint.h>
 #include <vector>
 
+/* Module Headers */
+#include <common/include/edgeai_demo_config.h>
+
 /* OpenVX Headers */
 #include <tiovx_capture_module.h>
 #include <tiovx_sensor_module.h>
@@ -72,7 +75,7 @@ namespace ti::edgeai::common
              *
              * @param chMask channel mask for sensor node.
              */
-            int32_t     getConfig(int32_t chMask);
+            int32_t     getConfig(InputInfo* camInputInfo, int32_t chMask);
 
         public:
             /* Data structure passed to mosaic module */

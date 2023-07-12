@@ -23,6 +23,9 @@ inputs:
         # This is the port number of fusion board the camera is connected to.
         camera-id: 0
 
+        # VPAC id, needed only for J784S4 to choose between 2 VPACs
+        vpac-id: 1
+
     input1:
         # Directory containing nv12 images of same resolution.
         source: /opt/edgeai-test-data/images/

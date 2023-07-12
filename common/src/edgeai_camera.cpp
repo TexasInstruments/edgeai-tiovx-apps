@@ -49,16 +49,28 @@ camera::~camera()
     LOG_DEBUG("multiScaler DESTRUCTOR\n");
 }
 
-int32_t camera::getConfig(int32_t chMask)
+int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
 {
     vx_status status = VX_SUCCESS;
+
+    string viss_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_viss_wdr.bin";
+    string ldc_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_ldc_wdr.bin";
 
     tiovx_sensor_module_params_init(&sensorObj);
     sensorObj.is_interactive = 0;
     sensorObj.ch_mask = chMask;
 
     tiovx_sensor_module_query(&sensorObj);
-    sensorObj.sensor_index = 0; /* App works only for IMX390 2MP cameras */
+
+    /* App works only for IMX390 2MP cameras */
+    if(camInputInfo->m_sen_id == "imx390")
+    {
+        sensorObj.sensor_index = 0;
+    }
+    else
+    {
+        throw runtime_error("App works only for IMX390 2MP cameras now. \n");
+    }
 
     tiovx_capture_module_params_init(&captureObj, &sensorObj);
     captureObj.enable_error_detection = 0; // or 1
@@ -69,7 +81,7 @@ int32_t camera::getConfig(int32_t chMask)
 
     snprintf(vissObj.dcc_config_file_path,
              TIVX_FILEIO_FILE_PATH_LENGTH,
-             "/opt/imaging/imx390/dcc_viss_wdr.bin");
+             viss_dcc_path.c_str());
 
     vissObj.input.bufq_depth = 1;
 
@@ -100,12 +112,9 @@ int32_t camera::getConfig(int32_t chMask)
     /* LDC Module params init */
     snprintf(ldcObj.dcc_config_file_path,
              TIVX_FILEIO_FILE_PATH_LENGTH,
-             "/opt/imaging/imx390/dcc_ldc_wdr.bin");
+             ldc_dcc_path.c_str());
 
-    snprintf(ldcObj.lut_file_path,
-             TIVX_FILEIO_FILE_PATH_LENGTH,
-             "/opt/edgeai-test-data/raw_images/modules_test/imx390_ldc_lut_1920x1080.bin");
-
+    /* Configuring LDC in DCC mode */
     ldcObj.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA;
     ldcObj.en_out_image_write = 0;
     ldcObj.en_output1 = 0;
