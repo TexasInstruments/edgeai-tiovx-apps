@@ -107,6 +107,6 @@ namespace ti::edgeai::common
             
     };
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_POST_PROC_H_
+#endif /* _TI_EDGEAI_TIOVX_POST_PROC_H_ */

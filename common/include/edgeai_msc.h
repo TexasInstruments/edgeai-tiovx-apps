@@ -91,6 +91,6 @@ namespace ti::edgeai::common
              */
             bool                          isHeadNode{true};
     };
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_MSC_H_
+#endif /* _TI_EDGEAI_TIOVX_MSC_H_ */

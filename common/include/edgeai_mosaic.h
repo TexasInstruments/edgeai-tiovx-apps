@@ -96,6 +96,6 @@ namespace ti::edgeai::common
             vector<vector<int32_t>>        m_mosaicInfo{};
     };
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_MOSAIC_H_
+#endif /* _TI_EDGEAI_TIOVX_MOSAIC_H_ */

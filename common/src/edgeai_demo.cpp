@@ -991,7 +991,7 @@ int32_t EdgeAIDemoImpl::startDemo()
         }
         cnt++;
 
-        /* HACK: If no camera input then sleep of 1 second to maintain FPS for image input */
+        /* If no camera input then sleep of 1 second to maintain FPS for image input */
         if(m_numCam == 0)
         {
             sleep(1);
@@ -1188,4 +1188,4 @@ void EdgeAIDemo::waitForExit()
     m_impl->waitForExit();
 }
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */

@@ -91,6 +91,6 @@ namespace ti::edgeai::common
             string                  network_file_path{""};
     };
     
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_TIDL_H_
+#endif /* _TI_EDGEAI_TIOVX_TIDL_H_ */

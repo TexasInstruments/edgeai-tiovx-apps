@@ -114,7 +114,7 @@ int32_t imgMosaic::getConfig(vector<vector<int32_t>> mosaicInfo)
     }
 
     /* Number of time to clear the output buffer before it gets reused */
-    imgMosaicObj.params.clear_count  = 4; // CAPTURE BUFQ DEPTH
+    imgMosaicObj.params.clear_count  = 4; /* CAPTURE BUFQ DEPTH */
     
     return status;
 }
@@ -210,4 +210,4 @@ void imgMosaic::setBackground(string title, vector<string> mosaicTitle)
     }
 }
 
-}
+} /* namespace ti::edgeai::common */

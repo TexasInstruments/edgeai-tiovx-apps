@@ -141,5 +141,5 @@ void logSetLevel(LogLevel level)
     }
 }
 
-} // namespace ti::edgeai::utils
+} /* namespace ti::edgeai::utils */
 

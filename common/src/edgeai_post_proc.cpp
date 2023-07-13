@@ -216,7 +216,7 @@ int32_t postProc::getConfig(const string        &modelBasePath,
 
         if ( (metric) && (metric["label_offset_pred"]) )
         {
-            // Read the width and height values
+            /* Read the width and height values */
             const YAML::Node &offset = metric["label_offset_pred"];
 
             if (offset.Type() == YAML::NodeType::Scalar)
@@ -327,4 +327,4 @@ int32_t postProc::getConfig(const string        &modelBasePath,
     return status;
 }
 
-}
+} /* namespace ti::edgeai::common */

@@ -71,6 +71,16 @@ InputInfo::InputInfo(const YAML::Node &node)
         m_cameraId = node["camera-id"].as<int32_t>();
     }
 
+    if (node["viss-dcc-path"])
+    {
+        m_vissDccPath = node["viss-dcc-path"].as<string>();
+    }
+
+    if (node["ldc-dcc-path"])
+    {
+        m_ldcDccPath = node["ldc-dcc-path"].as<string>();
+    }
+
     if (node["loop"])
     {
         m_loop = node["loop"].as<bool>();
@@ -703,5 +713,5 @@ DemoConfig::~DemoConfig()
     DeleteMap(m_flowMap);
 }
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 

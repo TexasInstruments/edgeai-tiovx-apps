@@ -93,13 +93,13 @@ namespace ti::utils
      */
     void logSetLevel(LogLevel level);
 
-} // namespace ti::edgeai::utils
+} /* namespace ti::edgeai::utils */
 
-// ALways have the error reporting
+/* ALways have the error reporting */
 #define LOG_ERROR(msg, ...) logMsg(ERROR, "[%s:%04d] " msg, __FUNCTION__, __LINE__,## __VA_ARGS__)
 #define LOG_ERROR_RAW(msg, ...) logMsgRaw(ERROR, msg, ## __VA_ARGS__)
 
-// Control the other levels for performance reasons
+/* Control the other levels for performance reasons */
 #if !defined(MINIMAL_LOGGING)
 
 #define LOG_DEBUG(msg, ...) logMsg(DEBUG, "[%s:%04d] " msg, __FUNCTION__, __LINE__,## __VA_ARGS__)
@@ -111,7 +111,7 @@ namespace ti::utils
 #define LOG_WARN_RAW(msg, ...)  logMsgRaw(WARN, msg, ## __VA_ARGS__)
 #define LOG_INFO_RAW(msg, ...)  logMsgRaw(INFO, msg, ## __VA_ARGS__)
 
-#else // defined(MINIMAL_LOGGING)
+#else /* defined(MINIMAL_LOGGING) */
 
 #define LOG_DEBUG(msg, ...)
 #define LOG_WARN(msg, ...)
@@ -121,6 +121,6 @@ namespace ti::utils
 #define LOG_WARN_RAW(msg, ...)
 #define LOG_INFO_RAW(msg, ...)
 
-#endif // if-else !defined(MINIMAL_LOGGING)
-#endif // _TI_EDGEAI_LOGGER_H_
+#endif /* if-else !defined(MINIMAL_LOGGING) */
+#endif /* _TI_EDGEAI_LOGGER_H_ */
 

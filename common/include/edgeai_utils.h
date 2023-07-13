@@ -83,7 +83,7 @@ namespace ti::edgeai::common
      */
     template<typename Numeric> bool _is_number(const string& s);
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
 #endif /* _TI_EDGEAI_TIOVX_UTILS_H_ */
 

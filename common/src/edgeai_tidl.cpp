@@ -285,4 +285,4 @@ void tidlInf::dumpInfo()
     }
 }
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */

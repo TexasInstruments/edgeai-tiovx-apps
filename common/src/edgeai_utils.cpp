@@ -52,33 +52,32 @@ vx_size getTensorDataType(vx_int32 tidl_type)
 {
     vx_size openvx_type = VX_TYPE_INVALID;
 
-    if (tidl_type == TIDL_UnsignedChar)
+    switch (tidl_type)
     {
-        openvx_type = VX_TYPE_UINT8;
-    }
-    else if(tidl_type == TIDL_SignedChar)
-    {
-        openvx_type = VX_TYPE_INT8;
-    }
-    else if(tidl_type == TIDL_UnsignedShort)
-    {
-        openvx_type = VX_TYPE_UINT16;
-    }
-    else if(tidl_type == TIDL_SignedShort)
-    {
-        openvx_type = VX_TYPE_INT16;
-    }
-    else if(tidl_type == TIDL_UnsignedWord)
-    {
-        openvx_type = VX_TYPE_UINT32;
-    }
-    else if(tidl_type == TIDL_SignedWord)
-    {
-        openvx_type = VX_TYPE_INT32;
-    }
-    else if(tidl_type == TIDL_SinglePrecFloat)
-    {
-        openvx_type = VX_TYPE_FLOAT32;
+        case TIDL_UnsignedChar:
+            openvx_type = VX_TYPE_UINT8;
+            break;
+        case TIDL_SignedChar:
+            openvx_type = VX_TYPE_INT8;
+            break;
+        case TIDL_UnsignedShort:
+            openvx_type = VX_TYPE_UINT16;
+            break;
+        case TIDL_SignedShort:
+            openvx_type = VX_TYPE_INT16;
+            break;
+        case TIDL_UnsignedWord:
+            openvx_type = VX_TYPE_UINT32;
+            break;
+        case TIDL_SignedWord:
+            openvx_type = VX_TYPE_INT32;
+            break;
+        case TIDL_SinglePrecFloat:
+            openvx_type = VX_TYPE_FLOAT32;
+            break;
+        default:
+            openvx_type = VX_TYPE_INVALID;
+            break;
     }
 
     return openvx_type;
@@ -98,7 +97,7 @@ void getClassNames(const string &modelBasePath, char (*classnames)[256])
 
     const YAML::Node   &categories = yaml["categories"];
 
-    // Validate the parsed yaml configuration
+    /* Validate the parsed yaml configuration */
     if (!categories)
     {
         printf("Parameter categories missing in dataset file.\n");
@@ -154,5 +153,5 @@ bool _is_number(const std::string& s)
     return((std::istringstream(s) >> n >> std::ws).eof());
 }
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 

@@ -30,8 +30,8 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIOVX_CAPTURE_H_
-#define _TI_EDGEAI_TIOVX_CAPTURE_H_
+#ifndef _TI_EDGEAI_TIOVX_CAMERA_H_
+#define _TI_EDGEAI_TIOVX_CAMERA_H_
 
 /* Standard Headers */
 #include <stdint.h>
@@ -52,7 +52,7 @@ namespace ti::edgeai::common
     using namespace std;
 
     /**
-     * \brief Class that wraps the imx390 camera related configuration
+     * \brief Class that wraps the camera related configuration
      *
      * \ingroup group_edgeai_common
      */
@@ -95,6 +95,6 @@ namespace ti::edgeai::common
 
     };
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_CAPTURE_H_
+#endif /* _TI_EDGEAI_TIOVX_CAPTURE_H_ */

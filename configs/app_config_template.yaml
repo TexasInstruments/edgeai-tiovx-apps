@@ -11,8 +11,11 @@ inputs:
     # - <some_path>/filename.nv12   [Image]
     #
     input0:
-        # IMX390 Camera Source
+        # Camera Source
         source: camera
+
+        # Sensor id -  by default set to imx390
+        sen-id: imx390
   
         # Input data width
         width: 1920
@@ -23,8 +26,14 @@ inputs:
         # This is the port number of fusion board the camera is connected to.
         camera-id: 0
 
-        # VPAC id, needed only for J784S4 to choose between 2 VPACs
+        # VPAC id, needed only for devices with more than one VPAC to choose from (optional)
         vpac-id: 1
+
+        # VISS DCC file path (optional)
+        viss-dcc-path: /opt/imaging/imx390/dcc_viss_wdr.bin
+
+        # LDC DCC file path (optional)
+        ldc-dcc-path: /opt/imaging/imx390/dcc_ldc_wdr.bin
 
     input1:
         # Directory containing nv12 images of same resolution.

@@ -99,7 +99,7 @@ CmdlineArgs::parse(int32_t        argc,
 
     }
 
-    // Check if the specified configuration file exists
+    /* Check if the specified configuration file exists */
     if (!std::filesystem::exists(configFile))
     {
         LOG_ERROR("The file [%s] does not exist.\n",
@@ -112,5 +112,5 @@ CmdlineArgs::parse(int32_t        argc,
 
     return;
 }
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 

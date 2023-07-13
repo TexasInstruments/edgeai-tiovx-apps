@@ -101,15 +101,23 @@ int32_t multiScaler::getConfig(int32_t input_wd,
         multiScalerObj2.interpolation_method = VX_INTERPOLATION_BILINEAR;
         multiScalerObj2.color_format = VX_DF_IMAGE_NV12;
 
-        if (cropWidth/4 > pre_proc_obj->cropWidth)
+        if ( (cropWidth/4) > pre_proc_obj->cropWidth)
+        {
             multiScalerObj2.input.width = cropWidth/4;
+        }
         else
+        {
             multiScalerObj2.input.width = pre_proc_obj->cropWidth;
+        }
 
-        if (cropHeight/4 > pre_proc_obj->cropHeight)
+        if ( (cropHeight/4) > pre_proc_obj->cropHeight)
+        {
             multiScalerObj2.input.height = cropHeight/4;
+        }
         else
+        {
             multiScalerObj2.input.height =  pre_proc_obj->cropHeight;
+        }
 
         multiScalerObj2.output[0].width = pre_proc_obj->cropWidth;
         multiScalerObj2.output[0].height = pre_proc_obj->cropHeight;
@@ -173,4 +181,4 @@ int32_t multiScaler::getConfig(int32_t input_wd,
     return status;
 }
 
-}
+} /* namespace ti::edgeai::common */

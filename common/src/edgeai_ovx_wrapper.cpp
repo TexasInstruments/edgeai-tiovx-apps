@@ -90,4 +90,4 @@ ovxGraph::~ovxGraph()
 
 }
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */

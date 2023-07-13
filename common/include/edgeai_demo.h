@@ -46,7 +46,7 @@
 
 namespace ti::edgeai::common
 {
-    // Forward declaration
+    /* Forward declaration */
     class EdgeAIDemoImpl;
 
     /**
@@ -110,6 +110,6 @@ namespace ti::edgeai::common
             EdgeAIDemoImpl                     *m_impl{nullptr};
     };
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
 #endif /* _TI_EDGEAI_TIOVX_DEMO_H_ */

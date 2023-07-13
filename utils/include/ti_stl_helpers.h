@@ -60,7 +60,7 @@ namespace ti::utils
         vec.clear();
     }
 
-} // namespace ti::utils
+} /* namespace ti::utils */
 
 #endif /* _TI_STL_HELPERS_H_ */
 

@@ -83,37 +83,37 @@ int32_t preProc::getConfig(const string         &modelBasePath,
     /** Validate the parsed yaml configuration and create the configuration
      *  for the inference object creation
      */
-    if (!preProc)
+    if (preProc.IsNull())
     {
         LOG_ERROR("Preprocess configuration parameters missing.\n");
         status = -1;
     }
-    else if (!session["input_mean"])
+    else if (session["input_mean"].IsNull())
     {
         LOG_ERROR("Mean value specification missing.\n");
         status = -1;
     }
-    else if (!session["input_scale"])
+    else if (session["input_scale"].IsNull())
     {
         LOG_ERROR("Scale value specification missing.\n");
         status = -1;
     }
-    else if (!session["input_details"])
+    else if (session["input_details"].IsNull())
     {
         LOG_ERROR("Input tensor details missing.\n");
         status = -1;
     }
-    else if (!preProc["data_layout"])
+    else if (preProc["data_layout"].IsNull())
     {
         LOG_ERROR("Data layout specification missing.\n");
         status = -1;
     }
-    else if (!preProc["resize"])
+    else if (preProc["resize"].IsNull())
     {
         LOG_ERROR("Resize specification missing.\n");
         status = -1;
     }
-    else if (!preProc["crop"])
+    else if (preProc["crop"].IsNull())
     {
         LOG_ERROR("Crop specification missing.\n");
         status = -1;
@@ -121,7 +121,7 @@ int32_t preProc::getConfig(const string         &modelBasePath,
     /* Check if crop information exists. */
     if (status == 0)
     {
-        // Read the width and height values
+        /* Read the width and height values */
         const YAML::Node &cropNode = preProc["crop"];
 
         if (cropNode.Type() == YAML::NodeType::Sequence)
@@ -141,7 +141,7 @@ int32_t preProc::getConfig(const string         &modelBasePath,
             cropWidth  = cropNode.as<int32_t>();
         }
 
-        // Read the width and height values
+        /* Read the width and height values */
         const YAML::Node &resizeNode = preProc["resize"];
 
         if (resizeNode.Type() == YAML::NodeType::Sequence)
@@ -155,7 +155,7 @@ int32_t preProc::getConfig(const string         &modelBasePath,
             resizeWidth  = resizeHeight;
         }
 
-        // Read the data layout
+        /* Read the data layout */
         if(preProc["data_layout"].as<std::string>() == "NCHW")
         {
             dlPreProcObj.params.channel_order = 0;
@@ -175,7 +175,7 @@ int32_t preProc::getConfig(const string         &modelBasePath,
         }
         
 
-        // Read the mean values
+        /* Read the mean values */
         const YAML::Node &meanNode = session["input_mean"];
         if (!meanNode.IsNull())
         {
@@ -191,7 +191,7 @@ int32_t preProc::getConfig(const string         &modelBasePath,
             dlPreProcObj.params.mean[2] = 0.0;
         }
 
-        // Read the scale values
+        /* Read the scale values */
         const YAML::Node &scaleNode = session["input_scale"];
         if (!scaleNode.IsNull())
         {
@@ -252,4 +252,4 @@ int32_t preProc::getConfig(const string         &modelBasePath,
     return status;
 }
 
-}
+} /* namespace ti::edgeai::common */

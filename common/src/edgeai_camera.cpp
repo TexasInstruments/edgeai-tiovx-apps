@@ -53,8 +53,26 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
 {
     vx_status status = VX_SUCCESS;
 
-    string viss_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_viss_wdr.bin";
-    string ldc_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_ldc_wdr.bin";
+    string viss_dcc_path{""};
+    string ldc_dcc_path{""};
+
+    if(camInputInfo->m_vissDccPath.empty())
+    {
+        viss_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_viss_wdr.bin";
+    }
+    else
+    {
+        viss_dcc_path = camInputInfo->m_vissDccPath;
+    }
+
+    if(camInputInfo->m_ldcDccPath.empty())
+    {
+        ldc_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_ldc_wdr.bin";
+    }
+    else
+    {
+        ldc_dcc_path = camInputInfo->m_ldcDccPath;
+    }
 
     tiovx_sensor_module_params_init(&sensorObj);
     sensorObj.is_interactive = 0;
@@ -73,8 +91,8 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
     }
 
     tiovx_capture_module_params_init(&captureObj, &sensorObj);
-    captureObj.enable_error_detection = 0; // or 1
-    captureObj.out_bufq_depth = 4; // This must be greater than 3
+    captureObj.enable_error_detection = 0; /* or 1 */
+    captureObj.out_bufq_depth = 4; /* This must be greater than 3 */
 
     /* VISS Module params init */
     tivx_vpac_viss_params_init(&vissObj.params);
@@ -95,9 +113,9 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
     vissObj.input.params.format[0].msb      = sensorObj.sensorParams.sensorInfo.raw_params.format[0].msb;
     vissObj.ae_awb_result_bufq_depth        = 1;
 
-    vissObj.output_select[0] = TIOVX_VISS_MODULE_OUTPUT_NA; // 0
+    vissObj.output_select[0] = TIOVX_VISS_MODULE_OUTPUT_NA; /* 0 */
     vissObj.output_select[1] = TIOVX_VISS_MODULE_OUTPUT_NA;
-    vissObj.output_select[2] = TIOVX_VISS_MODULE_OUTPUT_EN; // 1
+    vissObj.output_select[2] = TIOVX_VISS_MODULE_OUTPUT_EN; /* 1 */
     vissObj.output_select[3] = TIOVX_VISS_MODULE_OUTPUT_NA;
     vissObj.output_select[4] = TIOVX_VISS_MODULE_OUTPUT_NA;
 
@@ -124,10 +142,14 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
     ldcObj.input.width = vissObj.output2.width;
     ldcObj.input.height = vissObj.output2.height;
 
-    ldcObj.init_x = 0;
-    ldcObj.init_y = 0;
-    ldcObj.table_width = 1920;
-    ldcObj.table_height = 1080;
+    if(camInputInfo->m_sen_id == "imx390")
+    {
+        ldcObj.init_x = 0;
+        ldcObj.init_y = 0;
+        ldcObj.table_width = 1920;
+        ldcObj.table_height = 1080;
+    }
+
     ldcObj.ds_factor = 2;
     ldcObj.out_block_width = 64;
     ldcObj.out_block_height = 32;
@@ -141,4 +163,4 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
     return status;
 }
 
-}
+} /* namespace ti::edgeai::common */

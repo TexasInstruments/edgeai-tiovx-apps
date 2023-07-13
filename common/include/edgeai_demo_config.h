@@ -200,6 +200,12 @@ namespace ti::edgeai::common
             /* Channel Id for camera input from fusion board */
             int32_t                             m_cameraId{0};
 
+            /** Path used for providing VISS DCC file path */
+            string                              m_vissDccPath{""};
+
+            /** Path used for providing LDC DCC file path */
+            string                              m_ldcDccPath{""};
+
             /** Input data width. */
             int32_t                             m_width{};
 
@@ -504,7 +510,7 @@ namespace ti::edgeai::common
 
     };
 
-} //namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_DEMO_CONFIG_H_
+#endif /* _TI_EDGEAI_TIOVX_DEMO_CONFIG_H_ */
 

@@ -83,6 +83,6 @@ namespace ti::edgeai::common
             int32_t                     resizeWidth{0};
             
     };
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
-#endif // _TI_EDGEAI_TIOVX_PRE_PROC_H_
+#endif /* _TI_EDGEAI_TIOVX_PRE_PROC_H_ */

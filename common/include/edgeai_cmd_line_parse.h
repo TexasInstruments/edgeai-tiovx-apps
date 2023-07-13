@@ -67,6 +67,6 @@ namespace ti::edgeai::common
             LogLevel            logLevel{WARN};
     };
 
-} // namespace ti::edgeai::common
+} /* namespace ti::edgeai::common */
 
 #endif /* _TI_EDGEAI_TIOVX_CMD_LINE_PARSE_H_ */
