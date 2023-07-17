@@ -1,0 +1,25 @@
+# Generic config file used for test engine
+# test script will use this to update at runtime and pass it to the applications
+
+title: "Test Demo"
+log_level: 2
+inputs:
+    input0:
+        source: /opt/edgeai-test-data/raw_images/tiovx_apps/
+        width: 1280
+        height: 720
+        loop: True
+
+models:
+    model0:
+        # This will be updated at runtime by the test_engine.sh
+        model_path: /opt/model_zoo/<model>
+
+outputs:
+    output0:
+        sink: display
+        width: 1920
+        height: 1080
+
+flows:
+    flow0: [input0,model0,output0,[320,150,1280,720]]
