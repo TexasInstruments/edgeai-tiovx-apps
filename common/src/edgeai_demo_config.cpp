@@ -71,16 +71,6 @@ InputInfo::InputInfo(const YAML::Node &node)
         m_cameraId = node["camera-id"].as<int32_t>();
     }
 
-    if (node["viss-dcc-path"])
-    {
-        m_vissDccPath = node["viss-dcc-path"].as<string>();
-    }
-
-    if (node["ldc-dcc-path"])
-    {
-        m_ldcDccPath = node["ldc-dcc-path"].as<string>();
-    }
-
     if (node["loop"])
     {
         m_loop = node["loop"].as<bool>();
@@ -94,6 +84,24 @@ InputInfo::InputInfo(const YAML::Node &node)
     if (node["sen-id"])
     {
         m_sen_id = node["sen-id"].as<string>();
+    }
+
+    if (node["viss-dcc-path"])
+    {
+        m_vissDccPath = node["viss-dcc-path"].as<string>();
+    }
+    else
+    {
+        m_vissDccPath = "/opt/imaging/" + m_sen_id + "/dcc_viss_wdr.bin";
+    }
+
+    if (node["ldc-dcc-path"])
+    {
+        m_ldcDccPath = node["ldc-dcc-path"].as<string>();
+    }
+    else
+    {
+        m_ldcDccPath = "/opt/imaging/" + m_sen_id + "/dcc_ldc_wdr.bin";
     }
 
     if (node["vpac-id"])

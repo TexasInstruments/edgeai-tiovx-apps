@@ -46,33 +46,12 @@ camera::camera()
 
 camera::~camera()
 {
-    LOG_DEBUG("multiScaler DESTRUCTOR\n");
+    LOG_DEBUG("camera DESTRUCTOR\n");
 }
 
 int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
 {
     vx_status status = VX_SUCCESS;
-
-    string viss_dcc_path{""};
-    string ldc_dcc_path{""};
-
-    if(camInputInfo->m_vissDccPath.empty())
-    {
-        viss_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_viss_wdr.bin";
-    }
-    else
-    {
-        viss_dcc_path = camInputInfo->m_vissDccPath;
-    }
-
-    if(camInputInfo->m_ldcDccPath.empty())
-    {
-        ldc_dcc_path = "/opt/imaging/" + camInputInfo->m_sen_id + "/dcc_ldc_wdr.bin";
-    }
-    else
-    {
-        ldc_dcc_path = camInputInfo->m_ldcDccPath;
-    }
 
     tiovx_sensor_module_params_init(&sensorObj);
     sensorObj.is_interactive = 0;
@@ -99,7 +78,7 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
 
     snprintf(vissObj.dcc_config_file_path,
              TIVX_FILEIO_FILE_PATH_LENGTH,
-             viss_dcc_path.c_str());
+             camInputInfo->m_vissDccPath.c_str());
 
     vissObj.input.bufq_depth = 1;
 
@@ -130,7 +109,7 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
     /* LDC Module params init */
     snprintf(ldcObj.dcc_config_file_path,
              TIVX_FILEIO_FILE_PATH_LENGTH,
-             ldc_dcc_path.c_str());
+             camInputInfo->m_ldcDccPath.c_str());
 
     /* Configuring LDC in DCC mode */
     ldcObj.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA;

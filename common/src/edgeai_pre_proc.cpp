@@ -88,32 +88,32 @@ int32_t preProc::getConfig(const string         &modelBasePath,
         LOG_ERROR("Preprocess configuration parameters missing.\n");
         status = -1;
     }
-    else if (session["input_mean"].IsNull())
+    else if (!session["input_mean"])
     {
         LOG_ERROR("Mean value specification missing.\n");
         status = -1;
     }
-    else if (session["input_scale"].IsNull())
+    else if (!session["input_scale"])
     {
         LOG_ERROR("Scale value specification missing.\n");
         status = -1;
     }
-    else if (session["input_details"].IsNull())
+    else if (!session["input_details"])
     {
         LOG_ERROR("Input tensor details missing.\n");
         status = -1;
     }
-    else if (preProc["data_layout"].IsNull())
+    else if (!preProc["data_layout"])
     {
         LOG_ERROR("Data layout specification missing.\n");
         status = -1;
     }
-    else if (preProc["resize"].IsNull())
+    else if (!preProc["resize"])
     {
         LOG_ERROR("Resize specification missing.\n");
         status = -1;
     }
-    else if (preProc["crop"].IsNull())
+    else if (!preProc["crop"])
     {
         LOG_ERROR("Crop specification missing.\n");
         status = -1;
