@@ -85,7 +85,7 @@ include_directories(${PROJECT_SOURCE_DIR}
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/include
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/kernels/include/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tiovx/utils/include
-                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/ti_dl/inc
+                    SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/arm-tidl/rt/inc/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/arm-tidl/tiovx_kernels/include/
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/ivision
                     SYSTEM ${TARGET_FS}/usr/include/processor_sdk/app_utils/
