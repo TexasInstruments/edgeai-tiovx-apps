@@ -1,0 +1,41 @@
+title: "Semantic Segmentation"
+log_level: 2
+inputs:
+    input0:
+        source: camera
+        width: 1920
+        height: 1080
+        camera-id: 0
+    input1:
+        source: /opt/edgeai-test-data/raw_images/0001.nv12
+        width: 1280
+        height: 720
+        loop: True
+    input2:
+        source: /opt/edgeai-test-data/raw_images/tiovx_apps
+        width: 1280
+        height: 720
+        loop: True
+models:
+    model0:
+        model_path: /opt/model_zoo/TFL-SS-2580-deeplabv3_mobv2-ade20k32-mlperf-512x512
+        alpha: 0.4
+    model1:
+        model_path: /opt/model_zoo/ONR-SS-8710-deeplabv3lite-mobv2-cocoseg21-512x512
+        alpha: 0.4
+outputs:
+    output0:
+        sink: display
+        width: 1920
+        height: 1080
+    output1:
+        sink: /opt/edgeai-test-data/output/output_image.nv12
+        width: 1920
+        height: 1080
+    output2:
+        sink: /opt/edgeai-test-data/output/
+        width: 1920
+        height: 1080
+
+flows:
+    flow0: [input0,model1,output0,[320,150,1280,720]]

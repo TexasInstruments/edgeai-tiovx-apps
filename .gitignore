@@ -1,0 +1,4 @@
+# Build artifacts
+bin/
+build/
+lib/
