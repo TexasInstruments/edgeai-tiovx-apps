@@ -92,7 +92,7 @@ InputInfo::InputInfo(const YAML::Node &node)
     }
     else
     {
-        m_vissDccPath = "/opt/imaging/" + m_sen_id + "/dcc_viss_wdr.bin";
+        m_vissDccPath = "/opt/imaging/" + m_sen_id + "/wdr/dcc_viss_wdr.bin";
     }
 
     if (node["ldc-dcc-path"])
@@ -101,7 +101,7 @@ InputInfo::InputInfo(const YAML::Node &node)
     }
     else
     {
-        m_ldcDccPath = "/opt/imaging/" + m_sen_id + "/dcc_ldc_wdr.bin";
+        m_ldcDccPath = "/opt/imaging/" + m_sen_id + "/wdr/dcc_ldc_wdr.bin";
     }
 
     if (node["vpac-id"])

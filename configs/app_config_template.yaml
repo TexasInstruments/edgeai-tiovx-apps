@@ -30,10 +30,10 @@ inputs:
         vpac-id: 1
 
         # VISS DCC file path (optional)
-        viss-dcc-path: /opt/imaging/imx390/dcc_viss_wdr.bin
+        viss-dcc-path: /opt/imaging/imx390/wdr/dcc_viss_wdr.bin
 
         # LDC DCC file path (optional)
-        ldc-dcc-path: /opt/imaging/imx390/dcc_ldc_wdr.bin
+        ldc-dcc-path: /opt/imaging/imx390/wdr/dcc_ldc_wdr.bin
 
     input1:
         # Directory containing nv12 images of same resolution.
