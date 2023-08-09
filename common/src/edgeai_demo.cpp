@@ -72,6 +72,7 @@ namespace ti::edgeai::common
 
 #define GRAPH_PARAMETERS_QUEUE_PARAMS_LIST_SIZE 16
 
+#if !defined (SOC_AM62A)
 /* Callback function for drawing performance stats on display. */
 static void app_draw_perf_graphics(Draw2D_Handle *draw2d_obj, Draw2D_BufInfo *draw2d_buf_info, uint32_t update_type)
 {
@@ -118,6 +119,7 @@ static void app_draw_perf_graphics(Draw2D_Handle *draw2d_obj, Draw2D_BufInfo *dr
 
     return;
 }
+#endif
 
 class EdgeAIDemoImpl
 {
@@ -243,7 +245,9 @@ int32_t EdgeAIDemoImpl::setupFlows()
 
     vx_int32 graph_parameter_index = 0;
     vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[GRAPH_PARAMETERS_QUEUE_PARAMS_LIST_SIZE];
+#if !defined (SOC_AM62A)
     app_grpx_init_prms_t grpx_prms;
+#endif
 
     vector<vector<vector<int32_t>>> commonMosaicInfo;
     vector<vector<string>>          commonMosaicTitle;
@@ -319,6 +323,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                             &m_cameraObj->vissObj,
                                             &m_cameraObj->sensorObj);
         }
+#if !defined (SOC_AM62A)
         if(status == VX_SUCCESS)
         {
             status = tiovx_aewb_module_init(m_ovxGraph->context,
@@ -328,6 +333,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                             0,
                                             m_cameraObj->sensorObj.num_cameras_enabled);
         }
+#endif
         if(status == VX_SUCCESS)
         {
             status = tiovx_ldc_module_init(m_ovxGraph->context,
@@ -478,6 +484,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 postProcMosaicConn[output->m_instId].push_back(m_postProcObjs.size() - 1);
             }
 
+#if !defined(SOC_AM62A)
             if( (output->m_sinkType == "display") && (m_displayObj == NULL) )
             {
                 /* Init display module. */
@@ -509,6 +516,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 grpx_prms.draw_callback = app_draw_perf_graphics;
                 appGrpxInit(&grpx_prms);
             }
+#endif
         }
         
         if(input->m_srcType == "camera")
@@ -572,12 +580,14 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                               NULL,
                                               viss_target.c_str());
         }
+#if !defined (SOC_AM62A)
         if(status == VX_SUCCESS)
         {
             status = tiovx_aewb_module_create(m_ovxGraph->graph,
                                               &m_cameraObj->aewbObj,
                                               m_cameraObj->vissObj.h3a_stats_arr[0]);
         }
+#endif
         if(status == VX_SUCCESS)
         {
             status = tiovx_ldc_module_create(m_ovxGraph->graph,
@@ -699,6 +709,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                                 TIVX_TARGET_VPAC_MSC1);
     }
 
+#if !defined (SOC_AM62A)
     /* Create display module if needed. */
     if(m_displayObj != NULL)
     {
@@ -707,6 +718,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                                              m_imgMosaicObjs[m_dispMosaicIdx]->imgMosaicObj.output_image[0],
                                              TIVX_TARGET_DISPLAY1);
     }
+#endif
 
     /* Add graph parameter by node index */
     graph_parameter_index = 0;
@@ -1041,15 +1053,19 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
     {
         tiovx_capture_module_delete(&m_cameraObj->captureObj);
         tiovx_viss_module_delete(&m_cameraObj->vissObj);
+#if !defined (SOC_AM62A)
         tiovx_aewb_module_delete(&m_cameraObj->aewbObj);
+#endif
         tiovx_ldc_module_delete(&m_cameraObj->ldcObj);
     }
 
+#if !defined(SOC_AM62A)
     if(m_displayObj != NULL)
     {
         appGrpxDeInit();
         tiovx_display_module_delete(m_displayObj);
     }
+#endif
 
     for(auto &iter : m_multiScalerObjs)
     {
@@ -1093,16 +1109,20 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
         tiovx_sensor_module_deinit(&m_cameraObj->sensorObj);
         tiovx_capture_module_deinit(&m_cameraObj->captureObj);
         tiovx_viss_module_deinit(&m_cameraObj->vissObj);
+#if !defined (SOC_AM62A)
         tiovx_aewb_module_deinit(&m_cameraObj->aewbObj);
+#endif
         tiovx_ldc_module_deinit(&m_cameraObj->ldcObj);
         delete m_cameraObj;
     }
 
+#if !defined(SOC_AM62A)
     if(m_displayObj != NULL)
     {
         tiovx_display_module_deinit(m_displayObj);
         delete m_displayObj;
     }
+#endif
 
     for(auto &iter : m_multiScalerObjs)
     {
