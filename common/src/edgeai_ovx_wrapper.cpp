@@ -65,7 +65,9 @@ ovxGraph::ovxGraph()
     tivxImgProcLoadKernels(context);
     tivxEdgeaiImgProcLoadKernels(context);
     tivxTIDLLoadKernels(context);
+#if !defined (SOC_AM62A)
     tivxImagingLoadKernels(context);
+#endif
 }
 
 /* Destructor */
@@ -79,7 +81,9 @@ ovxGraph::~ovxGraph()
     tivxImgProcUnLoadKernels(context);
     tivxEdgeaiImgProcUnLoadKernels(context);
     tivxTIDLUnLoadKernels(context);
+#if !defined (SOC_AM62A)
     tivxImagingUnLoadKernels(context);
+#endif
 
     /* Release OpenVX context */
     int32_t status = vxReleaseContext(&context);
