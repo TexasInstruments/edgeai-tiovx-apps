@@ -27,7 +27,7 @@ models:
         model_path: /opt/model_zoo/ONR-OD-8020-ssd-lite-mobv2-mmdet-coco-512x512
         viz_threshold: 0.6
     model3:
-        model_path: /opt/model_zoo/ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512
+        model_path: /opt/model_zoo/TFL-SS-2580-deeplabv3_mobv2-ade20k32-mlperf-512x512
         alpha: 0.4
 outputs:
     output0:

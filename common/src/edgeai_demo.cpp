@@ -256,6 +256,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     int32_t                         cameraChMask = 0;
     bool                            isMultiCam = false;
     InputInfo*                      camInputInfo;
+    uint32_t                        subflowObjSizes = 0;
 
     for(int32_t i = 0; i < OutputInfo::m_numInstances; i++)
     {
@@ -358,17 +359,25 @@ int32_t EdgeAIDemoImpl::setupFlows()
             throw runtime_error("Size of modelIds is not equal to size of outputIds \n");
         }
 
-        m_preProcObjs.resize(modelIds.size());
-        m_tidlInfObjs.resize(modelIds.size());
-        m_postProcObjs.resize(modelIds.size());
-        m_multiScalerObjs.resize(modelIds.size());
+        /* subflowObjSizes denotes the total number of subflows traversed 
+           within all flows till now */
+        if((input->m_source != "camera") || (m_camNodesInit != true))
+        {
+            m_preProcObjs.resize(subflowObjSizes+modelIds.size());
+            m_tidlInfObjs.resize(subflowObjSizes+modelIds.size());
+            m_postProcObjs.resize(subflowObjSizes+modelIds.size());
+            m_multiScalerObjs.resize(subflowObjSizes+modelIds.size());
+        }
 
         for(uint32_t i=0; i < modelIds.size(); i++)
         {
-            m_preProcObjs[i]     = new preProc;
-            m_tidlInfObjs[i]     = new tidlInf;
-            m_postProcObjs[i]    = new postProc;
-            m_multiScalerObjs[i] = new multiScaler;
+            if( (input->m_source != "camera") || (m_camNodesInit != true) )
+            {
+                m_preProcObjs[i+subflowObjSizes]     = new preProc;
+                m_tidlInfObjs[i+subflowObjSizes]     = new tidlInf;
+                m_postProcObjs[i+subflowObjSizes]    = new postProc;
+                m_multiScalerObjs[i+subflowObjSizes] = new multiScaler;
+            }
             
             /**
             * modelIds is a vector of all models used for a unique input
@@ -381,62 +390,62 @@ int32_t EdgeAIDemoImpl::setupFlows()
             if( (input->m_source != "camera") || (m_camNodesInit != true) )
             {
                 /* Get config for TIDL module. */
-                m_tidlInfObjs[i]->getConfig(model->m_modelPath, m_ovxGraph->context);
+                m_tidlInfObjs[i+subflowObjSizes]->getConfig(model->m_modelPath, m_ovxGraph->context);
 
                 if(input->m_srcType == "camera")
                 {
-                    m_tidlInfObjs[i]->tidlObj.num_cameras = m_cameraObj->sensorObj.num_cameras_enabled;
+                    m_tidlInfObjs[i+subflowObjSizes]->tidlObj.num_cameras = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
                 status = tiovx_tidl_module_init(m_ovxGraph->context,
-                                                &m_tidlInfObjs[i]->tidlObj,
+                                                &m_tidlInfObjs[i+subflowObjSizes]->tidlObj,
                                                 const_cast<vx_char*>(string("tidl_obj").c_str()));
                 
                 /* Get config for Pre Process module. */
-                m_preProcObjs[i]->getConfig(model->m_modelPath, m_tidlInfObjs[i]->ioBufDesc);
+                m_preProcObjs[i+subflowObjSizes]->getConfig(model->m_modelPath, m_tidlInfObjs[i+subflowObjSizes]->ioBufDesc);
 
                 if(input->m_srcType == "camera")
                 {
-                    m_preProcObjs[i]->dlPreProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
+                    m_preProcObjs[i+subflowObjSizes]->dlPreProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
                 status = tiovx_dl_pre_proc_module_init(m_ovxGraph->context,
-                                                       &m_preProcObjs[i]->dlPreProcObj);
+                                                       &m_preProcObjs[i+subflowObjSizes]->dlPreProcObj);
 
                 /* Get config for Post Process Module. */
-                m_postProcObjs[i]->getConfig(model->m_modelPath,
-                                         m_tidlInfObjs[i]->ioBufDesc,
+                m_postProcObjs[i+subflowObjSizes]->getConfig(model->m_modelPath,
+                                         m_tidlInfObjs[i+subflowObjSizes]->ioBufDesc,
                                          flow->m_mosaicInfoVec[i][2],
                                          flow->m_mosaicInfoVec[i][3]);
 
-                m_postProcObjs[i]->dlPostProcObj.params.oc_prms.num_top_results = model->m_topN;
-                m_postProcObjs[i]->dlPostProcObj.params.od_prms.viz_th = model->m_vizThreshold;
-                m_postProcObjs[i]->dlPostProcObj.params.ss_prms.alpha = model->m_alpha;
+                m_postProcObjs[i+subflowObjSizes]->dlPostProcObj.params.oc_prms.num_top_results = model->m_topN;
+                m_postProcObjs[i+subflowObjSizes]->dlPostProcObj.params.od_prms.viz_th = model->m_vizThreshold;
+                m_postProcObjs[i+subflowObjSizes]->dlPostProcObj.params.ss_prms.alpha = model->m_alpha;
 
                 if(input->m_srcType == "camera")
                 {
-                    m_postProcObjs[i]->dlPostProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
+                    m_postProcObjs[i+subflowObjSizes]->dlPostProcObj.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
                 status = tiovx_dl_post_proc_module_init(m_ovxGraph->context,
-                                                        &m_postProcObjs[i]->dlPostProcObj);
+                                                        &m_postProcObjs[i+subflowObjSizes]->dlPostProcObj);
 
                 /* Get config for multiscaler module. */
-                m_multiScalerObjs[i]->getConfig(input->m_width,
+                m_multiScalerObjs[i+subflowObjSizes]->getConfig(input->m_width,
                                             input->m_height,
                                             flow->m_mosaicInfoVec[i][2],
                                             flow->m_mosaicInfoVec[i][3],
-                                            m_preProcObjs[i]);
+                                            m_preProcObjs[i+subflowObjSizes]);
 
                 if(input->m_srcType == "camera")
                 {
-                    m_multiScalerObjs[i]->multiScalerObj1.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
-                    m_multiScalerObjs[i]->multiScalerObj2.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
+                    m_multiScalerObjs[i+subflowObjSizes]->multiScalerObj1.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
+                    m_multiScalerObjs[i+subflowObjSizes]->multiScalerObj2.num_channels = m_cameraObj->sensorObj.num_cameras_enabled;
                 }
 
                 status = tiovx_multi_scaler_module_init(m_ovxGraph->context,
-                                                        &m_multiScalerObjs[i]->multiScalerObj1);
-                if (m_multiScalerObjs[i]->useSecondaryMsc)
+                                                        &m_multiScalerObjs[i+subflowObjSizes]->multiScalerObj1);
+                if (m_multiScalerObjs[i+subflowObjSizes]->useSecondaryMsc)
                 {
                     status = tiovx_multi_scaler_module_init(m_ovxGraph->context,
-                                                            &m_multiScalerObjs[i]->multiScalerObj2);
+                                                            &m_multiScalerObjs[i+subflowObjSizes]->multiScalerObj2);
                 }
 
                 /**
@@ -445,7 +454,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                  */
                 if(input->m_srcType == "camera")
                 {
-                    m_camMscIdxMap.push_back(m_multiScalerObjs.size()-1);
+                    m_camMscIdxMap.push_back(i+subflowObjSizes);
                 }
             }
 
@@ -517,6 +526,11 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 appGrpxInit(&grpx_prms);
             }
 #endif
+        }
+
+        if((input->m_source != "camera") || (m_camNodesInit != true))
+        {
+            subflowObjSizes += modelIds.size();
         }
         
         if(input->m_srcType == "camera")
