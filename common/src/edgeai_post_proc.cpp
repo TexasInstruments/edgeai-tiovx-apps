@@ -277,13 +277,13 @@ int32_t postProc::getConfig(const string        &modelBasePath,
             }
 
             dlPostProcObj.params.ss_prms.ioBufDesc = ioBufDesc;
-            dlPostProcObj.params.ss_prms.inDataWidth = ioBufDesc->inWidth[0]   +
-                                                       ioBufDesc->inPadL[0]    +
-                                                       ioBufDesc->inPadR[0];
+            dlPostProcObj.params.ss_prms.inDataWidth = ioBufDesc->outWidth[0]   +
+                                                       ioBufDesc->outPadL[0]    +
+                                                       ioBufDesc->outPadR[0];
 
-            dlPostProcObj.params.ss_prms.inDataHeight = ioBufDesc->inHeight[0] +
-                                                        ioBufDesc->inPadT[0]   +
-                                                        ioBufDesc->inPadB[0];
+            dlPostProcObj.params.ss_prms.inDataHeight = ioBufDesc->outHeight[0] +
+                                                        ioBufDesc->outPadT[0]   +
+                                                        ioBufDesc->outPadB[0];
             dlPostProcObj.params.ss_prms.alpha = 0.4;
             dlPostProcObj.params.ss_prms.YUVColorMap = mYUVColorMap;
             dlPostProcObj.params.ss_prms.MaxColorClass = mMaxColorClass;
