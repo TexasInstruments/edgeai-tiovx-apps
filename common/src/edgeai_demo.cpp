@@ -488,9 +488,12 @@ int32_t EdgeAIDemoImpl::setupFlows()
              * be the inputs to a single mosaic. This mosaic will eventually
              * go to this particular output.
              */
-            if(!postProcMosaicConn.empty())
+            if( (input->m_source != "camera") || (m_camNodesInit != true) )
             {
-                postProcMosaicConn[output->m_instId].push_back(m_postProcObjs.size() - 1);
+                if(!postProcMosaicConn.empty())
+                {
+                    postProcMosaicConn[output->m_instId].push_back(i+subflowObjSizes);
+                }
             }
 
 #if !defined(SOC_AM62A)
@@ -639,25 +642,54 @@ int32_t EdgeAIDemoImpl::setupFlows()
         }
     }
 
-    for(uint32_t i=0; i < m_multiScalerObjs.size(); i++)
+    uint32_t msc_cnt = 0;
+    for (auto const &[name,flow] : m_config.m_flowMap)
     {
-        /* Create multiscaler module with NULL input in case it is the first node.
-         * readImage will be used to feed the nodes with frames.
-         */
-        if( (status == VX_SUCCESS) && (m_multiScalerObjs[i]->isHeadNode) )
+        uint32_t   msc_ip_used;
+        auto const &modelIds = flow->m_modelIds;
+
+        /* For each flow input will be read only once and same input will be passed to
+           other multiscaler nodes.
+           msc_cnt is the counter for traversing multiscaler object array
+           msc_ip_used is the index of the multiscaler object in which the input is read and
+           this multiscaler object's input will be used in other multiscaler objects of
+           subflows as inputs */
+        if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
         {
             status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                      &m_multiScalerObjs[i]->multiScalerObj1,
+                                                      &m_multiScalerObjs[msc_cnt]->multiScalerObj1,
                                                       NULL,
                                                       TIVX_TARGET_VPAC_MSC1);
 
-            if( (status == VX_SUCCESS) && (m_multiScalerObjs[i]->useSecondaryMsc) )
+            if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->useSecondaryMsc) )
             {
                 status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                          &m_multiScalerObjs[i]->multiScalerObj2,
-                                                          m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
+                                                          &m_multiScalerObjs[msc_cnt]->multiScalerObj2,
+                                                          m_multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
                                                           TIVX_TARGET_VPAC_MSC2);
             }
+            msc_ip_used = msc_cnt;
+            msc_cnt++;
+        }
+        /* Starting i from 1 as first index already created */
+        for(uint32_t i = 1; i < modelIds.size(); i++)
+        {
+            if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
+            {
+                status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
+                                                          &m_multiScalerObjs[msc_cnt]->multiScalerObj1,
+                                                          m_multiScalerObjs[msc_ip_used]->multiScalerObj1.input.arr[0],
+                                                          TIVX_TARGET_VPAC_MSC1);
+
+                if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->useSecondaryMsc) )
+                {
+                    status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
+                                                              &m_multiScalerObjs[msc_cnt]->multiScalerObj2,
+                                                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
+                                                              TIVX_TARGET_VPAC_MSC2);
+                }
+            }
+            msc_cnt++;
         }
     }
 
@@ -745,16 +777,28 @@ int32_t EdgeAIDemoImpl::setupFlows()
         graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_cameraObj->captureObj.image_arr[0];
         graph_parameter_index++;
     }
-    for(uint32_t i=0; i < m_multiScalerObjs.size(); i++)
+
+    msc_cnt = 0;
+    for (auto const &[name,flow] : m_config.m_flowMap)
     {
-        if( (status == VX_SUCCESS) && (m_multiScalerObjs[i]->isHeadNode) )
+        auto const &modelIds = flow->m_modelIds;
+
+        if(msc_cnt < m_multiScalerObjs.size())
         {
-            status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_multiScalerObjs[i]->multiScalerObj1.node, 0);
-            m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index = graph_parameter_index;
-            graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
-            graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-            graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0];
-            graph_parameter_index++;
+            if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
+            {
+                status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_multiScalerObjs[msc_cnt]->multiScalerObj1.node, 0);
+                m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.graph_parameter_index = graph_parameter_index;
+                graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
+                graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
+                graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0];
+                graph_parameter_index++;
+            }
+
+            for(uint32_t i = 0; i < modelIds.size(); i++)
+            {
+                msc_cnt++;
+            }
         }
     }
 
@@ -864,19 +908,20 @@ int32_t EdgeAIDemoImpl::startDemo()
         {
             auto const &input = m_config.m_inputMap[flow->m_inputId];
 
+            if(input->m_srcType == "image")
+            {
+                readImage(const_cast<char*>(input->m_source.c_str()),
+                            m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
+                m_runLoop = input->m_loop;
+            }
+            else if(input->m_srcType == "images_directory")
+            {
+                readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()),
+                            m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
+            }
+
             for(uint32_t i = 0; i < flow->m_subFlowConfigs.size(); i++)
             {
-                if(input->m_srcType == "image")
-                {
-                    readImage(const_cast<char*>(input->m_source.c_str()),
-                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
-                    m_runLoop = input->m_loop;
-                }
-                else if(input->m_srcType == "images_directory")
-                {
-                    readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()),
-                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
-                }
                 msc_cnt++;
             }
             if(input->m_srcType == "images_directory")
@@ -902,14 +947,24 @@ int32_t EdgeAIDemoImpl::startDemo()
             }
         }
 
-        for(uint32_t i = 0; i < m_multiScalerObjs.size(); i++)
+        uint32_t msc_ip_used = 0;
+        for (auto const &[name,flow] : m_config.m_flowMap)
         {
-            if(m_multiScalerObjs[i]->isHeadNode)
+            auto const &modelIds = flow->m_modelIds;
+            if(msc_ip_used < m_multiScalerObjs.size())
             {
-                vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
-                                                m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
-                                                (vx_reference*) &m_multiScalerObjs[i]->multiScalerObj1.input.image_handle[0],
-                                                1);
+                if(m_multiScalerObjs[msc_ip_used]->isHeadNode)
+                {
+                    vxGraphParameterEnqueueReadyRef(m_ovxGraph->graph,
+                                                    m_multiScalerObjs[msc_ip_used]->multiScalerObj1.input.graph_parameter_index,
+                                                    (vx_reference*) &m_multiScalerObjs[msc_ip_used]->multiScalerObj1.input.image_handle[0],
+                                                    1);
+                }
+            }
+
+            for(uint32_t i = 0; i < modelIds.size(); i++)
+            {
+                msc_ip_used++;
             }
         }
 
@@ -942,15 +997,25 @@ int32_t EdgeAIDemoImpl::startDemo()
             camera_first_deq_done = true;
         }
 
-        for(uint32_t i = 0; i < m_multiScalerObjs.size(); i++)
+        msc_ip_used = 0;
+        for (auto const &[name,flow] : m_config.m_flowMap)
         {
-            if(m_multiScalerObjs[i]->isHeadNode)
+            auto const &modelIds = flow->m_modelIds;
+            if(msc_ip_used < m_multiScalerObjs.size())
             {
-                vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
-                                               m_multiScalerObjs[i]->multiScalerObj1.input.graph_parameter_index,
-                                               (vx_reference*) &input_o,
-                                               1,
-                                               &num_refs);
+                if(m_multiScalerObjs[msc_ip_used]->isHeadNode)
+                {
+                    vxGraphParameterDequeueDoneRef(m_ovxGraph->graph,
+                                                m_multiScalerObjs[msc_ip_used]->multiScalerObj1.input.graph_parameter_index,
+                                                (vx_reference*) &input_o,
+                                                1,
+                                                &num_refs);
+                }
+            }
+
+            for(uint32_t i = 0; i < modelIds.size(); i++)
+            {
+                msc_ip_used++;
             }
         }
 
