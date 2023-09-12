@@ -268,15 +268,6 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create graph structure */
     m_ovxGraph  = new ovxGraph;
 
-    /* Create graph */
-    m_ovxGraph->graph = vxCreateGraph(m_ovxGraph->context);
-    status = vxGetStatus((vx_reference)m_ovxGraph->graph);
-
-    if(status != VX_SUCCESS)
-    {
-        throw runtime_error("Graph Creation failed \n");
-    }
-
     /* Get channel mask for sensor node. */
     for (auto const &[name,flow] : m_config.m_flowMap)
     {
@@ -1173,13 +1164,6 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
     for(auto &iter : m_imgMosaicObjs)
     {
         tiovx_img_mosaic_module_delete(&iter->imgMosaicObj);
-    }
-
-    /* Release openVX Graph */
-
-    if(m_ovxGraph->graph != NULL)
-    {
-        vxReleaseGraph(&m_ovxGraph->graph);
     }
 
     /* Deinit all openVX modules */

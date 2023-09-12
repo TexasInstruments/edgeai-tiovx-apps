@@ -41,7 +41,8 @@
 #include <TI/video_io_kernels.h>
 #include <TI/j7_kernels_imaging_aewb.h>
 
-#include<stdio.h>
+/* Standard headers */
+#include <stdexcept>
 
 namespace ti::edgeai::common
 {
@@ -55,8 +56,7 @@ ovxGraph::ovxGraph()
 
     if(status != VX_SUCCESS)
     {
-        LOG_ERROR("OpenVX context creation failed \n");
-        exit(-1);
+        throw std::runtime_error("OpenVX context creation failed \n");
     }
 
     /* Load all the kernels needed for application */
@@ -68,12 +68,27 @@ ovxGraph::ovxGraph()
 #if !defined (SOC_AM62A)
     tivxImagingLoadKernels(context);
 #endif
+
+    /* Create graph */
+    graph = vxCreateGraph(context);
+    status = vxGetStatus((vx_reference)graph);
+
+    if(status != VX_SUCCESS)
+    {
+        throw std::runtime_error("Graph Creation failed \n");
+    }
 }
 
 /* Destructor */
 ovxGraph::~ovxGraph()
 {
     LOG_DEBUG("ovxGraph Destructor \n");
+
+    /* Release openVX Graph */
+    if(graph != NULL)
+    {
+        vxReleaseGraph(&graph);
+    }
 
     /* Unload all the kernels needed for application */
     tivxVideoIOUnLoadKernels(context);
