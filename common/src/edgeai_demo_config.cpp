@@ -369,7 +369,7 @@ FlowInfo::FlowInfo(FlowConfig &flowConfig)
 int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
                              map<string, InputInfo*>   &inputMap,
                              map<string, OutputInfo*>  &outputMap,
-                             bool                       isMultiCam)
+                             int32_t                   m_numCam)
 {
     auto                          &inputInfo = inputMap[m_inputId];
     int32_t                       cnt = 0;
@@ -478,7 +478,7 @@ int32_t FlowInfo::initialize(map<string, ModelInfo*>   &modelMap,
             break;
         }
 
-        if( (inputInfo->m_source == "camera") && (isMultiCam) )
+        if( (inputInfo->m_source == "camera") && (m_numCam > 1) )
         { 
             m_mosaicInfoVec.push_back({mosaicInfo->m_posX, mosaicInfo->m_posY,
                                         mosaicWidth, mosaicHeight,
