@@ -87,7 +87,7 @@ int main(int32_t argc, char * argv[])
         gDemo->dumpGraphAsDot();
     }
 
-    /* Start the graph. */
+    /* Start/Run the graph. */
     gDemo->startDemo();
 
     /* Wait for the threads to exit. */

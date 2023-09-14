@@ -416,7 +416,7 @@ namespace ti::edgeai::common
             int32_t initialize(map<string, ModelInfo*>   &modelMap,
                                map<string, InputInfo*>   &inputMap,
                                map<string, OutputInfo*>  &outputMap,
-                               bool                      isMultiCam);
+                               int32_t                   m_numCam);
 
             /**
              * Helper function to dump the configuration information.

@@ -52,6 +52,25 @@ namespace ti::edgeai::common
     using namespace std;
 
     /**
+     * \brief Helper function to obtain channel mask for rtos camera.
+     *        Parse and fill camera related module configs.
+     *
+     * \ingroup group_edgeai_common
+     *
+     * @param config Demo config
+     *
+     * @param chMask Channel Mask for camera input
+     *
+     * @param numCam Number of cameras available
+     *
+     * @param camInputInfo Input info of camera input
+     *
+     */
+
+    void getCamChMask(DemoConfig &config, int32_t &chMask, int32_t &numCam,
+                        InputInfo*& camInputInfo);
+
+    /**
      * \brief Class that wraps the camera related configuration
      *
      * \ingroup group_edgeai_common
@@ -60,7 +79,7 @@ namespace ti::edgeai::common
     class camera
     {
         public:
-            /* Default constructor. Use the compiler generated default one. */
+            /* Constructor. */
             camera();
 
             /* Destructor. */
@@ -71,11 +90,26 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse mosaic configuration.
+            /** Helper function to initialize camera related modules.
+             *  Sensor, Capture, VISS, AEWB (2A) and LDC
              *
-             * @param chMask channel mask for sensor node.
+             * @param context openVX context for reuired graph.
+             *
+             * @param camInputInfo Input info of camera input
+             *
+             * @param chMask Channel Mask for camera input
              */
-            int32_t     getConfig(InputInfo* camInputInfo, int32_t chMask);
+            int32_t     cameraInit(vx_context context,
+                                InputInfo* camInputInfo, int32_t chMask);
+
+            /** Helper function to create camera related modules.
+             *  Sensor, Capture, VISS, AEWB (2A) and LDC
+             *
+             * @param graph openVX graph.
+             *
+             * @param camInputInfo Input info of camera input
+             */
+            int32_t     cameraCreate(vx_graph graph, InputInfo* camInputInfo);
 
         public:
             /* Data structure passed to mosaic module */
@@ -92,6 +126,16 @@ namespace ti::edgeai::common
 
             /* Data structure passed to ldc module */
             TIOVXLDCModuleObj        ldcObj;
+
+        private:
+            /** Helper function to parse camera input configuration.
+             *  Parse and fill camera related module configs.
+             *
+             * @param camInputInfo Input info of camera input
+             *
+             * @param chMask channel mask for sensor node.
+             */
+            int32_t     getConfig(InputInfo* camInputInfo, int32_t chMask);
 
     };
 

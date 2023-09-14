@@ -228,7 +228,7 @@ EdgeAIDemoImpl::EdgeAIDemoImpl(const YAML::Node    &yaml)
 
     if (status == 0)
     {
-        /* Setup the flows and run the graph. */
+        /* Setup the flows */
         status = setupFlows();
     }
 
@@ -254,7 +254,6 @@ int32_t EdgeAIDemoImpl::setupFlows()
     vector<vector<int32_t>>         postProcMosaicConn;
     string                          modelName{""};
     int32_t                         cameraChMask = 0;
-    bool                            isMultiCam = false;
     InputInfo*                      camInputInfo;
     uint32_t                        subflowObjSizes = 0;
 
@@ -268,27 +267,8 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create graph structure */
     m_ovxGraph  = new ovxGraph;
 
-    /* Get channel mask for sensor node. */
-    for (auto const &[name,flow] : m_config.m_flowMap)
-    {
-        auto const &input = m_config.m_inputMap[flow->m_inputId];
-
-        /**
-         * cameraChMask = 00001101 means cameras connected to port 
-         *  (or m_cameraId) 0, 2 and 3 of fusion board
-         */
-        if(input->m_source == "camera")
-        {
-            cameraChMask = cameraChMask | (1 << input->m_cameraId);
-            m_numCam++;
-            camInputInfo = input;
-        }
-    }
-
-    if (m_numCam > 1)
-    {
-        isMultiCam = true;
-    }
+#if !defined (SOC_AM62A)
+    getCamChMask(m_config, cameraChMask, m_numCam, camInputInfo);
 
     /**
      * Make camera object and initialize camera related nodes only if atleast
@@ -297,49 +277,17 @@ int32_t EdgeAIDemoImpl::setupFlows()
     if(cameraChMask != 0)
     {
         m_cameraObj = new camera;
-        m_cameraObj->getConfig(camInputInfo, cameraChMask);
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_sensor_module_init(&m_cameraObj->sensorObj,
-                                              const_cast<char*>(string("sensor_obj").c_str()));
-        }
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_capture_module_init(m_ovxGraph->context,
-                                               &m_cameraObj->captureObj,
-                                               &m_cameraObj->sensorObj);
-        }
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_viss_module_init(m_ovxGraph->context,
-                                            &m_cameraObj->vissObj,
-                                            &m_cameraObj->sensorObj);
-        }
-#if !defined (SOC_AM62A)
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_aewb_module_init(m_ovxGraph->context,
-                                            &m_cameraObj->aewbObj,
-                                            &m_cameraObj->sensorObj,
-                                            const_cast<char*>(string("aewb_obj").c_str()),
-                                            0,
-                                            m_cameraObj->sensorObj.num_cameras_enabled);
-        }
-#endif
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_ldc_module_init(m_ovxGraph->context,
-                                           &m_cameraObj->ldcObj,
-                                           &m_cameraObj->sensorObj);
-        }
+        status = m_cameraObj->cameraInit(m_ovxGraph->context, camInputInfo,
+                                            cameraChMask);
     }
+#endif
 
     for (auto const &[name,flow] : m_config.m_flowMap)
     {
         flow->initialize(m_config.m_modelMap,
                          m_config.m_inputMap,
                          m_config.m_outputMap,
-                         isMultiCam);
+                         m_numCam);
 
         auto const &modelIds    = flow->m_modelIds;
         auto const &outputIds   = flow->m_outputIds;
@@ -561,48 +509,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     /* Create all camera related module if needed.*/
     if(m_cameraObj != NULL)
     {
-        string viss_target = TIVX_TARGET_VPAC_VISS1;
-        string ldc_target = TIVX_TARGET_VPAC_LDC1;
-
-#if defined(SOC_J784S4)
-        if(camInputInfo->m_vpac_id == 2)
-        {
-            viss_target = TIVX_TARGET_VPAC2_VISS1;
-            ldc_target = TIVX_TARGET_VPAC2_LDC1;
-        }
-#endif
-
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_capture_module_create(m_ovxGraph->graph,
-                                                 &m_cameraObj->captureObj,
-                                                 TIVX_TARGET_CAPTURE1);
-        }
-        if(status == VX_SUCCESS)
-        {
-            status = vxReleaseObjectArray(&m_cameraObj->vissObj.ae_awb_result_arr[0]);
-            m_cameraObj->vissObj.ae_awb_result_arr[0] = NULL;
-            status = tiovx_viss_module_create(m_ovxGraph->graph,
-                                              &m_cameraObj->vissObj,
-                                              m_cameraObj->captureObj.image_arr[0],
-                                              NULL,
-                                              viss_target.c_str());
-        }
-#if !defined (SOC_AM62A)
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_aewb_module_create(m_ovxGraph->graph,
-                                              &m_cameraObj->aewbObj,
-                                              m_cameraObj->vissObj.h3a_stats_arr[0]);
-        }
-#endif
-        if(status == VX_SUCCESS)
-        {
-            status = tiovx_ldc_module_create(m_ovxGraph->graph,
-                                             &m_cameraObj->ldcObj,
-                                             m_cameraObj->vissObj.output2.arr[0],
-                                             ldc_target.c_str());
-        }
+        status = m_cameraObj->cameraCreate(m_ovxGraph->graph, camInputInfo);
     }
 
     if(m_cameraObj != NULL)
@@ -1118,15 +1025,10 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
 {
     LOG_DEBUG("EdgeAIDemoImpl Destructor \n");
 
-    /* Delete all openVX modules */
+    /* Destructor for camera object */
     if(m_cameraObj != NULL)
     {
-        tiovx_capture_module_delete(&m_cameraObj->captureObj);
-        tiovx_viss_module_delete(&m_cameraObj->vissObj);
-#if !defined (SOC_AM62A)
-        tiovx_aewb_module_delete(&m_cameraObj->aewbObj);
-#endif
-        tiovx_ldc_module_delete(&m_cameraObj->ldcObj);
+        delete m_cameraObj;
     }
 
 #if !defined(SOC_AM62A)
@@ -1164,19 +1066,6 @@ EdgeAIDemoImpl::~EdgeAIDemoImpl()
     for(auto &iter : m_imgMosaicObjs)
     {
         tiovx_img_mosaic_module_delete(&iter->imgMosaicObj);
-    }
-
-    /* Deinit all openVX modules */
-    if(m_cameraObj != NULL)
-    {
-        tiovx_sensor_module_deinit(&m_cameraObj->sensorObj);
-        tiovx_capture_module_deinit(&m_cameraObj->captureObj);
-        tiovx_viss_module_deinit(&m_cameraObj->vissObj);
-#if !defined (SOC_AM62A)
-        tiovx_aewb_module_deinit(&m_cameraObj->aewbObj);
-#endif
-        tiovx_ldc_module_deinit(&m_cameraObj->ldcObj);
-        delete m_cameraObj;
     }
 
 #if !defined(SOC_AM62A)

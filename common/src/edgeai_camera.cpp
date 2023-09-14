@@ -47,6 +47,44 @@ camera::camera()
 camera::~camera()
 {
     LOG_DEBUG("camera DESTRUCTOR\n");
+
+    /* Delete all camera openVX modules */
+    tiovx_capture_module_delete(&captureObj);
+    tiovx_viss_module_delete(&vissObj);
+#if !defined (SOC_AM62A)
+    tiovx_aewb_module_delete(&aewbObj);
+#endif
+    tiovx_ldc_module_delete(&ldcObj);
+
+    /* Deinit all camera openVX modules */
+    tiovx_sensor_module_deinit(&sensorObj);
+    tiovx_capture_module_deinit(&captureObj);
+    tiovx_viss_module_deinit(&vissObj);
+#if !defined (SOC_AM62A)
+    tiovx_aewb_module_deinit(&aewbObj);
+#endif
+    tiovx_ldc_module_deinit(&ldcObj);
+
+}
+
+void getCamChMask(DemoConfig &config, int32_t &chMask, int32_t &numCam,
+                    InputInfo*& camInputInfo)
+{
+    for (auto const &[name,flow] : config.m_flowMap)
+    {
+        auto const &input = config.m_inputMap[flow->m_inputId];
+
+        /**
+         * chMask = 00001101 means cameras connected to port
+         *  (or m_cameraId) 0, 2 and 3 of fusion board
+         */
+        if(input->m_source == "camera")
+        {
+            chMask = chMask | (1 << input->m_cameraId);
+            numCam++;
+            camInputInfo = input;
+        }
+    }
 }
 
 int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
@@ -82,14 +120,10 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
 
     vissObj.input.bufq_depth = 1;
 
-    vissObj.input.params.width              = sensorObj.image_width;
-    vissObj.input.params.height             = sensorObj.image_height;
-    vissObj.input.params.num_exposures      = sensorObj.sensorParams.sensorInfo.raw_params.num_exposures;
-    vissObj.input.params.line_interleaved   = sensorObj.sensorParams.sensorInfo.raw_params.line_interleaved;
-    vissObj.input.params.meta_height_before = sensorObj.sensorParams.sensorInfo.raw_params.meta_height_before;
-    vissObj.input.params.meta_height_after  = sensorObj.sensorParams.sensorInfo.raw_params.meta_height_after;
-    vissObj.input.params.format[0].pixel_container = sensorObj.sensorParams.sensorInfo.raw_params.format[0].pixel_container;
-    vissObj.input.params.format[0].msb      = sensorObj.sensorParams.sensorInfo.raw_params.format[0].msb;
+    memcpy(&vissObj.input.params,
+            &sensorObj.sensorParams.sensorInfo.raw_params,
+            sizeof(tivx_raw_image_create_params_t));
+
     vissObj.ae_awb_result_bufq_depth        = 1;
 
     vissObj.output_select[0] = TIOVX_VISS_MODULE_OUTPUT_NA; /* 0 */
@@ -138,6 +172,94 @@ int32_t camera::getConfig(InputInfo* camInputInfo, int32_t chMask)
     ldcObj.output0.color_format = VX_DF_IMAGE_NV12;
     ldcObj.output0.width = ldcObj.table_width;
     ldcObj.output0.height = ldcObj.table_height;
+
+    return status;
+}
+
+int32_t camera::cameraInit(vx_context context, InputInfo* camInputInfo,
+                            int32_t chMask)
+{
+    vx_status status = VX_SUCCESS;
+
+    status = getConfig(camInputInfo, chMask);
+
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_sensor_module_init(&sensorObj,
+                            const_cast<char*>(string("sensor_obj").c_str()));
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_capture_module_init(context, &captureObj, &sensorObj);
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_viss_module_init(context, &vissObj, &sensorObj);
+    }
+#if !defined (SOC_AM62A)
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_aewb_module_init(context, &aewbObj, &sensorObj,
+                            const_cast<char*>(string("aewb_obj").c_str()),
+                            0, sensorObj.num_cameras_enabled);
+    }
+#endif
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_ldc_module_init(context, &ldcObj, &sensorObj);
+    }
+
+    return status;
+}
+
+int32_t camera::cameraCreate(vx_graph graph, InputInfo* camInputInfo)
+{
+    int32_t status = VX_SUCCESS;
+
+    string viss_target = TIVX_TARGET_VPAC_VISS1;
+    string ldc_target = TIVX_TARGET_VPAC_LDC1;
+
+#if defined(SOC_J784S4)
+    if(camInputInfo->m_vpac_id == 2)
+    {
+        viss_target = TIVX_TARGET_VPAC2_VISS1;
+        ldc_target = TIVX_TARGET_VPAC2_LDC1;
+    }
+    else
+#endif
+    if(camInputInfo->m_vpac_id == 1)
+    {
+        viss_target = TIVX_TARGET_VPAC_VISS1;
+        ldc_target = TIVX_TARGET_VPAC_LDC1;
+    }
+
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_capture_module_create(graph, &captureObj,
+                                             TIVX_TARGET_CAPTURE1);
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = vxReleaseObjectArray(&vissObj.ae_awb_result_arr[0]);
+        vissObj.ae_awb_result_arr[0] = NULL;
+        status = tiovx_viss_module_create(graph, &vissObj,
+                                          captureObj.image_arr[0],
+                                          NULL,
+                                          viss_target.c_str());
+    }
+#if !defined (SOC_AM62A)
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_aewb_module_create(graph, &aewbObj,
+                                          vissObj.h3a_stats_arr[0]);
+    }
+#endif
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_ldc_module_create(graph, &ldcObj,
+                                         vissObj.output2.arr[0],
+                                         ldc_target.c_str());
+    }
 
     return status;
 }
