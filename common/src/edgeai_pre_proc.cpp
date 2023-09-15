@@ -53,6 +53,9 @@ preProc::preProc()
 preProc::~preProc()
 {
     LOG_DEBUG("preProc DESTRUCTOR\n");
+
+    tiovx_dl_pre_proc_module_delete(&dlPreProcObj);
+    tiovx_dl_pre_proc_module_deinit(&dlPreProcObj);
 }
 
 int32_t preProc::getConfig(const string         &modelBasePath,
@@ -167,7 +170,8 @@ int32_t preProc::getConfig(const string         &modelBasePath,
 
         if(preProc["reverse_channels"])
         {
-            dlPreProcObj.params.tensor_format = preProc["reverse_channels"].as<bool>();
+            dlPreProcObj.params.tensor_format =
+                preProc["reverse_channels"].as<bool>();
         }
         else
         {
@@ -246,9 +250,31 @@ int32_t preProc::getConfig(const string         &modelBasePath,
         dlPreProcObj.output.num_dims = 3;
         dlPreProcObj.en_out_tensor_write = 0;
 
-        dlPreProcObj.output.datatype = getTensorDataType(ioBufDesc->inElementType[0]);
+        dlPreProcObj.output.datatype =
+            getTensorDataType(ioBufDesc->inElementType[0]);
 
     }
+    return status;
+}
+
+int32_t preProc::preProcInit(vx_context context, const string &modelBasePath,
+                                sTIDL_IOBufDesc_t *ioBufDesc, string &srcType,
+                                camera*& cameraObj)
+{
+    int32_t status = VX_SUCCESS;
+
+    /* Get config for Pre Process module. */
+    status = getConfig(modelBasePath, ioBufDesc);
+
+    if(srcType == "camera")
+    {
+        dlPreProcObj.num_channels = cameraObj->sensorObj.num_cameras_enabled;
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_dl_pre_proc_module_init(context, &dlPreProcObj);
+    }
+
     return status;
 }
 

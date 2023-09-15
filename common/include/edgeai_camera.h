@@ -58,11 +58,8 @@ namespace ti::edgeai::common
      * \ingroup group_edgeai_common
      *
      * @param config Demo config
-     *
      * @param chMask Channel Mask for camera input
-     *
      * @param numCam Number of cameras available
-     *
      * @param camInputInfo Input info of camera input
      *
      */
@@ -94,9 +91,7 @@ namespace ti::edgeai::common
              *  Sensor, Capture, VISS, AEWB (2A) and LDC
              *
              * @param context openVX context for reuired graph.
-             *
              * @param camInputInfo Input info of camera input
-             *
              * @param chMask Channel Mask for camera input
              */
             int32_t     cameraInit(vx_context context,
@@ -106,16 +101,15 @@ namespace ti::edgeai::common
              *  Sensor, Capture, VISS, AEWB (2A) and LDC
              *
              * @param graph openVX graph.
-             *
              * @param camInputInfo Input info of camera input
              */
             int32_t     cameraCreate(vx_graph graph, InputInfo* camInputInfo);
 
         public:
-            /* Data structure passed to mosaic module */
+            /* Data structure passed to capture module */
             TIOVXCaptureModuleObj    captureObj;
 
-            /* Data structure passed to mosaic module */
+            /* Data structure passed to sensor module */
             SensorObj                sensorObj;
 
             /* Data structure passed to viss module */
@@ -132,7 +126,6 @@ namespace ti::edgeai::common
              *  Parse and fill camera related module configs.
              *
              * @param camInputInfo Input info of camera input
-             *
              * @param chMask channel mask for sensor node.
              */
             int32_t     getConfig(InputInfo* camInputInfo, int32_t chMask);

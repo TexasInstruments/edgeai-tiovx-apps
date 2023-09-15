@@ -16,6 +16,7 @@ set(EDGEAI_COMMON_SRCS
     src/edgeai_msc.cpp
     src/edgeai_mosaic.cpp
     src/edgeai_camera.cpp
+    src/edgeai_display.cpp
     )
 
 build_lib(${PROJECT_NAME} EDGEAI_COMMON_SRCS STATIC)

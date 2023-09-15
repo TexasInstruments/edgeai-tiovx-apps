@@ -67,9 +67,12 @@ tidlInf::tidlInf()
 tidlInf::~tidlInf()
 {
     LOG_DEBUG("tidlInf DESTRUCTOR\n");
+
+    tiovx_tidl_module_delete(&tidlObj);
+    tiovx_tidl_module_deinit(&tidlObj);
 }
 
-int32_t tidlInf::getConfig(const string &modelBasePath, vx_context context)
+int32_t tidlInf::getConfig(vx_context context, const string &modelBasePath)
 {
     const string        &artifacts_dir_path = modelBasePath + "/artifacts/" ;      
     string              io_config_file_path = "";
@@ -229,6 +232,27 @@ vx_user_data_object tidlInf::readConfig(vx_context context)
     fclose(fp_config);
 
     return config;
+}
+
+int32_t tidlInf::tidlInit(vx_context context, const string &modelBasePath,
+                            string &srcType, camera*& cameraObj)
+{
+    int32_t status = VX_SUCCESS;
+
+    /* Get config for TIDL module. */
+    status = getConfig(context, modelBasePath);
+
+    if(srcType == "camera")
+    {
+        tidlObj.num_cameras = cameraObj->sensorObj.num_cameras_enabled;
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_tidl_module_init(context, &tidlObj,
+                            const_cast<vx_char*>(string("tidl_obj").c_str()));
+    }
+
+    return status;
 }
 
 void tidlInf::dumpInfo()

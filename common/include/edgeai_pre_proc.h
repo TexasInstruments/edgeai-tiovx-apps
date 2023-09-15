@@ -36,6 +36,10 @@
 /* Standard Headers */
 #include <string>
 
+/* Module Headers */
+#include <common/include/edgeai_camera.h>
+
+/* OpenVX Headers */
 #include <tiovx_dl_pre_proc_module.h>
 #include <TI/j7_tidl.h>
 
@@ -52,7 +56,7 @@ namespace ti::edgeai::common
     class preProc
     {
         public:
-            /* Default constructor. Use the compiler generated default one. */
+            /* Constructor. */
             preProc();
 
             /* Destructor. */
@@ -63,6 +67,20 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
+            /** Helper function to init Pre Proc module.
+             *
+             * @param context OpenVX context
+             * @param modelBasePath path of model directory
+             * @param ioBufDesc IO Buffer Descriptor of the model
+             * @param srcType Source Type
+             * @param cameraObj Camera Object
+             */
+            int32_t     preProcInit(vx_context context,
+                                    const string &modelBasePath,
+                                    sTIDL_IOBufDesc_t *ioBufDesc,
+                                    string &srcType, camera*& cameraObj);
+
+        private:
             /** Helper function to parse pre process configuration.
              *
              * @param modelBasePath path of model directory

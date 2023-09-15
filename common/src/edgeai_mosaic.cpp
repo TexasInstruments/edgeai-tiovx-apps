@@ -54,9 +54,12 @@ imgMosaic::imgMosaic()
 imgMosaic::~imgMosaic()
 {
     LOG_DEBUG("imgMosaic DESTRUCTOR\n");
+
+    tiovx_img_mosaic_module_delete(&imgMosaicObj);
+    tiovx_img_mosaic_module_deinit(&imgMosaicObj);
 }
 
-int32_t imgMosaic::getConfig(vector<vector<int32_t>> mosaicInfo)
+int32_t imgMosaic::getConfig(vector<vector<int32_t>> &mosaicInfo)
 {
     int32_t     status = 0;
     uint32_t    i;
@@ -119,7 +122,7 @@ int32_t imgMosaic::getConfig(vector<vector<int32_t>> mosaicInfo)
     return status;
 }
 
-void imgMosaic::setBackground(string title, vector<string> mosaicTitle)
+void imgMosaic::setBackground(string &title, vector<string> &mosaicTitle)
 {
     vx_rectangle_t              rect;
     vx_imagepatch_addressing_t  image_addr;
@@ -208,6 +211,28 @@ void imgMosaic::setBackground(string title, vector<string> mosaicTitle)
                  &text_font,
                  &text_color);
     }
+}
+
+int32_t imgMosaic::imgMosaicInit(vx_context context,
+                              vector<vector<int32_t>> &mosaicInfo,
+                              string &title, vector<string> &mosaicTitle)
+{
+    int32_t status = VX_SUCCESS;
+
+    if(!mosaicInfo.empty())
+    {
+        getConfig(mosaicInfo);
+    }
+
+    status = tiovx_img_mosaic_module_init(context, &imgMosaicObj);
+
+    /* Set black mosaic background and overlay titles and texts.*/
+    if(!mosaicTitle.empty())
+    {
+        setBackground(title, mosaicTitle);
+    }
+
+    return status;
 }
 
 } /* namespace ti::edgeai::common */

@@ -34,8 +34,11 @@
 #define _TI_EDGEAI_TIOVX_MSC_H_
 
 /* Modules Headers */
-#include <tiovx_multi_scaler_module.h>
 #include <common/include/edgeai_pre_proc.h>
+#include <common/include/edgeai_camera.h>
+
+/* OpenVX Headers */
+#include <tiovx_multi_scaler_module.h>
 
 namespace ti::edgeai::common
 {
@@ -50,7 +53,7 @@ namespace ti::edgeai::common
     class multiScaler
     {
         public:
-            /** Default constructor. Use the compiler generated default one. */
+            /** Constructor. */
             multiScaler();
 
             /** Destructor. */
@@ -59,6 +62,28 @@ namespace ti::edgeai::common
             /** Helper function to dump the configuration information. */
             void        dumpInfo();
 
+            /** Helper function to init MSC module.
+             *
+             * @param context OpenVX context
+             * @param input_wd Width of the input frame
+             * @param input_ht Height of the input frame
+             * @param post_proc_wd Width of the output frame (for post-process)
+             * @param post_proc_ht Height of the output frame (for post-process)
+             * @param pre_proc_obj Pre-Processing object
+             * @param srcType Source Type
+             * @param cameraObj Camera Object
+             *
+             */
+            int32_t     multiScalerInit(vx_context context,
+                                        int32_t input_wd,
+                                        int32_t input_ht,
+                                        int32_t post_proc_wd,
+                                        int32_t post_proc_ht,
+                                        preProc *pre_proc_obj,
+                                        string &srcType,
+                                        camera*& cameraObj);
+
+        private:
             /** Helper function to parse MSC configuration.
              *
              * @param input_wd Width of the input frame
