@@ -30,89 +30,68 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TI_EDGEAI_TIOVX_TIDL_H_
-#define _TI_EDGEAI_TIOVX_TIDL_H_
-
-/* Standard Headers */
-#include <string>
+#ifndef _TI_EDGEAI_TIOVX_DISPLAY_H_
+#define _TI_EDGEAI_TIOVX_DISPLAY_H_
 
 /* Module Headers */
-#include <common/include/edgeai_camera.h>
+#include <common/include/edgeai_demo_config.h>
 
 /* OpenVX Headers */
-#include <TI/tivx.h>
-#include <TI/j7_tidl.h>
-#include <tiovx_tidl_module.h>
+#include <tiovx_display_module.h>
+
+extern "C"
+{
+#include <utils/grpx/include/app_grpx.h>
+}
 
 namespace ti::edgeai::common
 {
     using namespace std;
 
     /**
-     * \brief Class that wraps the TIDL related configuration
+     * \brief Class that wraps the display related configuration
      *
      * \ingroup group_edgeai_common
      */
 
-    class tidlInf
+    class display
     {
         public:
-            /* Default constructor. Use the compiler generated default one. */
-            tidlInf();
+            /** Constructor. */
+            display();
 
-            /* Destructor. */
-            ~tidlInf();
+            /** Destructor. */
+            ~display();
 
-            /**
-             * Helper function to dump the configuration information.
-             */
+            /** Helper function to dump the configuration information. */
             void        dumpInfo();
 
-            /** Helper function to init TIDL module.
+            /** Helper function to init display module.
              *
              * @param context OpenVX context
              *
-             * @param modelBasePath path of model directory
-             *
-             * @param srcType Source Type
-             *
-             * @param cameraObj Camera Object
              */
-            int32_t     tidlInit(vx_context context,
-                                    const string &modelBasePath,
-                                    string &srcType, camera*& cameraObj);
-
-            /** Function to read and parse IO.bin file from model zoo Path
-             *
-             * @param context OpenVX context
-             *
-             * @return OpenVX user data object for tivxTIDLJ7Params
-             */
-            vx_user_data_object readConfig(vx_context context);
+            int32_t     displayInit(vx_context context, OutputInfo *output);
 
         private:
-            /** Helper function to parse TIDL Inference configuration.
+            /** Helper function to parse display configuration.
              *
-             * @param context OpenVX context
-             *
-             * @param modelBasePath path of model directory
+             * @param input_wd Width of the input frame
              *
              */
-            int32_t     getConfig(vx_context context,
-                                    const string &modelBasePath);
+            int32_t     getConfig(vx_context context, OutputInfo *output);
 
         public:
-            /* Data structure passed to TIDL module */
-            TIOVXTIDLModuleObj      tidlObj;
-            
-            /* IO Buffer Descriptor of the model */
-            sTIDL_IOBufDesc_t       *ioBufDesc;
+            /** Data structure passed to display module */
+            TIOVXDisplayModuleObj               displayObj;
 
         private:
-            /* Path to network file of the model */
-            string                  network_file_path{""};
+#if !defined (SOC_AM62A)
+            /** Performance overlay parameter struct */
+            app_grpx_init_prms_t                grpx_prms;
+#endif
+
     };
-    
 } /* namespace ti::edgeai::common */
 
-#endif /* _TI_EDGEAI_TIOVX_TIDL_H_ */
+#endif /* _TI_EDGEAI_TIOVX_DISPLAY_H_ */

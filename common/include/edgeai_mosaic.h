@@ -65,21 +65,36 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse mosaic configuration.
+            /** Helper function to init mosaic module.
               *
-              * @param mosaicInfo vector containing posX, posY, width and height
-              *                   about mosaic.
+              * @param context OpenVX context
+              * @param mosaicInfo vector containing posX, posY, width and
+              *                   height of mosaic.
+              * @param title Main title text to overlay
+              * @param mosaicTitle
               *
             */
-            int32_t     getConfig(vector<vector<int32_t>> mosaicInfo);
+           int32_t      imgMosaicInit(vx_context context,
+                              vector<vector<int32_t>> &mosaicInfo,
+                              string &title, vector<string> &mosaicTitle);
+
+        private:
+            /** Helper function to parse mosaic configuration.
+              *
+              * @param mosaicInfo vector containing posX, posY, width and
+              *                   height of mosaic.
+              *
+            */
+            int32_t     getConfig(vector<vector<int32_t>> &mosaicInfo);
 
             /** Function to set mosaic baground buffer.
               *
               * @param title Main title text to overlay
-              * @param mosaicTitle 
+              * @param mosaicTitle
               *
             */
-            void        setBackground(string title, vector<string> mosaicTitle);
+            void        setBackground(string &title,
+                                    vector<string> &mosaicTitle);
 
         public:
             /* Data structure passed to mosaic module */
@@ -89,7 +104,7 @@ namespace ti::edgeai::common
              * Used to pass input to mosaic nodes from previous post proc outputs.
              * Input to mosaic module is array of vx_object_array.
             */
-            vx_object_array            mosaic_input_arr[TIVX_IMG_MOSAIC_MAX_INPUTS] = {NULL};
+            vx_object_array mosaic_input_arr[TIVX_IMG_MOSAIC_MAX_INPUTS] = {NULL};
 
         private:
             /* Vector to store all mosaic co-ordinates and size*/

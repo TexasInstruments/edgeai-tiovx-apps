@@ -48,6 +48,18 @@ multiScaler::multiScaler()
 multiScaler::~multiScaler()
 {
     LOG_DEBUG("multiScaler DESTRUCTOR\n");
+
+    tiovx_multi_scaler_module_delete(&multiScalerObj1);
+    if(useSecondaryMsc)
+    {
+        tiovx_multi_scaler_module_delete(&multiScalerObj2);
+    }
+
+    tiovx_multi_scaler_module_deinit(&multiScalerObj1);
+    if(useSecondaryMsc)
+    {
+        tiovx_multi_scaler_module_deinit(&multiScalerObj2);
+    }
 }
 
 int32_t multiScaler::getConfig(int32_t input_wd,
@@ -66,7 +78,8 @@ int32_t multiScaler::getConfig(int32_t input_wd,
 
     if ( (input_wd < post_proc_wd) || (input_ht < post_proc_ht) )
     {
-        LOG_ERROR("Output width or height invalid. MSC cannot handle upscaling.\n");
+        LOG_ERROR("Output width or height invalid. "
+                  "MSC cannot handle upscaling.\n");
         status = -1;
         return status;
     }
@@ -79,8 +92,10 @@ int32_t multiScaler::getConfig(int32_t input_wd,
         return status;
     }
 
-    float cropXPct = (((resizeWidth - cropWidth) / 2 ) / float(resizeWidth));
-    float cropYPct = (((resizeHeight - cropHeight) / 2 ) / float(resizeHeight));
+    float cropXPct =
+        (((resizeWidth - cropWidth) / 2 ) / float(resizeWidth));
+    float cropYPct =
+        (((resizeHeight - cropHeight) / 2 ) / float(resizeHeight));
     crop_start_x = cropXPct * input_wd;
     crop_start_y = cropYPct * input_ht;
     resizeWidth  = cropWidth;
@@ -165,10 +180,12 @@ int32_t multiScaler::getConfig(int32_t input_wd,
               multiScalerObj1.input.width, multiScalerObj1.input.height);
     LOG_DEBUG("multiScalerObj1.output[0].width = %d, "
               "multiScalerObj1.output[0].height = %d \n",
-              multiScalerObj1.output[0].width, multiScalerObj1.output[0].height);
+              multiScalerObj1.output[0].width,
+              multiScalerObj1.output[0].height);
     LOG_DEBUG("multiScalerObj1.output[1].width = %d, "
               "multiScalerObj1.output[1].height = %d \n",
-              multiScalerObj1.output[1].width, multiScalerObj1.output[1].height);
+              multiScalerObj1.output[1].width,
+              multiScalerObj1.output[1].height);
     LOG_DEBUG("multiScalerObj1.crop_params[0].crop_start_x = %d, "
               "multiScalerObj1.crop_params[0].crop_start_y = %d \n",
               multiScalerObj1.crop_params[0].crop_start_x,
@@ -177,6 +194,36 @@ int32_t multiScaler::getConfig(int32_t input_wd,
               "multiScalerObj1.crop_params[0].crop_height = %d \n",
               multiScalerObj1.crop_params[0].crop_width,
               multiScalerObj1.crop_params[0].crop_height);
+
+    return status;
+}
+
+int32_t multiScaler::multiScalerInit(vx_context context, int32_t input_wd,
+                                int32_t input_ht, int32_t post_proc_wd,
+                                int32_t post_proc_ht, preProc *pre_proc_obj,
+                                string &srcType, camera*& cameraObj)
+{
+    int32_t status = VX_SUCCESS;
+
+    /* Get config for multiscaler module. */
+    status = getConfig(input_wd, input_ht, post_proc_wd, post_proc_ht,
+                        pre_proc_obj);
+
+    if(srcType == "camera")
+    {
+        multiScalerObj1.num_channels =
+            cameraObj->sensorObj.num_cameras_enabled;
+        multiScalerObj2.num_channels =
+            cameraObj->sensorObj.num_cameras_enabled;
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_multi_scaler_module_init(context, &multiScalerObj1);
+    }
+    if( (useSecondaryMsc) && (status == VX_SUCCESS))
+    {
+        status = tiovx_multi_scaler_module_init(context, &multiScalerObj2);
+    }
 
     return status;
 }

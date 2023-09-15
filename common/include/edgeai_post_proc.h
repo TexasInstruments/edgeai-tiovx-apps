@@ -37,6 +37,9 @@
 #include <stdint.h>
 #include <string>
 
+/* Module Headers */
+#include <common/include/edgeai_camera.h>
+
 /* OpenVX Headers */
 #include <TI/j7_tidl.h>
 #include <tiovx_dl_post_proc_module.h>
@@ -54,7 +57,7 @@ namespace ti::edgeai::common
     class postProc
     {
         public:
-            /* Default constructor. Use the compiler generated default one. */
+            /* Constructor. */
             postProc();
 
             /* Destructor. */
@@ -65,18 +68,18 @@ namespace ti::edgeai::common
              */
             void        dumpInfo();
 
-            /** Helper function to parse post process configuration.
+            /** Helper function to init Post Proc module.
              *
-             * @param modelBasePath path of model directory
-             * @param ioBufDesc io buffer descriptor of the model
-             * @param imageWidth input image width to post process node
-             * @param imageHeight input image height to post process node
-             *
+             * @param context OpenVX context
+             * @param model model being used
+             * @param ioBufDesc IO Buffer Descriptor of the model
+             * @param srcType Source Type
+             * @param cameraObj Camera Object
              */
-            int32_t     getConfig(const string      &modelBasePath,
-                                  sTIDL_IOBufDesc_t *ioBufDesc,
-                                  int32_t           imageWidth,
-                                  int32_t           imageHeight);
+            int32_t     postProcInit(vx_context context, ModelInfo*& model,
+                                    sTIDL_IOBufDesc_t *ioBufDesc,
+                                    int32_t imageWidth, int32_t imageHeight,
+                                    string &srcType, camera*& cameraObj);
         
         private:
             /**
@@ -94,6 +97,19 @@ namespace ti::edgeai::common
              * the compiler from generating a default assignment operator.
              */
             postProc & operator=(const postProc& rhs) = delete;
+
+            /** Helper function to parse post process configuration.
+             *
+             * @param modelBasePath path of model directory
+             * @param ioBufDesc io buffer descriptor of the model
+             * @param imageWidth input image width to post process node
+             * @param imageHeight input image height to post process node
+             *
+             */
+            int32_t     getConfig(const string      &modelBasePath,
+                                  sTIDL_IOBufDesc_t *ioBufDesc,
+                                  int32_t           imageWidth,
+                                  int32_t           imageHeight);
 
         public:
             /* Data structure passed to post process module */

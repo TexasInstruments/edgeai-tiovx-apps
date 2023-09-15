@@ -67,6 +67,8 @@ postProc::postProc()
 
 postProc::~postProc()
 {
+    LOG_DEBUG("postProc DESTRUCTOR\n");
+
     if(mYUVColorMap != NULL)
     {
         for(int32_t i = 0; i < mMaxColorClass; ++i)
@@ -76,7 +78,8 @@ postProc::~postProc()
         delete [] mYUVColorMap;
     }
 
-    LOG_DEBUG("postProc DESTRUCTOR\n");
+    tiovx_dl_post_proc_module_delete(&dlPostProcObj);
+    tiovx_dl_post_proc_module_deinit(&dlPostProcObj);
 }
 
 int32_t postProc::getConfig(const string        &modelBasePath,
@@ -322,6 +325,32 @@ int32_t postProc::getConfig(const string        &modelBasePath,
         dlPostProcObj.output_image.width = imageWidth;
         dlPostProcObj.output_image.height = imageHeight;
 
+    }
+
+    return status;
+}
+
+int32_t postProc::postProcInit(vx_context context, ModelInfo*& model,
+                                sTIDL_IOBufDesc_t *ioBufDesc,
+                                int32_t imageWidth, int32_t imageHeight,
+                                string &srcType, camera*& cameraObj)
+{
+    int32_t status = VX_SUCCESS;
+
+    /* Get config for Post Process Module. */
+    status = getConfig(model->m_modelPath, ioBufDesc, imageWidth, imageHeight);
+
+    dlPostProcObj.params.oc_prms.num_top_results = model->m_topN;
+    dlPostProcObj.params.od_prms.viz_th = model->m_vizThreshold;
+    dlPostProcObj.params.ss_prms.alpha = model->m_alpha;
+
+    if(srcType == "camera")
+    {
+        dlPostProcObj.num_channels = cameraObj->sensorObj.num_cameras_enabled;
+    }
+    if(status == VX_SUCCESS)
+    {
+        status = tiovx_dl_post_proc_module_init(context, &dlPostProcObj);
     }
 
     return status;
