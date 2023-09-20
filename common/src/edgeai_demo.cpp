@@ -372,7 +372,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 /* Init display module */
                 status = m_displayObj->displayInit(m_ovxGraph->context, output);
 
-                /* Save the instance id of mosaic output which goes to display. */
+                /* Save the instance id of mosaic output which goes to display*/
                 m_dispMosaicIdx = output->m_instId;
             }
 #endif
@@ -411,83 +411,11 @@ int32_t EdgeAIDemoImpl::setupFlows()
         status = m_cameraObj->cameraCreate(m_ovxGraph->graph, camInputInfo);
     }
 
-    if(m_cameraObj != NULL)
+    if(status == VX_SUCCESS)
     {
-        /* Create multiscaler module with appropriate msc connected to ldc node.*/
-        for(auto &iter : m_camMscIdxMap)
-        {
-            if(status == VX_SUCCESS)
-            {
-                status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                          &m_multiScalerObjs[iter]->multiScalerObj1,
-                                                          m_cameraObj->ldcObj.output0.arr[0],
-                                                          TIVX_TARGET_VPAC_MSC1);
-
-                if( (status == VX_SUCCESS) && (m_multiScalerObjs[iter]->useSecondaryMsc) )
-                {
-                    status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                              &m_multiScalerObjs[iter]->multiScalerObj2,
-                                                              m_multiScalerObjs[iter]->multiScalerObj1.output[0].arr[0],
-                                                              TIVX_TARGET_VPAC_MSC2);
-                }
-
-                /* If the input is camera, the multiscaler used with this
-                 * subflow is not the first node.
-                 */
-                m_multiScalerObjs[iter]->isHeadNode = false;
-            }
-        }
-    }
-
-    uint32_t msc_cnt = 0;
-    for (auto const &[name,flow] : m_config.m_flowMap)
-    {
-        uint32_t   msc_ip_used;
-        auto const &modelIds = flow->m_modelIds;
-
-        /* For each flow input will be read only once and same input will be passed to
-           other multiscaler nodes.
-           msc_cnt is the counter for traversing multiscaler object array
-           msc_ip_used is the index of the multiscaler object in which the input is read and
-           this multiscaler object's input will be used in other multiscaler objects of
-           subflows as inputs */
-        if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
-        {
-            status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                      &m_multiScalerObjs[msc_cnt]->multiScalerObj1,
-                                                      NULL,
-                                                      TIVX_TARGET_VPAC_MSC1);
-
-            if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->useSecondaryMsc) )
-            {
-                status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                          &m_multiScalerObjs[msc_cnt]->multiScalerObj2,
-                                                          m_multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
-                                                          TIVX_TARGET_VPAC_MSC2);
-            }
-            msc_ip_used = msc_cnt;
-            msc_cnt++;
-        }
-        /* Starting i from 1 as first index already created */
-        for(uint32_t i = 1; i < modelIds.size(); i++)
-        {
-            if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
-            {
-                status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                          &m_multiScalerObjs[msc_cnt]->multiScalerObj1,
-                                                          m_multiScalerObjs[msc_ip_used]->multiScalerObj1.input.arr[0],
-                                                          TIVX_TARGET_VPAC_MSC1);
-
-                if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->useSecondaryMsc) )
-                {
-                    status = tiovx_multi_scaler_module_create(m_ovxGraph->graph,
-                                                              &m_multiScalerObjs[msc_cnt]->multiScalerObj2,
-                                                              m_multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
-                                                              TIVX_TARGET_VPAC_MSC2);
-                }
-            }
-            msc_cnt++;
-        }
+        status = allMultiScalerCreate(m_ovxGraph->graph, m_cameraObj,
+                                      m_multiScalerObjs, m_camMscIdxMap,
+                                      m_config);
     }
 
     /* Create pre process module. */
@@ -496,24 +424,25 @@ int32_t EdgeAIDemoImpl::setupFlows()
         if(status == VX_SUCCESS)
         {
             /**
-             * If two back to back msc is needed , in case pre-process resolution
-             * is less than 1/4th original image, the original image will be
-             * resized to 1/4th by the first scaler node and the remaining
-             * scaling needed by pre-process will be scaled by second scaler node.
+             * If two back to back msc is needed , in case pre-process
+             * resolution is less than 1/4th original image, the original image
+             * will be resized to 1/4th by the first scaler node and the
+             * remaining scaling needed by pre-process will be scaled by second
+             * scaler node.
              */
             if(m_multiScalerObjs[i]->useSecondaryMsc)
             {
                 status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph,
-                                                         &m_preProcObjs[i]->dlPreProcObj,
-                                                         m_multiScalerObjs[i]->multiScalerObj2.output[0].arr[0],
-                                                         TIVX_TARGET_MPU_0);
+                                                &m_preProcObjs[i]->dlPreProcObj,
+                        m_multiScalerObjs[i]->multiScalerObj2.output[0].arr[0],
+                                                TIVX_TARGET_MPU_0);
             }
             else
             {
                 status = tiovx_dl_pre_proc_module_create(m_ovxGraph->graph,
-                                                         &m_preProcObjs[i]->dlPreProcObj,
-                                                         m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
-                                                         TIVX_TARGET_MPU_0);
+                                            &m_preProcObjs[i]->dlPreProcObj,
+                        m_multiScalerObjs[i]->multiScalerObj1.output[0].arr[0],
+                                            TIVX_TARGET_MPU_0);
             }
         }
 
@@ -521,9 +450,9 @@ int32_t EdgeAIDemoImpl::setupFlows()
         if(status == VX_SUCCESS)
         {
             status = tiovx_tidl_module_create(m_ovxGraph->context,
-                                        m_ovxGraph->graph,
-                                        &m_tidlInfObjs[i]->tidlObj,
-                                        m_preProcObjs[i]->dlPreProcObj.output.arr);
+                                    m_ovxGraph->graph,
+                                    &m_tidlInfObjs[i]->tidlObj,
+                                    m_preProcObjs[i]->dlPreProcObj.output.arr);
         }
 
         /* Create post process module. */
@@ -531,25 +460,28 @@ int32_t EdgeAIDemoImpl::setupFlows()
         {
             status = tiovx_dl_post_proc_module_create(m_ovxGraph->graph,
                                             &m_postProcObjs[i]->dlPostProcObj,
-                                            m_multiScalerObjs[i]->multiScalerObj1.output[1].arr[0],
-                                            m_tidlInfObjs[i]->tidlObj.output, TIVX_TARGET_MPU_0);
+                        m_multiScalerObjs[i]->multiScalerObj1.output[1].arr[0],
+                                            m_tidlInfObjs[i]->tidlObj.output,
+                                            TIVX_TARGET_MPU_0);
         }
     }
 
     /* Create mosaic module. */
     for(uint32_t i = 0; i < m_imgMosaicObjs.size(); i++)
     {
-        /* Connect appropriate post process node to its appropriate mosaic node. */
+        /* Connect appropriate post process node to its appropriate mosaic
+        node. */
         for(uint32_t j = 0; j < postProcMosaicConn[i].size(); j++)
         {
             int32_t index = postProcMosaicConn[i][j];
-            m_imgMosaicObjs[i]->mosaic_input_arr[j] = m_postProcObjs[index]->dlPostProcObj.output_image.arr[0];
+            m_imgMosaicObjs[i]->mosaic_input_arr[j] =
+                m_postProcObjs[index]->dlPostProcObj.output_image.arr[0];
         }
         status = tiovx_img_mosaic_module_create(m_ovxGraph->graph,
-                                                &m_imgMosaicObjs[i]->imgMosaicObj,
-                                                m_imgMosaicObjs[i]->imgMosaicObj.background_image[0],
-                                                m_imgMosaicObjs[i]->mosaic_input_arr,
-                                                TIVX_TARGET_VPAC_MSC1);
+                                        &m_imgMosaicObjs[i]->imgMosaicObj,
+                        m_imgMosaicObjs[i]->imgMosaicObj.background_image[0],
+                                        m_imgMosaicObjs[i]->mosaic_input_arr,
+                                        TIVX_TARGET_VPAC_MSC1);
     }
 
 #if !defined (SOC_AM62A)
@@ -558,7 +490,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     {
         status = tiovx_display_module_create(m_ovxGraph->graph,
                                              &m_displayObj->displayObj,
-                                             m_imgMosaicObjs[m_dispMosaicIdx]->imgMosaicObj.output_image[0],
+                m_imgMosaicObjs[m_dispMosaicIdx]->imgMosaicObj.output_image[0],
                                              TIVX_TARGET_DISPLAY1);
     }
 #endif
@@ -575,7 +507,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
         graph_parameter_index++;
     }
 
-    msc_cnt = 0;
+    uint32_t msc_cnt = 0;
     for (auto const &[name,flow] : m_config.m_flowMap)
     {
         auto const &modelIds = flow->m_modelIds;

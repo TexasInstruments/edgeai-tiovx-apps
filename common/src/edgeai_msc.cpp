@@ -228,4 +228,96 @@ int32_t multiScaler::multiScalerInit(vx_context context, int32_t input_wd,
     return status;
 }
 
+int32_t allMultiScalerCreate(vx_graph graph, camera*& cameraObj,
+                             vector<multiScaler*> &multiScalerObjs,
+                             vector<int32_t> &camMscIdxMap, DemoConfig &config)
+{
+    int32_t     status = VX_SUCCESS;
+    uint32_t    msc_cnt = 0;
+
+    if(cameraObj != NULL)
+    {
+        /* Create multiscaler module with appropriate msc connected to ldc node.
+        */
+        for(auto &iter : camMscIdxMap)
+        {
+            if(status == VX_SUCCESS)
+            {
+                status = tiovx_multi_scaler_module_create(graph,
+                                        &multiScalerObjs[iter]->multiScalerObj1,
+                                        cameraObj->ldcObj.output0.arr[0],
+                                        TIVX_TARGET_VPAC_MSC1);
+
+                if( (status == VX_SUCCESS) &&
+                    (multiScalerObjs[iter]->useSecondaryMsc) )
+                {
+                    status = tiovx_multi_scaler_module_create(graph,
+                                        &multiScalerObjs[iter]->multiScalerObj2,
+                        multiScalerObjs[iter]->multiScalerObj1.output[0].arr[0],
+                                        TIVX_TARGET_VPAC_MSC2);
+                }
+
+                /* If the input is camera, the multiscaler used with this
+                 * subflow is not the first node.
+                 */
+                multiScalerObjs[iter]->isHeadNode = false;
+            }
+        }
+    }
+
+    for (auto const &[name,flow] : config.m_flowMap)
+    {
+        uint32_t   msc_ip_used;
+        auto const &modelIds = flow->m_modelIds;
+
+        /* For each flow input will be read only once and same input will be
+           passed to other multiscaler nodes.
+           msc_cnt is the counter for traversing multiscaler object array
+           msc_ip_used is the index of the multiscaler object in which the input is read and
+           this multiscaler object's input will be used in other multiscaler objects of
+           subflows as inputs */
+        if( (status == VX_SUCCESS) && (multiScalerObjs[msc_cnt]->isHeadNode) )
+        {
+            status = tiovx_multi_scaler_module_create(graph,
+                                    &multiScalerObjs[msc_cnt]->multiScalerObj1,
+                                    NULL, TIVX_TARGET_VPAC_MSC1);
+
+            if( (status == VX_SUCCESS) &&
+                (multiScalerObjs[msc_cnt]->useSecondaryMsc) )
+            {
+                status = tiovx_multi_scaler_module_create(graph,
+                                    &multiScalerObjs[msc_cnt]->multiScalerObj2,
+                    multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
+                                    TIVX_TARGET_VPAC_MSC2);
+            }
+            msc_ip_used = msc_cnt;
+            msc_cnt++;
+        }
+        /* Starting i from 1 as first index already created */
+        for(uint32_t i = 1; i < modelIds.size(); i++)
+        {
+            if( (status == VX_SUCCESS) &&
+                (multiScalerObjs[msc_cnt]->isHeadNode) )
+            {
+                status = tiovx_multi_scaler_module_create(graph,
+                                    &multiScalerObjs[msc_cnt]->multiScalerObj1,
+                    multiScalerObjs[msc_ip_used]->multiScalerObj1.input.arr[0],
+                                    TIVX_TARGET_VPAC_MSC1);
+
+                if( (status == VX_SUCCESS) &&
+                    (multiScalerObjs[msc_cnt]->useSecondaryMsc) )
+                {
+                    status = tiovx_multi_scaler_module_create(graph,
+                                    &multiScalerObjs[msc_cnt]->multiScalerObj2,
+                    multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
+                                    TIVX_TARGET_VPAC_MSC2);
+                }
+            }
+            msc_cnt++;
+        }
+    }
+
+    return status;
+}
+
 } /* namespace ti::edgeai::common */

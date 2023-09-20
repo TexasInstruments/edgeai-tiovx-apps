@@ -116,6 +116,20 @@ namespace ti::edgeai::common
              */
             bool                          isHeadNode{true};
     };
+
+    /** Helper function to create all multiscaler modules.
+     *
+     * @param graph OpenVX graph
+     * @param cameraObj Camera Object
+     * @param multiScalerObjs Vector of pointers of all multiscaler objects
+     * @param camMscIdxMap Vector of index of all multiScalerObj which will
+     * take input from the camera nodes
+     * @param config Demo config
+     *
+     */
+    int32_t allMultiScalerCreate(vx_graph graph, camera*& cameraObj,
+                            vector<multiScaler*> &multiScalerObjs,
+                            vector<int32_t> &camMscIdxMap, DemoConfig &config);
 } /* namespace ti::edgeai::common */
 
 #endif /* _TI_EDGEAI_TIOVX_MSC_H_ */
