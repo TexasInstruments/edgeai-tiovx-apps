@@ -46,6 +46,7 @@
 #include <common/include/edgeai_msc.h>
 #include <common/include/edgeai_mosaic.h>
 #include <common/include/edgeai_camera.h>
+#include <common/include/edgeai_v4l2_camera.h>
 #include <common/include/edgeai_display.h>
 
 /* OpenVX headers */
@@ -124,6 +125,9 @@ class EdgeAIDemoImpl
 
         /** Camera object */
         camera                              *m_cameraObj{NULL};
+
+        /** V4l2 Camera object */
+        map<string, v4l2Camera*>            m_v4l2CameraObjMap;
 
         /** Vector of multiscaler objects */
         vector<multiScaler*>                m_multiScalerObjs{};
@@ -252,6 +256,13 @@ int32_t EdgeAIDemoImpl::setupFlows()
             m_multiScalerObjs.resize(subflowObjSizes+modelIds.size());
         }
 
+        if (input->m_srcType == "v4l2" && m_v4l2CameraObjMap.find(flow->m_inputId) == m_v4l2CameraObjMap.end())
+        {
+            m_v4l2CameraObjMap[flow->m_inputId] = new v4l2Camera(input);
+            m_v4l2CameraObjMap[flow->m_inputId]->v4l2CameraInit(m_ovxGraph->context);
+            m_v4l2CameraObjMap[flow->m_inputId]->v4l2CameraCreate(m_ovxGraph->graph);
+        }
+
         for(uint32_t i=0; i < modelIds.size(); i++)
         {
             if( (input->m_source != "camera") || (m_camNodesInit != true) )
@@ -261,14 +272,14 @@ int32_t EdgeAIDemoImpl::setupFlows()
                 m_postProcObjs[i+subflowObjSizes]    = new postProc;
                 m_multiScalerObjs[i+subflowObjSizes] = new multiScaler;
             }
-            
+
             /**
             * modelIds is a vector of all models used for a unique input
             * outputIds is a vector of all outputs used for a unique input
             */
             ModelInfo   *model = m_config.m_modelMap[modelIds[i]];
             OutputInfo  *output = m_config.m_outputMap[outputIds[i]];
-            
+
             /* Init modules (for camera input just init once). */
             if( (input->m_source != "camera") || (m_camNodesInit != true) )
             {
@@ -414,6 +425,7 @@ int32_t EdgeAIDemoImpl::setupFlows()
     if(status == VX_SUCCESS)
     {
         status = allMultiScalerCreate(m_ovxGraph->graph, m_cameraObj,
+                                      m_v4l2CameraObjMap,
                                       m_multiScalerObjs, m_camMscIdxMap,
                                       m_config);
     }
@@ -511,24 +523,29 @@ int32_t EdgeAIDemoImpl::setupFlows()
     for (auto const &[name,flow] : m_config.m_flowMap)
     {
         auto const &modelIds = flow->m_modelIds;
+        auto const &input = m_config.m_inputMap[flow->m_inputId];
 
-        if(msc_cnt < m_multiScalerObjs.size())
+        if(input->m_srcType == "v4l2")
         {
-            if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
-            {
-                status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_multiScalerObjs[msc_cnt]->multiScalerObj1.node, 0);
-                m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.graph_parameter_index = graph_parameter_index;
-                graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
-                graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
-                graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0];
-                graph_parameter_index++;
-            }
-
-            for(uint32_t i = 0; i < modelIds.size(); i++)
-            {
-                msc_cnt++;
-            }
+            v4l2Camera *v4l2CameraObj = m_v4l2CameraObjMap[flow->m_inputId];
+            status = add_graph_parameter_by_node_index(m_ovxGraph->graph, v4l2CameraObj->vissObj.node, 3);
+            v4l2CameraObj->vissObj.input.graph_parameter_index = graph_parameter_index;
+            graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&v4l2CameraObj->vissObj.input.image_handle[0];
+            graph_parameter_index++;
         }
+        else if( (status == VX_SUCCESS) && (m_multiScalerObjs[msc_cnt]->isHeadNode) )
+        {
+            status = add_graph_parameter_by_node_index(m_ovxGraph->graph, m_multiScalerObjs[msc_cnt]->multiScalerObj1.node, 0);
+            m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.graph_parameter_index = graph_parameter_index;
+            graph_parameters_queue_params_list[graph_parameter_index].graph_parameter_index = graph_parameter_index;
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list_size = 1;
+            graph_parameters_queue_params_list[graph_parameter_index].refs_list = (vx_reference*)&m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0];
+            graph_parameter_index++;
+        }
+
+        msc_cnt += modelIds.size();
     }
 
     for(uint32_t i = 0; i < m_imgMosaicObjs.size(); i++)
@@ -648,11 +665,13 @@ int32_t EdgeAIDemoImpl::startDemo()
                 readImage(const_cast<char*>(input->m_multiImageVect[input->m_multiImageVectCnt].c_str()),
                             m_multiScalerObjs[msc_cnt]->multiScalerObj1.input.image_handle[0]);
             }
-
-            for(uint32_t i = 0; i < flow->m_subFlowConfigs.size(); i++)
+            else if(input->m_srcType == "v4l2")
             {
-                msc_cnt++;
+                m_v4l2CameraObjMap[flow->m_inputId]->v4l2CameraCapture(m_ovxGraph->graph);
             }
+
+            msc_cnt += flow->m_subFlowConfigs.size();
+
             if(input->m_srcType == "images_directory")
             {
                 input->m_multiImageVectCnt++;

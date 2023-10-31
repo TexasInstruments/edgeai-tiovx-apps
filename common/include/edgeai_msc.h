@@ -36,6 +36,7 @@
 /* Modules Headers */
 #include <common/include/edgeai_pre_proc.h>
 #include <common/include/edgeai_camera.h>
+#include <common/include/edgeai_v4l2_camera.h>
 
 /* OpenVX Headers */
 #include <tiovx_multi_scaler_module.h>
@@ -128,6 +129,7 @@ namespace ti::edgeai::common
      *
      */
     int32_t allMultiScalerCreate(vx_graph graph, camera*& cameraObj,
+                            map<string, v4l2Camera*> v4l2CameraObjMap,
                             vector<multiScaler*> &multiScalerObjs,
                             vector<int32_t> &camMscIdxMap, DemoConfig &config);
 } /* namespace ti::edgeai::common */

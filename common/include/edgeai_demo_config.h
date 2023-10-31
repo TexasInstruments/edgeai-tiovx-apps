@@ -230,6 +230,12 @@ namespace ti::edgeai::common
             /** Sensor ID for raw sensor. */
             string                              m_sen_id{"imx390"};
 
+            /** V4l2 Subdev ID for raw sensor. */
+            string                              m_subdev_id{"/dev/v4l-imx390-subdev0"};
+
+            /** color format. */
+            string                              m_format{"rggb12"};
+
             /** VPAC ID */
             uint8_t                             m_vpac_id{1};
     };

@@ -229,6 +229,7 @@ int32_t multiScaler::multiScalerInit(vx_context context, int32_t input_wd,
 }
 
 int32_t allMultiScalerCreate(vx_graph graph, camera*& cameraObj,
+                             map<string, v4l2Camera*> v4l2CameraObjMap,
                              vector<multiScaler*> &multiScalerObjs,
                              vector<int32_t> &camMscIdxMap, DemoConfig &config)
 {
@@ -276,44 +277,79 @@ int32_t allMultiScalerCreate(vx_graph graph, camera*& cameraObj,
            msc_ip_used is the index of the multiscaler object in which the input is read and
            this multiscaler object's input will be used in other multiscaler objects of
            subflows as inputs */
-        if( (status == VX_SUCCESS) && (multiScalerObjs[msc_cnt]->isHeadNode) )
+        if (v4l2CameraObjMap.find(flow->m_inputId) != v4l2CameraObjMap.end())
         {
-            status = tiovx_multi_scaler_module_create(graph,
-                                    &multiScalerObjs[msc_cnt]->multiScalerObj1,
-                                    NULL, TIVX_TARGET_VPAC_MSC1);
+            v4l2Camera* v4l2_cam_obj = v4l2CameraObjMap[flow->m_inputId];
+            multiScalerObjs[msc_cnt]->isHeadNode = false;
 
-            if( (status == VX_SUCCESS) &&
-                (multiScalerObjs[msc_cnt]->useSecondaryMsc) )
+            for(uint32_t i = 0; i < modelIds.size(); i++)
             {
-                status = tiovx_multi_scaler_module_create(graph,
-                                    &multiScalerObjs[msc_cnt]->multiScalerObj2,
-                    multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
-                                    TIVX_TARGET_VPAC_MSC2);
-            }
-            msc_ip_used = msc_cnt;
-            msc_cnt++;
-        }
-        /* Starting i from 1 as first index already created */
-        for(uint32_t i = 1; i < modelIds.size(); i++)
-        {
-            if( (status == VX_SUCCESS) &&
-                (multiScalerObjs[msc_cnt]->isHeadNode) )
-            {
-                status = tiovx_multi_scaler_module_create(graph,
-                                    &multiScalerObjs[msc_cnt]->multiScalerObj1,
-                    multiScalerObjs[msc_ip_used]->multiScalerObj1.input.arr[0],
-                                    TIVX_TARGET_VPAC_MSC1);
+		if (v4l2_cam_obj->m_inputInfo->m_ldc) {
+			status = tiovx_multi_scaler_module_create(graph,
+						&multiScalerObjs[msc_cnt]->multiScalerObj1,
+						v4l2_cam_obj->ldcObj.output0.arr[0],
+						TIVX_TARGET_VPAC_MSC1);
+		} else {
+			status = tiovx_multi_scaler_module_create(graph,
+						&multiScalerObjs[msc_cnt]->multiScalerObj1,
+						v4l2_cam_obj->vissObj.output2.arr[0],
+						TIVX_TARGET_VPAC_MSC1);
+
+		}
 
                 if( (status == VX_SUCCESS) &&
                     (multiScalerObjs[msc_cnt]->useSecondaryMsc) )
                 {
                     status = tiovx_multi_scaler_module_create(graph,
-                                    &multiScalerObjs[msc_cnt]->multiScalerObj2,
-                    multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
-                                    TIVX_TARGET_VPAC_MSC2);
+                                        &multiScalerObjs[msc_cnt]->multiScalerObj2,
+                        multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
+                                        TIVX_TARGET_VPAC_MSC2);
                 }
+
+                msc_cnt++;
             }
-            msc_cnt++;
+        }
+        else
+        {
+            if( (status == VX_SUCCESS) && (multiScalerObjs[msc_cnt]->isHeadNode) )
+            {
+                status = tiovx_multi_scaler_module_create(graph,
+                                        &multiScalerObjs[msc_cnt]->multiScalerObj1,
+                                        NULL, TIVX_TARGET_VPAC_MSC1);
+
+                if( (status == VX_SUCCESS) &&
+                    (multiScalerObjs[msc_cnt]->useSecondaryMsc) )
+                {
+                    status = tiovx_multi_scaler_module_create(graph,
+                                        &multiScalerObjs[msc_cnt]->multiScalerObj2,
+                        multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
+                                        TIVX_TARGET_VPAC_MSC2);
+                }
+                msc_ip_used = msc_cnt;
+                msc_cnt++;
+            }
+            /* Starting i from 1 as first index already created */
+            for(uint32_t i = 1; i < modelIds.size(); i++)
+            {
+                if( (status == VX_SUCCESS) &&
+                    (multiScalerObjs[msc_cnt]->isHeadNode) )
+                {
+                    status = tiovx_multi_scaler_module_create(graph,
+                                        &multiScalerObjs[msc_cnt]->multiScalerObj1,
+                        multiScalerObjs[msc_ip_used]->multiScalerObj1.input.arr[0],
+                                        TIVX_TARGET_VPAC_MSC1);
+
+                    if( (status == VX_SUCCESS) &&
+                        (multiScalerObjs[msc_cnt]->useSecondaryMsc) )
+                    {
+                        status = tiovx_multi_scaler_module_create(graph,
+                                        &multiScalerObjs[msc_cnt]->multiScalerObj2,
+                        multiScalerObjs[msc_cnt]->multiScalerObj1.output[0].arr[0],
+                                        TIVX_TARGET_VPAC_MSC2);
+                    }
+                }
+                msc_cnt++;
+            }
         }
     }
 

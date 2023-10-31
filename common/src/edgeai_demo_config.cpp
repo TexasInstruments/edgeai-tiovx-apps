@@ -86,6 +86,17 @@ InputInfo::InputInfo(const YAML::Node &node)
         m_sen_id = node["sen-id"].as<string>();
     }
 
+    if (node["subdev-id"])
+    {
+        m_subdev_id = node["subdev-id"].as<string>();
+    }
+
+    if (node["format"])
+    {
+        m_format = node["format"].as<string>();
+    }
+
+
     if (node["viss-dcc-path"])
     {
         m_vissDccPath = node["viss-dcc-path"].as<string>();
@@ -153,6 +164,10 @@ InputInfo::InputInfo(const YAML::Node &node)
         else if ( (srcExt == ".nv12") || (srcExt == ".yuv") )
         {
             m_srcType = "image";
+        }
+        else if (string::npos != m_source.find("/dev/video"))
+        {
+            m_srcType = "v4l2";
         }
         else
         {

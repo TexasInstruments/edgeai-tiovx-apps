@@ -16,6 +16,21 @@ inputs:
         width: 1280
         height: 720
         loop: True
+    input3:
+        source: /dev/video-rpi-cam0
+        subdev-id: /dev/v4l-rpi-subdev0
+        width: 1920
+        height: 1080
+        format: rggb
+        sen-id: imx219
+    input4:
+        source: /dev/video-imx390-cam0
+        subdev-id: /dev/v4l-imx390-subdev0
+        width: 1936
+        height: 1100
+        format: rggb12
+        sen-id: imx390
+        ldc: True
 
 models:
     model0:
