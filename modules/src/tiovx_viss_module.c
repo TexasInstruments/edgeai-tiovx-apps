@@ -78,7 +78,7 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXVissNodeCfg *node_cfg = (TIOVXVissNodeCfg *)node->node_cfg;
-    TIOVXVissNodePriv *node_priv = (TIOVXVissNodeCfg *)node->node_priv;
+    TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
 
     node_cfg->viss_params.sensor_dcc_id       = node_priv->sensor_obj.sensorParams.dccId;
     node_cfg->viss_params.use_case            = 0;
@@ -178,7 +178,7 @@ static vx_status tiovx_viss_module_configure_dcc_params(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXVissNodeCfg *node_cfg = (TIOVXVissNodeCfg *)node->node_cfg;
-    TIOVXVissNodePriv *node_priv = (TIOVXVissNodeCfg *)node->node_priv;
+    TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
     int32_t dcc_buff_size;
     uint8_t * dcc_buf;
     vx_map_id dcc_buf_map_id;
@@ -267,7 +267,7 @@ vx_status tiovx_viss_init_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXVissNodeCfg *node_cfg = (TIOVXVissNodeCfg *)node->node_cfg;
-    TIOVXVissNodePriv *node_priv = (TIOVXVissNodeCfg *)node->node_priv;
+    TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
 
     status = tiovx_init_sensor(&node_priv->sensor_obj, node_cfg->sensor_name);
     if (VX_SUCCESS != status) {
@@ -338,7 +338,7 @@ vx_status tiovx_viss_create_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXVissNodeCfg *node_cfg = (TIOVXVissNodeCfg *)node->node_cfg;
-    TIOVXVissNodePriv *node_priv = (TIOVXVissNodeCfg *)node->node_priv;
+    TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
     vx_user_data_object ae_awb_result = NULL;
     vx_image output[] = {NULL, NULL, NULL, NULL, NULL};
     vx_user_data_object h3a_stats = NULL;
@@ -381,9 +381,7 @@ vx_status tiovx_viss_create_node(NodeObj *node)
 vx_status tiovx_viss_delete_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-    TIOVXVissNodePriv *node_priv = (TIOVXVissNodeCfg *)node->node_priv;
-
-    status = tiovx_modules_delete_node(node);
+    TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
 
     status = vxReleaseUserDataObject(&node_priv->viss_params_obj);
     status = vxReleaseUserDataObject(&node_priv->dcc_config_obj);
