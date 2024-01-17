@@ -59,8 +59,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include "tiovx_modules_cbs.h"
-#include "tiovx_modules_types.h"
+#include "tiovx_modules.h"
 
 NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
 {
@@ -76,7 +75,7 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .init_node = tiovx_dl_color_convert_init_node,
         .create_node = tiovx_dl_color_convert_create_node,
         .post_verify_graph = NULL,
-        .delete_node = tiovx_modules_delete_node,
+        .delete_node = tiovx_modules_release_node,
         .get_cfg_size = tiovx_dl_color_convert_get_cfg_size,
         .get_priv_size = NULL
     },
@@ -84,7 +83,7 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .init_node = tiovx_color_convert_init_node,
         .create_node = tiovx_color_convert_create_node,
         .post_verify_graph = NULL,
-        .delete_node = tiovx_modules_delete_node,
+        .delete_node = tiovx_modules_release_node,
         .get_cfg_size = tiovx_color_convert_get_cfg_size,
         .get_priv_size = NULL
     },

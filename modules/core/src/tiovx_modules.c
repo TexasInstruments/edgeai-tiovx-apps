@@ -421,10 +421,20 @@ vx_status tiovx_modules_delete_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
 
+    node->cbs->delete_node(node);
+
     free(node->node_cfg);
     if (node->node_priv) {
         free(node->node_priv);
     }
+
+    return status;
+}
+
+vx_status tiovx_modules_release_node(NodeObj *node)
+{
+    vx_status status = VX_FAILURE;
+
     status = vxReleaseNode(&node->tiovx_node);
 
     return status;
@@ -453,7 +463,7 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
             tiovx_modules_free_bufpool(pad->buf_pool);
         }
 
-        node->cbs->delete_node(node);
+        tiovx_modules_delete_node(node);
     }
 
     vxReleaseGraph(&graph->tiovx_graph);

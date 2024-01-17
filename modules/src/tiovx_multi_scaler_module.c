@@ -409,13 +409,13 @@ vx_status tiovx_multi_scaler_delete_node(NodeObj *node)
     vx_status status = VX_FAILURE;
     TIOVXMultiScalerNodePriv *node_priv = (TIOVXMultiScalerNodePriv *)node->node_priv;
 
+    status = vxReleaseNode(&node->tiovx_node);
+
     status = vxReleaseUserDataObject(&node_priv->coeff_obj);
 
     for (int i = 0; i < node->num_outputs; i++) {
         status = vxReleaseUserDataObject(&node_priv->crop_obj[i]);
     }
-
-    status = tiovx_modules_delete_node(node);
 
     return status;
 }
