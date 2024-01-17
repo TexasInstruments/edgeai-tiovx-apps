@@ -63,6 +63,11 @@
 
 #include <TI/hwa_vpac_msc.h>
 
+typedef struct {
+    vx_user_data_object         coeff_obj;
+    vx_user_data_object         crop_obj[TIOVX_MULTI_SCALER_MODULE_MAX_OUTPUTS];
+} TIOVXMultiScalerNodePriv;
+
 vx_status tiovx_multi_scaler_module_crop_params_init(TIOVXMultiScalerNodeCfg *cfg)
 {
     for (int i = 0; i < cfg->num_outputs; i++)
@@ -183,22 +188,23 @@ vx_status tiovx_multi_scaler_module_configure_scaler_coeffs(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
+    TIOVXMultiScalerNodePriv *node_priv = (TIOVXMultiScalerNodePriv *)node->node_priv;
     tivx_vpac_msc_coefficients_t coeffs;
 
     tiovx_multi_scaler_module_set_coeff(&coeffs,
                                         node_cfg->interpolation_method);
 
     /* Set Coefficients */
-    node_cfg->coeff_obj = vxCreateUserDataObject(node->graph->tiovx_context,
+    node_priv->coeff_obj = vxCreateUserDataObject(node->graph->tiovx_context,
                                 "tivx_vpac_msc_coefficients_t",
                                 sizeof(tivx_vpac_msc_coefficients_t),
                                 NULL);
-    status = vxGetStatus((vx_reference)node_cfg->coeff_obj);
+    status = vxGetStatus((vx_reference)node_priv->coeff_obj);
 
     if((vx_status)VX_SUCCESS == status)
     {
-        vxSetReferenceName((vx_reference)node_cfg->coeff_obj, "multi_scaler_node_coeff_obj");
-        status = vxCopyUserDataObject(node_cfg->coeff_obj, 0,
+        vxSetReferenceName((vx_reference)node_priv->coeff_obj, "multi_scaler_node_coeff_obj");
+        status = vxCopyUserDataObject(node_priv->coeff_obj, 0,
                                     sizeof(tivx_vpac_msc_coefficients_t),
                                     &coeffs,
                                     VX_WRITE_ONLY,
@@ -218,19 +224,20 @@ vx_status tiovx_multi_scaler_configure_crop_params(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
+    TIOVXMultiScalerNodePriv *node_priv = (TIOVXMultiScalerNodePriv *)node->node_priv;
 
     for (int i = 0; i < node->num_outputs; i++)
     {
-        node_cfg->crop_obj[i] = vxCreateUserDataObject(
+        node_priv->crop_obj[i] = vxCreateUserDataObject(
                                         node->graph->tiovx_context,
                                         "tivx_vpac_msc_crop_params_t",
                                         sizeof(tivx_vpac_msc_crop_params_t),
                                         NULL);
-        status = vxGetStatus((vx_reference)node_cfg->crop_obj[i]);
+        status = vxGetStatus((vx_reference)node_priv->crop_obj[i]);
 
         if((vx_status)VX_SUCCESS == status)
         {
-            status = vxCopyUserDataObject(node_cfg->crop_obj[i], 0,
+            status = vxCopyUserDataObject(node_priv->crop_obj[i], 0,
                                           sizeof(tivx_vpac_msc_crop_params_t),
                                           node_cfg->crop_params + i,
                                           VX_WRITE_ONLY,
@@ -324,9 +331,9 @@ vx_status tiovx_multi_scaler_module_update_filter_coeffs(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     vx_reference refs[1];
-    TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
+    TIOVXMultiScalerNodePriv *node_priv = (TIOVXMultiScalerNodePriv *)node->node_priv;
 
-    refs[0] = (vx_reference)node_cfg->coeff_obj;
+    refs[0] = (vx_reference)node_priv->coeff_obj;
 
     status = tivxNodeSendCommand(node->tiovx_node, 0u,
                                  TIVX_VPAC_MSC_CMD_SET_COEFF,
@@ -344,10 +351,11 @@ vx_status tiovx_multi_scaler_module_update_crop_params(NodeObj *node)
     vx_status status = VX_FAILURE;
     vx_reference refs[TIOVX_MULTI_SCALER_MODULE_MAX_OUTPUTS];
     TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
+    TIOVXMultiScalerNodePriv *node_priv = (TIOVXMultiScalerNodePriv *)node->node_priv;
 
     for (int i = 0; i < node_cfg->num_outputs; i++)
     {
-        refs[i] = (vx_reference)node_cfg->crop_obj[i];
+        refs[i] = (vx_reference)node_priv->crop_obj[i];
     }
 
     status = tivxNodeSendCommand(node->tiovx_node, 0u,
@@ -399,15 +407,15 @@ vx_status tiovx_multi_scaler_create_node(NodeObj *node)
 vx_status tiovx_multi_scaler_delete_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-    TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
+    TIOVXMultiScalerNodePriv *node_priv = (TIOVXMultiScalerNodePriv *)node->node_priv;
 
-    status = tiovx_modules_delete_node(node);
-
-    status = vxReleaseUserDataObject(&node_cfg->coeff_obj);
+    status = vxReleaseUserDataObject(&node_priv->coeff_obj);
 
     for (int i = 0; i < node->num_outputs; i++) {
-        status = vxReleaseUserDataObject(&node_cfg->crop_obj[i]);
+        status = vxReleaseUserDataObject(&node_priv->crop_obj[i]);
     }
+
+    status = tiovx_modules_delete_node(node);
 
     return status;
 }
@@ -425,4 +433,9 @@ vx_status tiovx_multi_scaler_post_verify_graph(NodeObj *node)
 vx_uint32 tiovx_multi_scaler_get_cfg_size()
 {
     return sizeof(TIOVXMultiScalerNodeCfg);
+}
+
+vx_uint32 tiovx_multi_scaler_get_priv_size()
+{
+    return sizeof(TIOVXMultiScalerNodePriv);
 }

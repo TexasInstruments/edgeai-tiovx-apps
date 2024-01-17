@@ -154,6 +154,7 @@ typedef struct {
     vx_status (*post_verify_graph)(NodeObj *node);
     vx_status (*delete_node)(NodeObj *node);
     vx_uint32 (*get_cfg_size)();
+    vx_uint32 (*get_priv_size)();
 } NodeCbs;
 
 struct _NodeObj {
@@ -166,6 +167,7 @@ struct _NodeObj {
     Pad                 sinks[TIOVX_MODULES_MAX_NODE_INPUTS];
     Pad                 srcs[TIOVX_MODULES_MAX_NODE_OUTPUTS];
     NodeCbs             *cbs;
+    void                *node_priv;
 };
 
 struct _GraphObj {
