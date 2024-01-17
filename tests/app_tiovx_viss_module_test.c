@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2021 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -60,73 +60,67 @@
  *
  */
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
 #include <tiovx_modules.h>
+#include <tiovx_utils.h>
 
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
+#define APP_BUFQ_DEPTH   (1)
+#define APP_NUM_CH       (1)
 
-char *EDGEAI_DATA_PATH;
+#define INPUT_WIDTH  (1920)
+#define INPUT_HEIGHT (1080)
 
-int main(int argc, char *argv[])
+#define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
+#define DCC_VISS "/opt/imaging/imx219/linear/dcc_viss.bin"
+
+vx_status app_modules_viss_test(vx_int32 argc, vx_char* argv[])
 {
-    int status = 0;
+    vx_status status = VX_FAILURE;
+    GraphObj graph;
+    NodeObj *node = NULL;
+    TIOVXVissNodeCfg cfg;
+    BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
+    Buf *inbuf = NULL, *outbuf = NULL;
+    char input_filename[100];
+    char output_filename[100];
 
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
-    {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
-    }
+    sprintf(input_filename, "%s/raw_images/modules_test/imx219_1920x1080_capture.raw", EDGEAI_DATA_PATH);
+    sprintf(output_filename, "%s/output/imx219_1920x1080_capture_nv12.yuv", EDGEAI_DATA_PATH);
 
-    status = appInit();
+    tiovx_viss_init_cfg(&cfg);
 
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
+    snprintf(cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", DCC_VISS);
+    cfg.width = INPUT_WIDTH;
+    cfg.height = INPUT_HEIGHT;
+    sprintf(cfg.target_string, TIVX_TARGET_VPAC_VISS1);
 
-        status = app_modules_multi_scaler_test(argc, argv);
-    }
-#endif
+    cfg.input_cfg.params.format[0].pixel_container = TIVX_RAW_IMAGE_8_BIT;
+    cfg.input_cfg.params.format[0].msb = 7;
 
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
+    status = tiovx_modules_initialize_graph(&graph);
+    node = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&cfg);
+    status = tiovx_modules_verify_graph(&graph);
 
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
+    in_buf_pool = node->sinks[0].buf_pool;
+    inbuf = tiovx_modules_acquire_buf(in_buf_pool);
+    readRawImage(input_filename, (tivx_raw_image)inbuf->handle);
+    tiovx_modules_enqueue_buf(inbuf);
 
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
+    out_buf_pool = node->srcs[0].buf_pool;
+    outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+    tiovx_modules_enqueue_buf(outbuf);
 
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
+    tiovx_modules_schedule_graph(&graph);
+    tiovx_modules_wait_graph(&graph);
 
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
+    inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+    outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
 
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
+    writeImage(output_filename, (vx_image)outbuf->handle);
 
-    printf("All tests complete!\n");
+    tiovx_modules_release_buf(inbuf);
+    tiovx_modules_release_buf(outbuf);
 
-    appDeInit();
+    tiovx_modules_clean_graph(&graph);
 
     return status;
 }

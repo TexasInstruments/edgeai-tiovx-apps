@@ -87,5 +87,13 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .delete_node = tiovx_modules_delete_node,
         .get_cfg_size = tiovx_color_convert_get_cfg_size,
         .get_priv_size = NULL
+    },
+    {
+        .init_node = tiovx_viss_init_node,
+        .create_node = tiovx_viss_create_node,
+        .post_verify_graph = NULL,
+        .delete_node = tiovx_viss_delete_node,
+        .get_cfg_size = tiovx_viss_get_cfg_size,
+        .get_priv_size = tiovx_viss_get_priv_size
     }
 };
