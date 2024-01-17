@@ -9,6 +9,7 @@ set(SRC_FILES
     src/tiovx_multi_scaler_module.c
     src/tiovx_dl_color_convert_module.c
     src/tiovx_color_convert_module.c
+    src/tiovx_viss_module.c
     )
 
 build_lib(${PROJECT_NAME}  # Named argument: library name

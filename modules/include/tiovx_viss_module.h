@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2021 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,74 +59,40 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifndef _TIOVX_VISS_MODULE
+#define _TIOVX_VISS_MODULE
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
-#include <tiovx_modules.h>
+#include "tiovx_modules_types.h"
+#include <tiovx_sensor_module.h>
 
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
+#define TIOVX_VISS_MODULE_MAX_OUTPUTS (5)
 
-char *EDGEAI_DATA_PATH;
-
-int main(int argc, char *argv[])
-{
-    int status = 0;
-
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
-    {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
-    }
-
-    status = appInit();
-
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
-
-        status = app_modules_multi_scaler_test(argc, argv);
-    }
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
+typedef struct {
+    vx_int32                    width;
+    vx_int32                    height;
+    RawImgCfg                   input_cfg;
+    ImgCfg                      output_cfgs[TIOVX_VISS_MODULE_MAX_OUTPUTS];
+    vx_int32                    output_select[TIOVX_VISS_MODULE_MAX_OUTPUTS];
+    tivx_vpac_viss_params_t     viss_params;
+    vx_char                     dcc_config_file[TIVX_FILEIO_FILE_PATH_LENGTH];
+    char                        target_string[TIVX_TARGET_MAX_NAME];
+    vx_int32                    num_channels;
+    char                        sensor_name[ISS_SENSORS_MAX_NAME];
+} TIOVXVissNodeCfg;
 
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
+void tiovx_viss_init_cfg(TIOVXVissNodeCfg *cfg);
+vx_status tiovx_viss_init_node(NodeObj *node);
+vx_status tiovx_viss_create_node(NodeObj *node);
+vx_status tiovx_viss_delete_node(NodeObj *node);
+vx_uint32 tiovx_viss_get_cfg_size();
+vx_uint32 tiovx_viss_get_priv_size();
 
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
-
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
-
-    printf("All tests complete!\n");
-
-    appDeInit();
-
-    return status;
+#ifdef __cplusplus
 }
+#endif
+
+#endif
