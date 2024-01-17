@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2020 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -60,74 +60,48 @@
  *
  */
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
-#include <tiovx_modules.h>
+#include <tiovx_sensor_module.h>
 
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
-#define APP_MODULES_TEST_VISS (1)
-
-char *EDGEAI_DATA_PATH;
-
-int main(int argc, char *argv[])
+vx_status tiovx_init_sensor(SensorObj *sensorObj, char *objName)
 {
-    int status = 0;
+    vx_status status = VX_SUCCESS;
+    sensorObj->sensor_dcc_enabled=1;
+    sensorObj->sensor_exp_control_enabled=0;
+    sensorObj->sensor_gain_control_enabled=0;
+    sensorObj->sensor_wdr_enabled=0;
+    sensorObj->num_cameras_enabled=1;
+    sensorObj->ch_mask=1;
+    snprintf(sensorObj->sensor_name, ISS_SENSORS_MAX_NAME, "%s", objName);
 
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
+    TIOVX_MODULE_PRINTF("[SENSOR-MODULE] Sensor name = %s\n", sensorObj->sensor_name);
+
+    if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX390_UB953_D3") == 0)
     {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
+        sensorObj->sensorParams.dccId=390;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0820_UB953_LI") == 0)
+    {
+        sensorObj->sensorParams.dccId=820;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0233_UB953_MARS") == 0)
+    {
+        sensorObj->sensorParams.dccId=233;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX219_RPI") == 0)
+    {
+        sensorObj->sensorParams.dccId=219;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_OV2312_UB953_LI") == 0)
+    {
+        sensorObj->sensorParams.dccId=2312;
+    }
+    else
+    {
+        TIOVX_MODULE_ERROR("[SENSOR-MODULE] Invalid sensor name\n");
+        status = VX_FAILURE;
     }
 
-    status = appInit();
-
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
-
-        status = app_modules_multi_scaler_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
-
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
-
-    printf("All tests complete!\n");
-
-    appDeInit();
+    TIOVX_MODULE_PRINTF("[SENSOR-MODULE] Dcc ID = %d\n", sensorObj->sensorParams.dccId);
 
     return status;
 }

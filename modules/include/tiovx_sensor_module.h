@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2020 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,75 +59,31 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifndef _TIOVX_SENSOR_MODULE
+#define _TIOVX_SENSOR_MODULE
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
-#include <tiovx_modules.h>
+#include <utils/iss/include/app_iss.h>
+#include <tiovx_modules_types.h>
 
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
-#define APP_MODULES_TEST_VISS (1)
-
-char *EDGEAI_DATA_PATH;
-
-int main(int argc, char *argv[])
-{
-    int status = 0;
-
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
-    {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
-    }
-
-    status = appInit();
-
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
-
-        status = app_modules_multi_scaler_test(argc, argv);
-    }
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
+typedef struct {
+    IssSensor_CreateParams sensorParams;
+    vx_char sensor_name[ISS_SENSORS_MAX_NAME];
+    uint32_t sensor_dcc_enabled;
+    uint32_t sensor_wdr_enabled;
+    uint32_t sensor_exp_control_enabled;
+    uint32_t sensor_gain_control_enabled;
+    uint32_t num_cameras_enabled;
+    uint32_t ch_mask;
+} SensorObj;
 
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
+vx_status tiovx_init_sensor(SensorObj *sensorObj, char *objName);
 
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
-
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
-
-    printf("All tests complete!\n");
-
-    appDeInit();
-
-    return status;
+#ifdef __cplusplus
 }
+#endif
+
+#endif //_TIOVX_SENSOR_MODULE
