@@ -69,20 +69,23 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .create_node = tiovx_multi_scaler_create_node,
         .post_verify_graph = tiovx_multi_scaler_post_verify_graph,
         .delete_node = tiovx_multi_scaler_delete_node,
-        .get_cfg_size = tiovx_multi_scaler_get_cfg_size
+        .get_cfg_size = tiovx_multi_scaler_get_cfg_size,
+        .get_priv_size = tiovx_multi_scaler_get_priv_size
     },
     {
         .init_node = tiovx_dl_color_convert_init_node,
         .create_node = tiovx_dl_color_convert_create_node,
         .post_verify_graph = NULL,
         .delete_node = tiovx_modules_delete_node,
-        .get_cfg_size = tiovx_dl_color_convert_get_cfg_size
+        .get_cfg_size = tiovx_dl_color_convert_get_cfg_size,
+        .get_priv_size = NULL
     },
     {
         .init_node = tiovx_color_convert_init_node,
         .create_node = tiovx_color_convert_create_node,
         .post_verify_graph = NULL,
         .delete_node = tiovx_modules_delete_node,
-        .get_cfg_size = tiovx_color_convert_get_cfg_size
+        .get_cfg_size = tiovx_color_convert_get_cfg_size,
+        .get_priv_size = NULL
     }
 };

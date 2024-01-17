@@ -74,8 +74,6 @@ extern "C" {
 typedef struct {
     ImgCfg                      input_cfg;
     ImgCfg                      output_cfgs[TIOVX_MULTI_SCALER_MODULE_MAX_OUTPUTS];
-    vx_user_data_object         coeff_obj;
-    vx_user_data_object         crop_obj[TIOVX_MULTI_SCALER_MODULE_MAX_OUTPUTS];
     tivx_vpac_msc_crop_params_t crop_params[TIOVX_MULTI_SCALER_MODULE_MAX_OUTPUTS];
     vx_int32                    num_outputs;
     vx_int32                    color_format;
@@ -91,6 +89,7 @@ vx_status tiovx_multi_scaler_post_verify_graph(NodeObj *node);
 vx_status tiovx_multi_scaler_delete_node(NodeObj *node);
 vx_uint32 tiovx_multi_scaler_get_cfg_size();
 vx_status tiovx_multi_scaler_module_crop_params_init(TIOVXMultiScalerNodeCfg *cgf);
+vx_uint32 tiovx_multi_scaler_get_priv_size();
 
 #ifdef __cplusplus
 }

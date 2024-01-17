@@ -95,6 +95,10 @@ NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg
     node->cbs = &gNodeCbs[node_type];
     node->node_cfg = malloc(node->cbs->get_cfg_size());
 
+    if (node->cbs->get_priv_size) {
+        node->node_priv = malloc(node->cbs->get_priv_size());
+    }
+
     for (uint8_t i = 0; i < TIOVX_MODULES_MAX_NODE_INPUTS; i++) {
         node->sinks[i].direction = SINK;
         node->sinks[i].num_channels = TIOVX_MODULES_DEFAULT_NUM_CHANNELS;
@@ -418,6 +422,9 @@ vx_status tiovx_modules_delete_node(NodeObj *node)
     vx_status status = VX_FAILURE;
 
     free(node->node_cfg);
+    if (node->node_priv) {
+        free(node->node_priv);
+    }
     status = vxReleaseNode(&node->tiovx_node);
 
     return status;
