@@ -81,6 +81,7 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf);
 Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool);
 vx_status tiovx_modules_schedule_graph(GraphObj *graph);
 vx_status tiovx_modules_wait_graph(GraphObj *graph);
+vx_status tiovx_modules_release_node(NodeObj *node);
 
 #ifdef __cplusplus
 }

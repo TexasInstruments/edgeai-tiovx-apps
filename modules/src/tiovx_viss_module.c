@@ -383,6 +383,8 @@ vx_status tiovx_viss_delete_node(NodeObj *node)
     vx_status status = VX_FAILURE;
     TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
 
+    status = vxReleaseNode(&node->tiovx_node);
+
     status = vxReleaseUserDataObject(&node_priv->viss_params_obj);
     status = vxReleaseUserDataObject(&node_priv->dcc_config_obj);
 

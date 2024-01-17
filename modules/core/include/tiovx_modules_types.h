@@ -209,8 +209,6 @@ typedef struct {
     vx_uint32 	        range;
 } DstCfg;
 
-vx_status tiovx_modules_delete_node(NodeObj *node);
-
 #ifdef __cplusplus
 }
 #endif
