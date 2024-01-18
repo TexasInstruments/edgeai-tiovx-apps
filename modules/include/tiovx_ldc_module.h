@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2021 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,86 +59,69 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifndef _TIOVX_LDC_MODULE
+#define _TIOVX_LDC_MODULE
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
-#include <tiovx_modules.h>
+#include "tiovx_modules_types.h"
+#include <tiovx_sensor_module.h>
+#include <TI/hwa_vpac_ldc.h>
 
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
-#define APP_MODULES_TEST_VISS (1)
-#define APP_MODULES_TEST_LDC (1)
+#define TIOVX_LDC_MODULE_MAX_OUTPUTS (2)
 
-char *EDGEAI_DATA_PATH;
-
-int main(int argc, char *argv[])
-{
-    int status = 0;
-
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
-    {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
-    }
-
-    status = appInit();
-
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
-
-        status = app_modules_multi_scaler_test(argc, argv);
-    }
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
+/** \brief LDC Mode enumeration
+ *
+ * Contains different enumeration option for LDC operation
+ *
+ * 0 - All details are taken from DCC data, no need to provide mesh image,
+ *     warp matrix, region params etc. (default)
+ * 1 - No DCC data available user to provide all details pertaining to warp matrix,
+ *     mesh image, region params etc.
+ * 2 - Max enumeration value
+ *
+ */
+typedef enum {
+    TIOVX_MODULE_LDC_OP_MODE_DCC_DATA = 0,
+    TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE,
+    TIOVX_MODULE_LDC_OP_MODE_MAX,
+    TIOVX_MODULE_LDC_OP_MODE_DEFAULT = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA
+}eLDCMode;
 
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
+typedef struct {
+    ImgCfg                        input_cfg;
+    ImgCfg                        output_cfgs[TIOVX_LDC_MODULE_MAX_OUTPUTS];
+    vx_int32                      output_select[TIOVX_LDC_MODULE_MAX_OUTPUTS];
+    eLDCMode                      ldc_mode;
+    tivx_vpac_ldc_params_t        ldc_params;
+    tivx_vpac_ldc_mesh_params_t   mesh_params;
+    tivx_vpac_ldc_region_params_t region_params;
+    vx_char                       dcc_config_file[TIVX_FILEIO_FILE_PATH_LENGTH];
+    vx_uint32                     table_width;
+    vx_uint32                     table_height;
+    vx_uint32                     ds_factor;
+    vx_uint32                     out_block_width;
+    vx_uint32                     out_block_height;
+    vx_uint32                     pixel_pad;
+    vx_uint32                     init_x;
+    vx_uint32                     init_y;
+    vx_char                       lut_file[TIVX_FILEIO_FILE_PATH_LENGTH];
+    char                          target_string[TIVX_TARGET_MAX_NAME];
+    vx_int32                      num_channels;
+    char                          sensor_name[ISS_SENSORS_MAX_NAME];
+} TIOVXLdcNodeCfg;
 
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
+void tiovx_ldc_init_cfg(TIOVXLdcNodeCfg *cfg);
+vx_status tiovx_ldc_init_node(NodeObj *node);
+vx_status tiovx_ldc_create_node(NodeObj *node);
+vx_status tiovx_ldc_delete_node(NodeObj *node);
+vx_uint32 tiovx_ldc_get_cfg_size();
+vx_uint32 tiovx_ldc_get_priv_size();
 
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
-
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_LDC)
-    if(status==0)
-    {
-        printf("Running ldc module test\n");
-        int app_modules_ldc_test(int argc, char* argv[]);
-
-        status = app_modules_ldc_test(argc, argv);
-    }
-#endif
-
-    printf("All tests complete!\n");
-
-    appDeInit();
-
-    return status;
+#ifdef __cplusplus
 }
+#endif
+
+#endif
