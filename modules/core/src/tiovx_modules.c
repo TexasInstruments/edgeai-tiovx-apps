@@ -210,7 +210,6 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exempler1, vx_reference exe
 vx_status tiovx_modules_link_pads(Pad *src_pad, Pad *sink_pad)
 {
     vx_status status = VX_FAILURE;
-    BufPool *buf_pool = NULL;
 
     if (SRC != src_pad->direction) {
         TIOVX_MODULE_ERROR("Invalid src pad\n");
@@ -243,14 +242,13 @@ vx_status tiovx_modules_link_pads(Pad *src_pad, Pad *sink_pad)
         return status;
     }
 
-    buf_pool = tiovx_modules_allocate_bufpool(src_pad);
-    if (NULL == buf_pool) {
-        TIOVX_MODULE_ERROR("buf pool allocation failed\n");
-        return status;
-    }
+    vxRetainReference(src_pad->exemplar);
+    vxRetainReference((vx_reference)src_pad->exemplar_arr);
+    vxReleaseReference(&sink_pad->exemplar);
+    vxReleaseObjectArray(&sink_pad->exemplar_arr);
 
-    src_pad->buf_pool = buf_pool;
-    sink_pad->buf_pool = buf_pool;
+    sink_pad->exemplar = src_pad->exemplar;
+    sink_pad->exemplar_arr = src_pad->exemplar_arr;
 
     src_pad->peer_pad = sink_pad;
     sink_pad->peer_pad = src_pad;
@@ -304,29 +302,13 @@ vx_status tiovx_modules_verify_graph(GraphObj *graph)
 
     for (uint8_t i = 0; i < graph->num_nodes; i++) {
         node = &graph->node_list[i];
-
-        for (uint8_t j = 0; j < node->num_inputs; j++) {
-            pad = &node->sinks[j];
-
-            if (NULL == pad->buf_pool) {
-                pad->buf_pool = tiovx_modules_allocate_bufpool(pad);
-            }
-        }
-
-        for (uint8_t j = 0; j < node->num_outputs; j++) {
-            pad = &node->srcs[j];
-
-            if (NULL == pad->buf_pool) {
-                pad->buf_pool = tiovx_modules_allocate_bufpool(pad);
-            }
-        }
-
         status = node->cbs->create_node(node);
 
         for (uint8_t j = 0; j < node->num_inputs; j++) {
             pad = &node->sinks[j];
 
             if (NULL == pad->peer_pad) {
+                pad->buf_pool = tiovx_modules_allocate_bufpool(pad);
                 status = tiovx_modules_add_to_graph_params(pad);
             }
         }
@@ -335,6 +317,7 @@ vx_status tiovx_modules_verify_graph(GraphObj *graph)
             pad = &node->srcs[j];
 
             if (NULL == pad->peer_pad) {
+                pad->buf_pool = tiovx_modules_allocate_bufpool(pad);
                 status = tiovx_modules_add_to_graph_params(pad);
             }
         }
@@ -480,7 +463,9 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
             pad = &node->srcs[j];
             vxReleaseReference(&pad->exemplar);
             vxReleaseObjectArray(&pad->exemplar_arr);
-            tiovx_modules_free_bufpool(pad->buf_pool);
+            if (pad->peer_pad == NULL) {
+                tiovx_modules_free_bufpool(pad->buf_pool);
+            }
         }
 
         tiovx_modules_delete_node(node);

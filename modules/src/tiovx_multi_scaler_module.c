@@ -382,12 +382,12 @@ vx_status tiovx_multi_scaler_create_node(NodeObj *node)
                            vx_false_e, vx_false_e, vx_false_e};
 
     for (int i = 0; i < node->num_outputs; i++) {
-        output[i] = (vx_image)node->srcs[i].buf_pool->bufs[0].handle;
+        output[i] = (vx_image)node->srcs[i].exemplar;
         replicate[i+1] = vx_true_e;
     }
 
     node->tiovx_node = tivxVpacMscScaleNode(node->graph->tiovx_graph,
-                                (vx_image)(node->sinks[0].buf_pool->bufs[0].handle),
+                                (vx_image)(node->sinks[0].exemplar),
                                 output[0], output[1], output[2],
                                 output[3], output[4]);
 

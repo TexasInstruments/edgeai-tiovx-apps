@@ -126,8 +126,8 @@ vx_status tiovx_dl_color_convert_create_node(NodeObj *node)
     vx_bool replicate[] = { vx_true_e, vx_true_e };
 
     node->tiovx_node = tivxDLColorConvertArmv8Node(node->graph->tiovx_graph,
-                                (vx_image)(node->sinks[0].buf_pool->bufs[0].handle),
-                                (vx_image)(node->srcs[0].buf_pool->bufs[0].handle));
+                                (vx_image)(node->sinks[0].exemplar),
+                                (vx_image)(node->srcs[0].exemplar));
     status = vxGetStatus((vx_reference)node->tiovx_node);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[DL_COLOR_CONVERT] Create Node Failed\n");

@@ -354,7 +354,7 @@ vx_status tiovx_viss_create_node(NodeObj *node)
 
     for (int i = 0, j = 0; i < TIOVX_VISS_MODULE_MAX_OUTPUTS; i++) {
         if (node_cfg->output_select[i] == TIOVX_VISS_MODULE_OUTPUT_EN) {
-            output[i] = (vx_image)node->srcs[j++].buf_pool->bufs[0].handle;
+            output[i] = (vx_image)node->srcs[j++].exemplar;
             replicate[i+4] = vx_true_e;
         }
     }
@@ -363,7 +363,7 @@ vx_status tiovx_viss_create_node(NodeObj *node)
                                 node_priv->viss_params_obj,
                                 ae_awb_result,
                                 node_priv->dcc_config_obj,
-                                (tivx_raw_image)(node->sinks[0].buf_pool->bufs[0].handle),
+                                (tivx_raw_image)(node->sinks[0].exemplar),
                                 output[0], output[1], output[2],
                                 output[3], output[4],
                                 h3a_stats, NULL, NULL, NULL);

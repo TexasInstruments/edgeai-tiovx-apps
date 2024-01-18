@@ -402,7 +402,7 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
 
     for (int i = 0, j = 0; i < TIOVX_LDC_MODULE_MAX_OUTPUTS; i++) {
         if (node_cfg->output_select[i] == TIOVX_LDC_MODULE_OUTPUT_EN) {
-            output[i] = (vx_image)node->srcs[j++].buf_pool->bufs[0].handle;
+            output[i] = (vx_image)node->srcs[j++].exemplar;
             replicate[i+7] = vx_true_e;
         }
     }
@@ -414,7 +414,7 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
                                 node_priv->mesh_params_obj,
                                 node_priv->mesh_img,
                                 node_priv->dcc_config_obj,
-                                (vx_image)(node->sinks[0].buf_pool->bufs[0].handle),
+                                (vx_image)(node->sinks[0].exemplar),
                                 output[0], output[1]);
 
     status = vxGetStatus((vx_reference)node->tiovx_node);
