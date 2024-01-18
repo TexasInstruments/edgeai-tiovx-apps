@@ -272,6 +272,7 @@ vx_status tiovx_multi_scaler_init_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
+    vx_reference exemplar;
 
     node_cfg->input_cfg.color_format = node_cfg->color_format;
     for (int i = 0; i < node_cfg->num_outputs; i++)
@@ -284,33 +285,33 @@ vx_status tiovx_multi_scaler_init_node(NodeObj *node)
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index = 0;
     node->sinks[0].num_channels = node_cfg->num_channels;
-    node->sinks[0].exemplar = (vx_reference)vxCreateImage(
-                                            node->graph->tiovx_context,
-                                            node_cfg->input_cfg.width,
-                                            node_cfg->input_cfg.height,
-                                            node_cfg->input_cfg.color_format);
-    status = vxGetStatus(node->sinks[0].exemplar);
+    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
+                                           node_cfg->input_cfg.width,
+                                           node_cfg->input_cfg.height,
+                                           node_cfg->input_cfg.color_format);
+    status = tiovx_module_create_pad_exemplar(&node->sinks[0], exemplar);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[MULTI_SCALER] Create Input Failed\n");
         return status;
     }
+    vxReleaseReference(&exemplar);
 
     for (int i = 0; i < node_cfg->num_outputs; i++) {
         node->srcs[i].node = node;
         node->srcs[i].pad_index = i;
         node->srcs[i].node_parameter_index = i + 1;
         node->srcs[i].num_channels = node_cfg->num_channels;
-        node->srcs[i].exemplar = (vx_reference)vxCreateImage(
-                                        node->graph->tiovx_context,
-                                        node_cfg->output_cfgs[i].width,
-                                        node_cfg->output_cfgs[i].height,
-                                        node_cfg->output_cfgs[i].color_format);
-        status = vxGetStatus(node->srcs[i].exemplar);
+        exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
+                                               node_cfg->output_cfgs[i].width,
+                                               node_cfg->output_cfgs[i].height,
+                                               node_cfg->output_cfgs[i].color_format);
+        status = tiovx_module_create_pad_exemplar(&node->srcs[i], exemplar);
         if (VX_SUCCESS != status) {
             TIOVX_MODULE_ERROR(
                     "[MULTI_SCALER] Create Output %d Failed\n", i);
             return status;
         }
+        vxReleaseReference(&exemplar);
     }
 
     status = tiovx_multi_scaler_configure_crop_params(node);

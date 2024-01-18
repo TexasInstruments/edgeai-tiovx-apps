@@ -268,6 +268,7 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     vx_status status = VX_FAILURE;
     TIOVXVissNodeCfg *node_cfg = (TIOVXVissNodeCfg *)node->node_cfg;
     TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
+    vx_reference exemplar;
 
     status = tiovx_init_sensor(&node_priv->sensor_obj, node_cfg->sensor_name);
     if (VX_SUCCESS != status) {
@@ -284,14 +285,14 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index = 3;
     node->sinks[0].num_channels = node_cfg->num_channels;
-    node->sinks[0].exemplar = (vx_reference)tivxCreateRawImage(
-                                            node->graph->tiovx_context,
-                                            &node_cfg->input_cfg.params);
-    status = vxGetStatus(node->sinks[0].exemplar);
+    exemplar = (vx_reference)tivxCreateRawImage(node->graph->tiovx_context,
+                                                &node_cfg->input_cfg.params);
+    status = tiovx_module_create_pad_exemplar(&node->sinks[0], exemplar);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[VISS] Create Input Failed\n");
         return status;
     }
+    vxReleaseReference(&exemplar);
 
     #if defined(SOC_AM62A)
         if (node_cfg->viss_params.enable_ir_op == TIVX_VPAC_VISS_IR_ENABLE) {
@@ -313,17 +314,20 @@ vx_status tiovx_viss_init_node(NodeObj *node)
             node->srcs[node->num_outputs].pad_index = node->num_outputs;
             node->srcs[node->num_outputs].node_parameter_index = i + 4;
             node->srcs[node->num_outputs].num_channels = node_cfg->num_channels;
-            node->srcs[node->num_outputs].exemplar = (vx_reference)vxCreateImage(
-                                            node->graph->tiovx_context,
-                                            node_cfg->output_cfgs[i].width,
-                                            node_cfg->output_cfgs[i].height,
-                                            node_cfg->output_cfgs[i].color_format);
-            status = vxGetStatus(node->srcs[node->num_outputs].exemplar);
+            exemplar = (vx_reference)vxCreateImage(
+                                        node->graph->tiovx_context,
+                                        node_cfg->output_cfgs[i].width,
+                                        node_cfg->output_cfgs[i].height,
+                                        node_cfg->output_cfgs[i].color_format);
+            status = tiovx_module_create_pad_exemplar(
+                                                &node->srcs[node->num_outputs],
+                                                exemplar);
             if (VX_SUCCESS != status) {
                 TIOVX_MODULE_ERROR(
                         "[VISS] Create Output %d Failed\n", i);
                 return status;
             }
+            vxReleaseReference(&exemplar);
             node->num_outputs++;
         }
     }

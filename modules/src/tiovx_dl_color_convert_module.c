@@ -76,6 +76,7 @@ vx_status tiovx_dl_color_convert_init_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXDLColorConvertNodeCfg *node_cfg = (TIOVXDLColorConvertNodeCfg *)node->node_cfg;
+    vx_reference exemplar;
 
     node_cfg->input_cfg.width = node_cfg->width;
     node_cfg->input_cfg.height = node_cfg->height;
@@ -89,31 +90,31 @@ vx_status tiovx_dl_color_convert_init_node(NodeObj *node)
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index = 0;
     node->sinks[0].num_channels = node_cfg->num_channels;
-    node->sinks[0].exemplar = (vx_reference)vxCreateImage(
-                                            node->graph->tiovx_context,
-                                            node_cfg->input_cfg.width,
-                                            node_cfg->input_cfg.height,
-                                            node_cfg->input_cfg.color_format);
-    status = vxGetStatus(node->sinks[0].exemplar);
+    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
+                                           node_cfg->input_cfg.width,
+                                           node_cfg->input_cfg.height,
+                                           node_cfg->input_cfg.color_format);
+    status = tiovx_module_create_pad_exemplar(&node->sinks[0], exemplar);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[DL_COLOR_CONVERT] Create Input Failed\n");
         return status;
     }
+    vxReleaseReference(&exemplar);
 
     node->srcs[0].node = node;
     node->srcs[0].pad_index = 0;
     node->srcs[0].node_parameter_index = 1;
     node->srcs[0].num_channels = node_cfg->num_channels;
-    node->srcs[0].exemplar = (vx_reference)vxCreateImage(
-                                            node->graph->tiovx_context,
-                                            node_cfg->output_cfg.width,
-                                            node_cfg->output_cfg.height,
-                                            node_cfg->output_cfg.color_format);
-    status = vxGetStatus(node->srcs[0].exemplar);
+    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
+                                           node_cfg->output_cfg.width,
+                                           node_cfg->output_cfg.height,
+                                           node_cfg->output_cfg.color_format);
+    status = tiovx_module_create_pad_exemplar(&node->srcs[0], exemplar);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[DL_COLOR_CONVERT] Create Output Failed\n");
         return status;
     }
+    vxReleaseReference(&exemplar);
 
     return status;
 }

@@ -325,6 +325,7 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
     vx_status status = VX_FAILURE;
     TIOVXLdcNodeCfg *node_cfg = (TIOVXLdcNodeCfg *)node->node_cfg;
     TIOVXLdcNodePriv *node_priv = (TIOVXLdcNodePriv *)node->node_priv;
+    vx_reference exemplar;
 
     CLR(node_priv);
 
@@ -340,16 +341,16 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index = 6;
     node->sinks[0].num_channels = node_cfg->num_channels;
-    node->sinks[0].exemplar = (vx_reference)vxCreateImage(
-                                            node->graph->tiovx_context,
-                                            node_cfg->input_cfg.width,
-                                            node_cfg->input_cfg.height,
-                                            node_cfg->input_cfg.color_format);
-    status = vxGetStatus(node->sinks[0].exemplar);
+    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
+                                           node_cfg->input_cfg.width,
+                                           node_cfg->input_cfg.height,
+                                           node_cfg->input_cfg.color_format);
+    status = tiovx_module_create_pad_exemplar(&node->sinks[0], exemplar);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[LDC] Create Input Failed\n");
         return status;
     }
+    vxReleaseReference(&exemplar);
 
     node->num_outputs = 0;
 
@@ -359,17 +360,20 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
             node->srcs[node->num_outputs].pad_index = node->num_outputs;
             node->srcs[node->num_outputs].node_parameter_index = i + 7;
             node->srcs[node->num_outputs].num_channels = node_cfg->num_channels;
-            node->srcs[node->num_outputs].exemplar = (vx_reference)vxCreateImage(
-                                            node->graph->tiovx_context,
-                                            node_cfg->output_cfgs[i].width,
-                                            node_cfg->output_cfgs[i].height,
-                                            node_cfg->output_cfgs[i].color_format);
-            status = vxGetStatus(node->srcs[node->num_outputs].exemplar);
+            exemplar = (vx_reference)vxCreateImage(
+                                        node->graph->tiovx_context,
+                                        node_cfg->output_cfgs[i].width,
+                                        node_cfg->output_cfgs[i].height,
+                                        node_cfg->output_cfgs[i].color_format);
+            status = tiovx_module_create_pad_exemplar(
+                                                &node->srcs[node->num_outputs],
+                                                exemplar);
             if (VX_SUCCESS != status) {
                 TIOVX_MODULE_ERROR(
                         "[LDC] Create Output %d Failed\n", i);
                 return status;
             }
+            vxReleaseReference(&exemplar);
             node->num_outputs++;
         }
     }
