@@ -146,6 +146,7 @@ struct _Pad {
     vx_int32            bufq_depth;
     BufPool             *buf_pool;
     vx_reference        exemplar;
+    vx_object_array     exemplar_arr;
 };
 
 typedef struct {
@@ -208,6 +209,8 @@ typedef struct {
     vx_int32 	        offset;
     vx_uint32 	        range;
 } DstCfg;
+
+vx_status tiovx_module_create_pad_exemplar(Pad *pad, vx_reference exemplar);
 
 #ifdef __cplusplus
 }

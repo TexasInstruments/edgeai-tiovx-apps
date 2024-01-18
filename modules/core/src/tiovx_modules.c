@@ -440,6 +440,24 @@ vx_status tiovx_modules_release_node(NodeObj *node)
     return status;
 }
 
+vx_status tiovx_module_create_pad_exemplar(Pad *pad, vx_reference exemplar)
+{
+    vx_status status = VX_FAILURE;
+
+    pad->exemplar_arr = vxCreateObjectArray(pad->node->graph->tiovx_context,
+                                            exemplar, pad->num_channels);
+    status = vxGetStatus((vx_reference)pad->exemplar_arr);
+    if(status != VX_SUCCESS)
+    {
+        TIOVX_MODULE_ERROR("Creating Pad exemplar failed\n");
+        return status;
+    }
+
+    pad->exemplar = vxGetObjectArrayItem(pad->exemplar_arr, 0);
+
+    return status;
+}
+
 vx_status tiovx_modules_clean_graph(GraphObj *graph)
 {
     vx_status status = VX_FAILURE;
@@ -452,6 +470,7 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
         for (uint8_t j = 0; j < node->num_inputs; j++) {
             pad = &node->sinks[j];
             vxReleaseReference(&pad->exemplar);
+            vxReleaseObjectArray(&pad->exemplar_arr);
             if (pad->peer_pad == NULL) {
                 tiovx_modules_free_bufpool(pad->buf_pool);
             }
@@ -460,6 +479,7 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
         for (uint8_t j = 0; j < node->num_outputs; j++) {
             pad = &node->srcs[j];
             vxReleaseReference(&pad->exemplar);
+            vxReleaseObjectArray(&pad->exemplar_arr);
             tiovx_modules_free_bufpool(pad->buf_pool);
         }
 
