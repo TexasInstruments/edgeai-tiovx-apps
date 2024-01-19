@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2021 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,108 +59,28 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifndef _TIOVX_TEE_MODULE
+#define _TIOVX_TEE_MODULE
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
-#include <tiovx_modules.h>
+#include "tiovx_modules_types.h"
 
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
-#define APP_MODULES_TEST_VISS (1)
-#define APP_MODULES_TEST_LDC (1)
-#define APP_MODULES_TEST_VISS_LDC_MSC (1)
-#define APP_MODULES_TEST_TEE (1)
-
-char *EDGEAI_DATA_PATH;
-
-int main(int argc, char *argv[])
-{
-    int status = 0;
-
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
-    {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
-    }
-
-    status = appInit();
-
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
-
-        status = app_modules_multi_scaler_test(argc, argv);
-    }
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
+typedef struct {
+    Pad         *peer_src_pad;
+    vx_int32    num_outputs;
+} TIOVXTeeNodeCfg;
 
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
+void tiovx_tee_init_cfg(TIOVXTeeNodeCfg *cfg);
+vx_status tiovx_tee_init_node(NodeObj *node);
+vx_status tiovx_tee_create_node(NodeObj *node);
+vx_status tiovx_tee_delete_node(NodeObj *node);
+vx_uint32 tiovx_tee_get_cfg_size();
 
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
-
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_LDC)
-    if(status==0)
-    {
-        printf("Running ldc module test\n");
-        int app_modules_ldc_test(int argc, char* argv[]);
-
-        status = app_modules_ldc_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS_LDC_MSC)
-    if(status==0)
-    {
-        printf("Running viss->ldc->msc pipeline test\n");
-        int app_modules_viss_ldc_msc_test(int argc, char* argv[]);
-
-        status = app_modules_viss_ldc_msc_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_TEE)
-    if(status==0)
-    {
-        printf("Running tee module test\n");
-        int app_modules_tee_test(int argc, char* argv[]);
-
-        status = app_modules_tee_test(argc, argv);
-    }
-#endif
-
-    printf("All tests complete!\n");
-
-    appDeInit();
-
-    return status;
+#ifdef __cplusplus
 }
+#endif
+
+#endif

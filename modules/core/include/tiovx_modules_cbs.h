@@ -67,6 +67,7 @@
 #include "tiovx_color_convert_module.h"
 #include "tiovx_viss_module.h"
 #include "tiovx_ldc_module.h"
+#include "tiovx_tee_module.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +79,7 @@ typedef enum {
     TIOVX_COLOR_CONVERT,
     TIOVX_VISS,
     TIOVX_LDC,
+    TIOVX_TEE,
     TIOVX_MODULES_NUM_MODULES,
 } NODE_TYPES;
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2017 Texas Instruments Incorporated
+ * Copyright (c) 2021 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,108 +59,71 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include "tiovx_tee_module.h"
 
-#include <stdio.h>
-#include <TI/tivx.h>
-#include <app_init.h>
-#include <stdlib.h>
-#include <tiovx_modules.h>
-
-#define APP_MODULES_TEST_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_DL_COLOR_CONVERT (1)
-#define APP_MODULES_TEST_MULTI_SCALER (1)
-#define APP_MODULES_TEST_VISS (1)
-#define APP_MODULES_TEST_LDC (1)
-#define APP_MODULES_TEST_VISS_LDC_MSC (1)
-#define APP_MODULES_TEST_TEE (1)
-
-char *EDGEAI_DATA_PATH;
-
-int main(int argc, char *argv[])
+void tiovx_tee_init_cfg(TIOVXTeeNodeCfg *node_cfg)
 {
-    int status = 0;
+    node_cfg->peer_src_pad = NULL;
+    node_cfg->num_outputs = 1;
+}
 
-    EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
-    if (EDGEAI_DATA_PATH == NULL)
-    {
-      TIOVX_MODULE_ERROR("EDGEAI_DATA_PATH Not Defined!!\n");
+vx_status tiovx_tee_init_node(NodeObj *node)
+{
+    vx_status status = VX_FAILURE;
+    TIOVXTeeNodeCfg *node_cfg = (TIOVXTeeNodeCfg *)node->node_cfg;
+
+    node->num_inputs = 1;
+    node->num_outputs = node_cfg->num_outputs;
+
+    node->sinks[0].node = node;
+    node->sinks[0].pad_index = 0;
+    node->sinks[0].node_parameter_index =
+                          node_cfg->peer_src_pad->node_parameter_index;
+    node->sinks[0].num_channels = node_cfg->peer_src_pad->num_channels;
+    vxRetainReference(node_cfg->peer_src_pad->exemplar);
+    vxRetainReference((vx_reference)node_cfg->peer_src_pad->exemplar_arr);
+    node->sinks[0].exemplar = node_cfg->peer_src_pad->exemplar;
+    node->sinks[0].exemplar_arr = node_cfg->peer_src_pad->exemplar_arr;
+
+    for (int i = 0; i < node_cfg->num_outputs; i++) {
+        node->srcs[i].node = node;
+        node->srcs[i].pad_index = i;
+        node->srcs[i].node_parameter_index =
+                             node_cfg->peer_src_pad->node_parameter_index;
+        node->srcs[i].num_channels = node_cfg->peer_src_pad->num_channels;
+        vxRetainReference(node_cfg->peer_src_pad->exemplar);
+        vxRetainReference((vx_reference)node_cfg->peer_src_pad->exemplar_arr);
+        node->srcs[i].exemplar = node_cfg->peer_src_pad->exemplar;
+        node->srcs[i].exemplar_arr = node_cfg->peer_src_pad->exemplar_arr;
     }
 
-    status = appInit();
-
-#if (APP_MODULES_TEST_MULTI_SCALER)
-    if(status==0)
-    {
-        printf("Running Multi Scaler module test\n");
-        int app_modules_multi_scaler_test(int argc, char* argv[]);
-
-        status = app_modules_multi_scaler_test(argc, argv);
+    status = tiovx_modules_link_pads(node_cfg->peer_src_pad, &node->sinks[0]);
+    if (VX_SUCCESS != status) {
+        TIOVX_MODULE_ERROR("[TEE] Failed to link sink pad\n");
+        return status;
     }
-#endif
-
-#if (APP_MODULES_TEST_DL_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running DL color convert module test\n");
-        int app_modules_dl_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_dl_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_COLOR_CONVERT)
-    if(status==0)
-    {
-        printf("Running color convert module test\n");
-        int app_modules_color_convert_test(int argc, char* argv[]);
-
-        status = app_modules_color_convert_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS)
-    if(status==0)
-    {
-        printf("Running viss module test\n");
-        int app_modules_viss_test(int argc, char* argv[]);
-
-        status = app_modules_viss_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_LDC)
-    if(status==0)
-    {
-        printf("Running ldc module test\n");
-        int app_modules_ldc_test(int argc, char* argv[]);
-
-        status = app_modules_ldc_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_VISS_LDC_MSC)
-    if(status==0)
-    {
-        printf("Running viss->ldc->msc pipeline test\n");
-        int app_modules_viss_ldc_msc_test(int argc, char* argv[]);
-
-        status = app_modules_viss_ldc_msc_test(argc, argv);
-    }
-#endif
-
-#if (APP_MODULES_TEST_TEE)
-    if(status==0)
-    {
-        printf("Running tee module test\n");
-        int app_modules_tee_test(int argc, char* argv[]);
-
-        status = app_modules_tee_test(argc, argv);
-    }
-#endif
-
-    printf("All tests complete!\n");
-
-    appDeInit();
 
     return status;
+}
+
+vx_status tiovx_tee_create_node(NodeObj *node)
+{
+    vx_status status = VX_SUCCESS;
+    TIOVXTeeNodeCfg *node_cfg = (TIOVXTeeNodeCfg *)node->node_cfg;
+
+    node->tiovx_node = node_cfg->peer_src_pad->node->tiovx_node;
+
+    return status;
+}
+
+vx_status tiovx_tee_delete_node(NodeObj *node)
+{
+    vx_status status = VX_SUCCESS;
+
+    return status;
+}
+
+vx_uint32 tiovx_tee_get_cfg_size()
+{
+    return sizeof(TIOVXTeeNodeCfg);
 }

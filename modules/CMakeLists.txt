@@ -12,6 +12,7 @@ set(SRC_FILES
     src/tiovx_viss_module.c
     src/tiovx_sensor_module.c
     src/tiovx_ldc_module.c
+    src/tiovx_tee_module.c
     )
 
 build_lib(${PROJECT_NAME}  # Named argument: library name
