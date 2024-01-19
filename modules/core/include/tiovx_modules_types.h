@@ -211,6 +211,7 @@ typedef struct {
 } DstCfg;
 
 vx_status tiovx_module_create_pad_exemplar(Pad *pad, vx_reference exemplar);
+vx_status tiovx_modules_link_pads(Pad *src_pad, Pad *sink_pad);
 
 #ifdef __cplusplus
 }

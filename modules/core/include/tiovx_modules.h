@@ -72,7 +72,6 @@ extern "C" {
 vx_status tiovx_modules_initialize_graph(GraphObj *graph);
 NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg);
 BufPool* tiovx_modules_allocate_bufpool(Pad *pad);
-vx_status tiovx_modules_link_pads(Pad *src_pad, Pad *sink_pad);
 vx_status tiovx_modules_verify_graph(GraphObj *graph);
 Buf* tiovx_modules_acquire_buf(BufPool *buf_pool);
 vx_status tiovx_modules_release_buf(Buf *buf);

@@ -11,6 +11,7 @@ set(SRC_FILES
     app_tiovx_viss_module_test.c
     app_tiovx_ldc_module_test.c
     app_tiovx_viss_ldc_msc_test.c
+    app_tiovx_tee_module_test.c
     main.c)
 
 build_app(${PROJ_NAME}
