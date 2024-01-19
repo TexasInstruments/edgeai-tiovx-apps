@@ -296,10 +296,15 @@ vx_status tiovx_viss_init_node(NodeObj *node)
 
     #if defined(SOC_AM62A)
         if (node_cfg->viss_params.enable_ir_op == TIVX_VPAC_VISS_IR_ENABLE) {
+            node_cfg->output_select[0] = TIOVX_VISS_MODULE_OUTPUT_EN;
+        } else {
             node_cfg->output_select[0] = TIOVX_VISS_MODULE_OUTPUT_NA;
         }
+
         if (node_cfg->viss_params.enable_bayer_op == TIVX_VPAC_VISS_BAYER_ENABLE) {
             node_cfg->output_select[2] = TIOVX_VISS_MODULE_OUTPUT_EN;
+        } else {
+            node_cfg->output_select[2] = TIOVX_VISS_MODULE_OUTPUT_NA;
         }
     #endif
 
