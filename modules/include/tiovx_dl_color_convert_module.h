@@ -80,7 +80,6 @@ typedef struct {
 void tiovx_dl_color_convert_init_cfg(TIOVXDLColorConvertNodeCfg *cfg);
 vx_status tiovx_dl_color_convert_init_node(NodeObj *node);
 vx_status tiovx_dl_color_convert_create_node(NodeObj *node);
-vx_status tiovx_dl_color_convert_post_verify_graph(NodeObj *node);
 vx_uint32 tiovx_dl_color_convert_get_cfg_size();
 
 #ifdef __cplusplus
