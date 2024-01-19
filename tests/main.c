@@ -71,6 +71,7 @@
 #define APP_MODULES_TEST_MULTI_SCALER (1)
 #define APP_MODULES_TEST_VISS (1)
 #define APP_MODULES_TEST_LDC (1)
+#define APP_MODULES_TEST_VISS_LDC_MSC (1)
 
 char *EDGEAI_DATA_PATH;
 
@@ -133,6 +134,16 @@ int main(int argc, char *argv[])
         int app_modules_ldc_test(int argc, char* argv[]);
 
         status = app_modules_ldc_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_VISS_LDC_MSC)
+    if(status==0)
+    {
+        printf("Running viss->ldc->msc pipeline test\n");
+        int app_modules_viss_ldc_msc_test(int argc, char* argv[]);
+
+        status = app_modules_viss_ldc_msc_test(argc, argv);
     }
 #endif
 

@@ -98,6 +98,7 @@ vx_status app_modules_ldc_test(vx_int32 argc, vx_char* argv[])
 
     tiovx_ldc_init_cfg(&cfg);
 
+    sprintf(cfg.sensor_name, SENSOR_NAME);
     snprintf(cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", DCC_LDC);
     snprintf(cfg.lut_file, TIVX_FILEIO_FILE_PATH_LENGTH,
             "%s/raw_images/modules_test/imx390_ldc_lut_1920x1080.bin",
