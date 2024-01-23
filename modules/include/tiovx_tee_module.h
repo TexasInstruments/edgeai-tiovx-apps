@@ -69,7 +69,7 @@ extern "C" {
 #endif
 
 typedef struct {
-    Pad         *peer_src_pad;
+    Pad         *peer_pad;
     vx_int32    num_outputs;
 } TIOVXTeeNodeCfg;
 
