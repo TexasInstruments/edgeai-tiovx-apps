@@ -63,7 +63,7 @@
 
 void tiovx_tee_init_cfg(TIOVXTeeNodeCfg *node_cfg)
 {
-    node_cfg->peer_src_pad = NULL;
+    node_cfg->peer_pad = NULL;
     node_cfg->num_outputs = 1;
 }
 
@@ -78,29 +78,37 @@ vx_status tiovx_tee_init_node(NodeObj *node)
     node->sinks[0].node = node;
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index =
-                          node_cfg->peer_src_pad->node_parameter_index;
-    node->sinks[0].num_channels = node_cfg->peer_src_pad->num_channels;
-    vxRetainReference(node_cfg->peer_src_pad->exemplar);
-    vxRetainReference((vx_reference)node_cfg->peer_src_pad->exemplar_arr);
-    node->sinks[0].exemplar = node_cfg->peer_src_pad->exemplar;
-    node->sinks[0].exemplar_arr = node_cfg->peer_src_pad->exemplar_arr;
+                          node_cfg->peer_pad->node_parameter_index;
+    node->sinks[0].num_channels = node_cfg->peer_pad->num_channels;
+    vxRetainReference(node_cfg->peer_pad->exemplar);
+    vxRetainReference((vx_reference)node_cfg->peer_pad->exemplar_arr);
+    node->sinks[0].exemplar = node_cfg->peer_pad->exemplar;
+    node->sinks[0].exemplar_arr = node_cfg->peer_pad->exemplar_arr;
 
     for (int i = 0; i < node_cfg->num_outputs; i++) {
         node->srcs[i].node = node;
         node->srcs[i].pad_index = i;
         node->srcs[i].node_parameter_index =
-                             node_cfg->peer_src_pad->node_parameter_index;
-        node->srcs[i].num_channels = node_cfg->peer_src_pad->num_channels;
-        vxRetainReference(node_cfg->peer_src_pad->exemplar);
-        vxRetainReference((vx_reference)node_cfg->peer_src_pad->exemplar_arr);
-        node->srcs[i].exemplar = node_cfg->peer_src_pad->exemplar;
-        node->srcs[i].exemplar_arr = node_cfg->peer_src_pad->exemplar_arr;
+                             node_cfg->peer_pad->node_parameter_index;
+        node->srcs[i].num_channels = node_cfg->peer_pad->num_channels;
+        vxRetainReference(node_cfg->peer_pad->exemplar);
+        vxRetainReference((vx_reference)node_cfg->peer_pad->exemplar_arr);
+        node->srcs[i].exemplar = node_cfg->peer_pad->exemplar;
+        node->srcs[i].exemplar_arr = node_cfg->peer_pad->exemplar_arr;
     }
 
-    status = tiovx_modules_link_pads(node_cfg->peer_src_pad, &node->sinks[0]);
-    if (VX_SUCCESS != status) {
-        TIOVX_MODULE_ERROR("[TEE] Failed to link sink pad\n");
-        return status;
+    if (SRC == node_cfg->peer_pad->direction) {
+        status = tiovx_modules_link_pads(node_cfg->peer_pad, &node->sinks[0]);
+        if (VX_SUCCESS != status) {
+            TIOVX_MODULE_ERROR("[TEE] Failed to link sink pad\n");
+            return status;
+        }
+    } else {
+        status = tiovx_modules_link_pads(&node->srcs[0], node_cfg->peer_pad);
+        if (VX_SUCCESS != status) {
+            TIOVX_MODULE_ERROR("[TEE] Failed to link src pad\n");
+            return status;
+        }
     }
 
     return status;
@@ -111,7 +119,7 @@ vx_status tiovx_tee_create_node(NodeObj *node)
     vx_status status = VX_SUCCESS;
     TIOVXTeeNodeCfg *node_cfg = (TIOVXTeeNodeCfg *)node->node_cfg;
 
-    node->tiovx_node = node_cfg->peer_src_pad->node->tiovx_node;
+    node->tiovx_node = node_cfg->peer_pad->node->tiovx_node;
 
     return status;
 }
