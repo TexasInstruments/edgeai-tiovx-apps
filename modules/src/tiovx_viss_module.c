@@ -90,11 +90,11 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
 #if defined(SOC_AM62A)
         if(node_cfg->viss_params.enable_ir_op)
         {
-            if(node_cfg->output[0].color_format == VX_DF_IMAGE_U8)
+            if(node_cfg->output_cfgs[0].color_format == VX_DF_IMAGE_U8)
             {
                 node_cfg->viss_params.fcp[0].mux_output0  = TIVX_VPAC_VISS_MUX0_IR8;
             }
-            else if(node_cfg->output[0].color_format == TIVX_DF_IMAGE_P12)
+            else if(node_cfg->output_cfgs[0].color_format == TIVX_DF_IMAGE_P12)
             {
                 node_cfg->viss_params.fcp[0].mux_output0  = TIVX_VPAC_VISS_MUX0_IR12_P12;
             }
