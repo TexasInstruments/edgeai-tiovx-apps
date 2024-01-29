@@ -76,6 +76,7 @@
 #define APP_MODULES_TEST_TIDL (0)
 #define APP_MODULES_TEST_DL_PRE_PROC (0)
 #define APP_MODULES_TEST_DL_POST_PROC (0)
+#define APP_MODULES_TEST_MOSAIC (1)
 
 char *EDGEAI_DATA_PATH;
 
@@ -185,6 +186,15 @@ int main(int argc, char *argv[])
         int app_modules_dl_post_proc_test(int argc, char* argv[]);
 
         status = app_modules_dl_post_proc_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_MOSAIC)
+    if(status==0)
+    {
+        printf("Running mosaic module test\n");
+        int app_modules_mosaic_test(int argc, char* argv[]);
+
+        status = app_modules_mosaic_test(argc, argv);
     }
 #endif
 

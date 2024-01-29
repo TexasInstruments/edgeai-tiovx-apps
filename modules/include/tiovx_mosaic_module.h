@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,40 +59,36 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
+ #ifndef _TIOVX_MOSAIC_MODULE
+ #define _TIOVX_MOSAIC_MODULE
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
+#include "tiovx_modules_types.h"
+#include <TI/tivx_img_proc.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+typedef struct {
+    ImgCfg                      input_cfgs[TIVX_IMG_MOSAIC_MAX_INPUTS];
+    ImgCfg                      background_cfg;
+    ImgCfg                      output_cfg;
+    vx_int32                    num_inputs;
+    vx_int32                    color_format;
+    vx_int32                    num_channels;
+    char                        target_string[TIVX_TARGET_MAX_NAME];
+    tivxImgMosaicParams         params;
+} TIOVXMosaicNodeCfg;
+
+void tiovx_mosaic_init_cfg(TIOVXMosaicNodeCfg *cfg);
+vx_status tiovx_mosaic_init_node(NodeObj *node);
+vx_status tiovx_mosaic_create_node(NodeObj *node);
+vx_status tiovx_mosaic_delete_node(NodeObj *node);
+vx_uint32 tiovx_mosaic_get_cfg_size();
+vx_uint32 tiovx_mosaic_get_priv_size();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_MODULES_CBS
+#endif
