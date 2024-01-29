@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,64 +59,43 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include "tiovx_modules.h"
+#ifndef _TIOVX_TIDL_MODULE
+#define _TIOVX_TIDL_MODULE
 
-NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
-{
-    {
-        .init_node = tiovx_multi_scaler_init_node,
-        .create_node = tiovx_multi_scaler_create_node,
-        .post_verify_graph = tiovx_multi_scaler_post_verify_graph,
-        .delete_node = tiovx_multi_scaler_delete_node,
-        .get_cfg_size = tiovx_multi_scaler_get_cfg_size,
-        .get_priv_size = tiovx_multi_scaler_get_priv_size
-    },
-    {
-        .init_node = tiovx_dl_color_convert_init_node,
-        .create_node = tiovx_dl_color_convert_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_modules_release_node,
-        .get_cfg_size = tiovx_dl_color_convert_get_cfg_size,
-        .get_priv_size = NULL
-    },
-    {
-        .init_node = tiovx_color_convert_init_node,
-        .create_node = tiovx_color_convert_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_modules_release_node,
-        .get_cfg_size = tiovx_color_convert_get_cfg_size,
-        .get_priv_size = NULL
-    },
-    {
-        .init_node = tiovx_viss_init_node,
-        .create_node = tiovx_viss_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_viss_delete_node,
-        .get_cfg_size = tiovx_viss_get_cfg_size,
-        .get_priv_size = tiovx_viss_get_priv_size
-    },
-    {
-        .init_node = tiovx_ldc_init_node,
-        .create_node = tiovx_ldc_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_ldc_delete_node,
-        .get_cfg_size = tiovx_ldc_get_cfg_size,
-        .get_priv_size = tiovx_ldc_get_priv_size
-    },
-    {
-        .init_node = tiovx_tee_init_node,
-        .create_node = tiovx_tee_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_tee_delete_node,
-        .get_cfg_size = tiovx_tee_get_cfg_size,
-        .get_priv_size = NULL
-    },
-    {
-        .init_node = tiovx_tidl_init_node,
-        .create_node = tiovx_tidl_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_tidl_delete_node,
-        .get_cfg_size = tiovx_tidl_get_cfg_size,
-        .get_priv_size = tiovx_tidl_get_priv_size
-    }
-};
+#include <TI/j7_tidl.h>
+
+#include "tiovx_modules_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {
+    TensorCfg                   input_cfg[TIOVX_MODULES_MAX_TENSORS];
+    TensorCfg                   output_cfg[TIOVX_MODULES_MAX_TENSORS];
+    vx_int32                    num_channels;
+    vx_uint32                   num_input_tensors;
+    vx_uint32                   num_output_tensors;
+    vx_char*                    io_config_path;
+    vx_uint8                    io_config_checksum[TIVX_TIDL_J7_CHECKSUM_SIZE];
+    vx_char*                    network_path;
+    vx_uint8                    network_checksum[TIVX_TIDL_J7_CHECKSUM_SIZE];
+    sTIDL_IOBufDesc_t           io_buf_desc;
+} TIOVXTIDLNodeCfg;
+
+void tiovx_tidl_init_cfg(TIOVXTIDLNodeCfg *cfg);
+vx_status tiovx_tidl_init_node(NodeObj *node);
+vx_status tiovx_tidl_create_node(NodeObj *node);
+vx_status tiovx_tidl_delete_node(NodeObj *node);
+vx_uint32 tiovx_tidl_get_cfg_size();
+vx_uint32 tiovx_tidl_get_priv_size();
+vx_enum get_vx_tensor_datatype(int32_t tidl_datatype);
+vx_user_data_object tiovx_tidl_read_io_config(GraphObj          *graph,
+                                              vx_char           *io_config_path,
+                                              sTIDL_IOBufDesc_t *io_buf_desc);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

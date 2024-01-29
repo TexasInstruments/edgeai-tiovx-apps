@@ -68,6 +68,7 @@
 #include "tiovx_viss_module.h"
 #include "tiovx_ldc_module.h"
 #include "tiovx_tee_module.h"
+#include "tiovx_tidl_module.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +81,7 @@ typedef enum {
     TIOVX_VISS,
     TIOVX_LDC,
     TIOVX_TEE,
+    TIOVX_TIDL,
     TIOVX_MODULES_NUM_MODULES,
 } NODE_TYPES;
 
