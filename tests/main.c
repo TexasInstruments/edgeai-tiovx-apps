@@ -74,6 +74,7 @@
 #define APP_MODULES_TEST_VISS_LDC_MSC (1)
 #define APP_MODULES_TEST_TEE (1)
 #define APP_MODULES_TEST_TIDL (0)
+#define APP_MODULES_TEST_DL_PRE_PROC (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -165,6 +166,15 @@ int main(int argc, char *argv[])
         int app_modules_tidl_test(int argc, char* argv[]);
 
         status = app_modules_tidl_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_DL_PRE_PROC)
+    if(status==0)
+    {
+        printf("Running dl pre proc module test\n");
+        int app_modules_dl_pre_proc_test(int argc, char* argv[]);
+
+        status = app_modules_dl_pre_proc_test(argc, argv);
     }
 #endif
 
