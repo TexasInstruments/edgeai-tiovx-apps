@@ -73,6 +73,7 @@
 #define APP_MODULES_TEST_LDC (1)
 #define APP_MODULES_TEST_VISS_LDC_MSC (1)
 #define APP_MODULES_TEST_TEE (1)
+#define APP_MODULES_TEST_TIDL (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -155,6 +156,15 @@ int main(int argc, char *argv[])
         int app_modules_tee_test(int argc, char* argv[]);
 
         status = app_modules_tee_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_TIDL)
+    if(status==0)
+    {
+        printf("Running tidl module test\n");
+        int app_modules_tidl_test(int argc, char* argv[]);
+
+        status = app_modules_tidl_test(argc, argv);
     }
 #endif
 
