@@ -69,6 +69,7 @@
 #include "tiovx_ldc_module.h"
 #include "tiovx_tee_module.h"
 #include "tiovx_tidl_module.h"
+#include "tiovx_dl_pre_proc_module.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,6 +83,7 @@ typedef enum {
     TIOVX_LDC,
     TIOVX_TEE,
     TIOVX_TIDL,
+    TIOVX_DL_PRE_PROC,
     TIOVX_MODULES_NUM_MODULES,
 } NODE_TYPES;
 
