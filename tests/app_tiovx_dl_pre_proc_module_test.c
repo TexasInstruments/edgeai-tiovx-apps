@@ -59,72 +59,79 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include "tiovx_modules.h"
 
-NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
+#include <tiovx_modules.h>
+#include <tiovx_utils.h>
+
+#define APP_BUFQ_DEPTH   (1)
+#define APP_NUM_CH       (1)
+
+#define IMAGE_WIDTH  (224)
+#define IMAGE_HEIGHT (224)
+
+#define TIDL_CONFIG_FILE_PATH "/opt/model_zoo/TFL-CL-0000-mobileNetV1-mlperf/artifacts/87_tidl_io_1.bin"
+
+vx_status app_modules_dl_pre_proc_test(vx_int32 argc, vx_char* argv[])
 {
-    {
-        .init_node = tiovx_multi_scaler_init_node,
-        .create_node = tiovx_multi_scaler_create_node,
-        .post_verify_graph = tiovx_multi_scaler_post_verify_graph,
-        .delete_node = tiovx_multi_scaler_delete_node,
-        .get_cfg_size = tiovx_multi_scaler_get_cfg_size,
-        .get_priv_size = tiovx_multi_scaler_get_priv_size
-    },
-    {
-        .init_node = tiovx_dl_color_convert_init_node,
-        .create_node = tiovx_dl_color_convert_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_modules_release_node,
-        .get_cfg_size = tiovx_dl_color_convert_get_cfg_size,
-        .get_priv_size = NULL
-    },
-    {
-        .init_node = tiovx_color_convert_init_node,
-        .create_node = tiovx_color_convert_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_modules_release_node,
-        .get_cfg_size = tiovx_color_convert_get_cfg_size,
-        .get_priv_size = NULL
-    },
-    {
-        .init_node = tiovx_viss_init_node,
-        .create_node = tiovx_viss_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_viss_delete_node,
-        .get_cfg_size = tiovx_viss_get_cfg_size,
-        .get_priv_size = tiovx_viss_get_priv_size
-    },
-    {
-        .init_node = tiovx_ldc_init_node,
-        .create_node = tiovx_ldc_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_ldc_delete_node,
-        .get_cfg_size = tiovx_ldc_get_cfg_size,
-        .get_priv_size = tiovx_ldc_get_priv_size
-    },
-    {
-        .init_node = tiovx_tee_init_node,
-        .create_node = tiovx_tee_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_tee_delete_node,
-        .get_cfg_size = tiovx_tee_get_cfg_size,
-        .get_priv_size = NULL
-    },
-    {
-        .init_node = tiovx_tidl_init_node,
-        .create_node = tiovx_tidl_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_tidl_delete_node,
-        .get_cfg_size = tiovx_tidl_get_cfg_size,
-        .get_priv_size = tiovx_tidl_get_priv_size
-    },
-    {
-        .init_node = tiovx_dl_pre_proc_init_node,
-        .create_node = tiovx_dl_pre_proc_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_dl_pre_proc_delete_node,
-        .get_cfg_size = tiovx_dl_pre_proc_get_cfg_size,
-        .get_priv_size = tiovx_dl_pre_proc_get_priv_size
-    }
-};
+    vx_status status = VX_FAILURE;
+    GraphObj graph;
+    NodeObj *node = NULL;
+    TIOVXDLPreProcNodeCfg cfg;
+    BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
+    Buf *inbuf = NULL, *outbuf = NULL;
+    char input_filename[100];
+    char output_filename[100];
+
+    sprintf(input_filename, "%s/raw_images/modules_test/baboon_224x224_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(output_filename, "%s/output/dl-pre-proc-output", EDGEAI_DATA_PATH);
+
+    tiovx_dl_pre_proc_init_cfg(&cfg);
+
+    sprintf(cfg.target_string, TIVX_TARGET_MPU_0);
+
+    cfg.io_config_path = TIDL_CONFIG_FILE_PATH;
+
+    cfg.params.channel_order = 0;
+    cfg.params.tensor_format = 1;
+    cfg.params.scale[0] = 1.0; //For R or Y plane
+    cfg.params.scale[1] = 1.0; //For G or U plane
+    cfg.params.scale[2] = 1.0; //For B or V plane
+    cfg.params.mean[0] = 0.0; //For R or Y plane
+    cfg.params.mean[1] = 0.0; //For G or U plane
+    cfg.params.mean[2] = 0.0; //For B or V plane
+    cfg.params.crop[0] = 0; //Top
+    cfg.params.crop[1] = 0; //Bottom
+    cfg.params.crop[2] = 0; //Left
+    cfg.params.crop[3] = 0; //Right
+
+
+    status = tiovx_modules_initialize_graph(&graph);
+    node = tiovx_modules_add_node(&graph, TIOVX_DL_PRE_PROC, (void *)&cfg);
+    status = tiovx_modules_verify_graph(&graph);
+
+    in_buf_pool = node->sinks[0].buf_pool;
+    out_buf_pool = node->srcs[0].buf_pool;
+
+    inbuf = tiovx_modules_acquire_buf(in_buf_pool);
+    outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+
+    readImage(input_filename, (vx_image)inbuf->handle);
+    
+    tiovx_modules_enqueue_buf(inbuf);
+    tiovx_modules_enqueue_buf(outbuf);
+
+    tiovx_modules_schedule_graph(&graph);
+    tiovx_modules_wait_graph(&graph);
+
+    inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+    outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
+
+    writeTensor(output_filename, (vx_tensor)outbuf->handle);
+
+    tiovx_modules_release_buf(inbuf);
+    tiovx_modules_release_buf(outbuf);
+
+    tiovx_modules_clean_graph(&graph);
+
+    return status;
+}
