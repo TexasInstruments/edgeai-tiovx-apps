@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,38 +59,40 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
+#ifndef _TIOVX_DL_POST_PROC_MODULE
+#define _TIOVX_DL_POST_PROC_MODULE
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
+#include "tiovx_modules_types.h"
+#include <edgeai_tiovx_img_proc.h>
+#include <tivx_dl_post_proc_host.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+typedef struct {
+    vx_int32                    width;
+    vx_int32                    height;
+    ImgCfg                      input_image_cfg;
+    TensorCfg                   input_tensor_cfg[TIOVX_MODULES_MAX_TENSORS];
+    ImgCfg                      output_image_cfg;
+    vx_int32                    num_channels;
+    char                        target_string[TIVX_TARGET_MAX_NAME];
+    vx_uint32                   num_input_tensors;
+    tivxDLPostProcParams        params;
+    vx_char*                    io_config_path;
+    sTIDL_IOBufDesc_t           io_buf_desc;
+} TIOVXDLPostProcNodeCfg;
+
+void tiovx_dl_post_proc_init_cfg(TIOVXDLPostProcNodeCfg *cfg);
+vx_status tiovx_dl_post_proc_init_node(NodeObj *node);
+vx_status tiovx_dl_post_proc_create_node(NodeObj *node);
+vx_status tiovx_dl_post_proc_delete_node(NodeObj *node);
+vx_uint32 tiovx_dl_post_proc_get_cfg_size();
+vx_uint32 tiovx_dl_post_proc_get_priv_size();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_MODULES_CBS
+#endif
