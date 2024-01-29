@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -116,7 +116,7 @@ vx_status app_modules_dl_pre_proc_test(vx_int32 argc, vx_char* argv[])
     outbuf = tiovx_modules_acquire_buf(out_buf_pool);
 
     readImage(input_filename, (vx_image)inbuf->handle);
-    
+
     tiovx_modules_enqueue_buf(inbuf);
     tiovx_modules_enqueue_buf(outbuf);
 

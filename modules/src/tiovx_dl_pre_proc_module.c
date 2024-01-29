@@ -263,11 +263,11 @@ vx_status tiovx_dl_pre_proc_delete_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXDLPreProcNodePriv *node_priv = (TIOVXDLPreProcNodePriv *)node->node_priv;
-    
+
     status = vxReleaseNode(&node->tiovx_node);
 
     status = vxReleaseUserDataObject(&node_priv->io_config);
-    
+
     return status;
 }
 
