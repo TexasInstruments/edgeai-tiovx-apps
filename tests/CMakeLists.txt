@@ -14,6 +14,7 @@ set(SRC_FILES
     app_tiovx_tee_module_test.c
     app_tiovx_tidl_module_test.c
     app_tiovx_dl_pre_proc_module_test.c
+    app_tiovx_dl_post_proc_module_test.c
     main.c)
 
 build_app(${PROJ_NAME}
