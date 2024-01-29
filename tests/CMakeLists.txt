@@ -15,6 +15,7 @@ set(SRC_FILES
     app_tiovx_tidl_module_test.c
     app_tiovx_dl_pre_proc_module_test.c
     app_tiovx_dl_post_proc_module_test.c
+    app_tiovx_dl_pipeline_test.c
     app_tiovx_mosaic_module_test.c
     app_tiovx_display_module_test.c
     main.c)
