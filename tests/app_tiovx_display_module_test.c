@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,42 +59,60 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
-#include "tiovx_display_module.h"
+#include <tiovx_modules.h>
+#include <tiovx_utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define APP_BUFQ_DEPTH   (1)
+#define APP_NUM_CH       (1)
 
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-    TIOVX_DISPLAY,
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+#define IMAGE_WIDTH  (640)
+#define IMAGE_HEIGHT (480)
 
-#ifdef __cplusplus
+vx_status app_modules_display_test(vx_int32 argc, vx_char* argv[])
+{
+    vx_status status = VX_FAILURE;
+    GraphObj graph;
+    NodeObj *node = NULL;
+    TIOVXDisplayNodeCfg cfg;
+    BufPool *in_buf_pool = NULL;
+    Buf *inbuf = NULL;
+    char input_filename[100];
+
+    sprintf(input_filename, "%s/raw_images/modules_test/baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
+
+    tiovx_display_init_cfg(&cfg);
+
+    cfg.width = IMAGE_WIDTH;
+    cfg.height = IMAGE_HEIGHT;
+    cfg.input_cfg.color_format = VX_DF_IMAGE_NV12;
+
+    cfg.params.outWidth  = IMAGE_WIDTH;
+    cfg.params.outHeight = IMAGE_HEIGHT;
+
+    /* Rtos display has fixed resolution of 1920x1080.*/
+    cfg.params.posX = (1920 - IMAGE_WIDTH)/2;
+    cfg.params.posY = (1080 - IMAGE_HEIGHT)/2;
+
+    status = tiovx_modules_initialize_graph(&graph);
+    node = tiovx_modules_add_node(&graph, TIOVX_DISPLAY, (void *)&cfg);
+    status = tiovx_modules_verify_graph(&graph);
+
+    in_buf_pool = node->sinks[0].buf_pool;
+    inbuf = tiovx_modules_acquire_buf(in_buf_pool);
+
+    readImage(input_filename, (vx_image)inbuf->handle);
+
+    tiovx_modules_enqueue_buf(inbuf);
+
+    tiovx_modules_schedule_graph(&graph);
+    tiovx_modules_wait_graph(&graph);
+
+    inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+
+    tiovx_modules_release_buf(inbuf);
+
+    tiovx_modules_clean_graph(&graph);
+
+    return status;
 }
-#endif
-
-#endif //_TIOVX_MODULES_CBS

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,42 +59,37 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
+ #ifndef _TIOVX_DISPLAY_MODULE
+ #define _TIOVX_DISPLAY_MODULE
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
-#include "tiovx_display_module.h"
+#include "tiovx_modules_types.h"
+#include <TI/video_io_display.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-    TIOVX_DISPLAY,
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+#define DEFAULT_DISPLAY_WIDTH 1920
+#define DEFAULT_DISPLAY_HEIGHT 1080
+
+typedef struct {
+    vx_int32                    width;
+    vx_int32                    height;
+    ImgCfg                      input_cfg;;
+    vx_int32                    num_channels;
+    char                        target_string[TIVX_TARGET_MAX_NAME];
+    tivx_display_params_t       params;
+} TIOVXDisplayNodeCfg;
+
+void tiovx_display_init_cfg(TIOVXDisplayNodeCfg *cfg);
+vx_status tiovx_display_init_node(NodeObj *node);
+vx_status tiovx_display_create_node(NodeObj *node);
+vx_status tiovx_display_delete_node(NodeObj *node);
+vx_uint32 tiovx_display_get_cfg_size();
+vx_uint32 tiovx_display_get_priv_size();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_MODULES_CBS
+#endif
