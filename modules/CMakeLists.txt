@@ -17,6 +17,7 @@ set(SRC_FILES
     src/tiovx_dl_pre_proc_module.c
     src/tiovx_dl_post_proc_module.c
     src/tiovx_mosaic_module.c
+    src/tiovx_display_module.c
     )
 
 build_lib(${PROJECT_NAME}  # Named argument: library name
