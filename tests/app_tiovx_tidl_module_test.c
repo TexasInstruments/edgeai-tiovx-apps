@@ -107,7 +107,7 @@ vx_status app_modules_tidl_test(int argc, char* argv[])
     outbuf = tiovx_modules_acquire_buf(out_buf_pool);
 
     readTensor(input_filename, (vx_tensor)inbuf->handle);
-    
+
     tiovx_modules_enqueue_buf(inbuf);
     tiovx_modules_enqueue_buf(outbuf);
 

@@ -161,7 +161,7 @@ vx_user_data_object tiovx_tidl_read_io_config(GraphObj          *graph,
         fclose(fp_io_config);
         return NULL;
     }
-    
+
     vxMapUserDataObject(io_config,
                         0,
                         sizeof(tivxTIDLJ7Params),
@@ -271,7 +271,7 @@ vx_status tiovx_tidl_create_io_config(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXTIDLNodePriv *node_priv = (TIOVXTIDLNodePriv *)node->node_priv;
-    
+
     vx_map_id map_id;
     tivxTIDLJ7Params *temp_params;
 
@@ -285,7 +285,7 @@ vx_status tiovx_tidl_create_io_config(NodeObj *node)
                         VX_WRITE_ONLY,
                         VX_MEMORY_TYPE_HOST,
                         0);
-    
+
     temp_params->compute_config_checksum  = 0;
     temp_params->compute_network_checksum = 0;
 
@@ -361,7 +361,7 @@ vx_status tiovx_tidl_create_network(NodeObj *node)
     }
 
     vxUnmapUserDataObject(node_priv->network, map_id);
-    
+
     fclose(fp_network);
 
     return status;
@@ -747,13 +747,13 @@ vx_status tiovx_tidl_create_node(NodeObj *node)
 
     vxReleaseUserDataObject(&inArgs);
     vxReleaseUserDataObject(&outArgs);
-    
+
     for(i = 0; i < node_cfg->num_input_tensors; i++)
         input_tensors[i] = (vx_tensor)(node->sinks[i].exemplar);
-    
+
     for(i = 0; i < node_cfg->num_output_tensors; i++)
         output_tensors[i] = (vx_tensor)(node->srcs[i].exemplar);
-    
+
     node->tiovx_node = tivxTIDLNode(node->graph->tiovx_graph,
                                     node_priv->kernel,
                                     params,
@@ -797,7 +797,6 @@ vx_status tiovx_tidl_create_node(NodeObj *node)
     vxReplicateNode(node->graph->tiovx_graph,
                     node->tiovx_node, replicate, replicate_idx);
 
-    
     for(i = 0; i < node_cfg->num_input_tensors; i++)
         vxReleaseTensor(&input_tensors[i]);
 
@@ -821,7 +820,7 @@ vx_status tiovx_tidl_delete_node(NodeObj *node)
     status = vxReleaseObjectArray(&node_priv->out_args_arr);
 
     vxRemoveKernel(node_priv->kernel);
-    
+
     return status;
 }
 
