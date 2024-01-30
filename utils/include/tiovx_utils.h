@@ -83,6 +83,8 @@ vx_status writeRawImage(char* file_name, tivx_raw_image img);
 vx_status readTensor(char* file_name, vx_tensor tensor);
 vx_status writeTensor(char* file_name, vx_tensor tensor);
 
+int getDmaFd(vx_reference ref);
+
 #ifdef __cplusplus
 }
 #endif
