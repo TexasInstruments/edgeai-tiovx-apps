@@ -178,6 +178,7 @@ struct _GraphObj {
     vx_int32                            num_graph_params;
     vx_int32                            num_nodes;
     NodeObj                             node_list[TIOVX_MODULES_MAX_NODES];
+    vx_enum                             schedule_mode;
 };
 
 typedef struct {
