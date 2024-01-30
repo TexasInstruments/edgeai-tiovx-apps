@@ -73,11 +73,12 @@
 #define APP_MODULES_TEST_LDC (1)
 #define APP_MODULES_TEST_VISS_LDC_MSC (1)
 #define APP_MODULES_TEST_TEE (1)
+#define APP_MODULES_TEST_MOSAIC (1)
+#define APP_MODULES_TEST_SENSOR_CAPTURE (0)
 #define APP_MODULES_TEST_TIDL (0)
 #define APP_MODULES_TEST_DL_PRE_PROC (0)
 #define APP_MODULES_TEST_DL_POST_PROC (0)
 #define APP_MODULES_TEST_DL_PIPELINE (0)
-#define APP_MODULES_TEST_MOSAIC (1)
 #define APP_MODULES_TEST_DISPLAY (0)
 
 char *EDGEAI_DATA_PATH;
@@ -163,6 +164,24 @@ int main(int argc, char *argv[])
         status = app_modules_tee_test(argc, argv);
     }
 #endif
+#if (APP_MODULES_TEST_MOSAIC)
+    if(status==0)
+    {
+        printf("Running mosaic module test\n");
+        int app_modules_mosaic_test(int argc, char* argv[]);
+
+        status = app_modules_mosaic_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_SENSOR_CAPTURE)
+    if(status==0)
+    {
+        printf("Running sensor capture module test\n");
+        int app_modules_sensor_capture_test(int argc, char* argv[]);
+
+        status = app_modules_sensor_capture_test(argc, argv);
+    }
+#endif
 #if (APP_MODULES_TEST_TIDL)
     if(status==0)
     {
@@ -197,15 +216,6 @@ int main(int argc, char *argv[])
         int app_modules_dl_pipeline_test(int argc, char* argv[]);
 
         status = app_modules_dl_pipeline_test(argc, argv);
-    }
-#endif
-#if (APP_MODULES_TEST_MOSAIC)
-    if(status==0)
-    {
-        printf("Running mosaic module test\n");
-        int app_modules_mosaic_test(int argc, char* argv[]);
-
-        status = app_modules_mosaic_test(argc, argv);
     }
 #endif
 #if (APP_MODULES_TEST_DISPLAY)

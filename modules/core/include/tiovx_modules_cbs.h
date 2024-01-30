@@ -73,6 +73,7 @@
 #include "tiovx_dl_post_proc_module.h"
 #include "tiovx_mosaic_module.h"
 #include "tiovx_display_module.h"
+#include "tiovx_capture_module.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,6 +91,7 @@ typedef enum {
     TIOVX_DL_POST_PROC,
     TIOVX_MOSAIC,
     TIOVX_DISPLAY,
+    TIOVX_CAPTURE,
     TIOVX_MODULES_NUM_MODULES,
 } NODE_TYPES;
 

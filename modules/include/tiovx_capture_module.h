@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2020 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,50 +59,34 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_SENSOR_MODULE
-#define _TIOVX_SENSOR_MODULE
+ #ifndef _TIOVX_CAPTURE_MODULE
+ #define _TIOVX_CAPTURE_MODULE
 
-#define TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0 (0)
-#define TIOVX_SENSOR_MODULE_FEATURE_CFG_UC1 (1)
-#define TIOVX_SENSOR_MODULE_FEATURE_CFG_UC2 (2)
+#include "tiovx_modules_types.h"
 
-#include <utils/iss/include/app_iss.h>
-#include <tiovx_modules_types.h>
+#include <TI/video_io_capture.h>
+#include <tiovx_sensor_module.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-    IssSensor_CreateParams sensorParams;
-    char    availableSensorNames[ISS_SENSORS_MAX_SUPPORTED_SENSOR][ISS_SENSORS_MAX_NAME];
-    vx_char sensor_name[ISS_SENSORS_MAX_NAME];
-    uint8_t num_sensors_found;
-    uint32_t sensor_features_enabled;
-    uint32_t sensor_features_supported;
-    uint32_t sensor_dcc_enabled;
-    uint32_t sensor_wdr_enabled;
-    uint32_t sensor_exp_control_enabled;
-    uint32_t sensor_gain_control_enabled;
-    uint32_t num_cameras_enabled;
-    uint32_t ch_mask;
-    vx_int32 sensor_index;
-    vx_int32 usecase_option;
-    vx_int32 image_width;
-    vx_int32 image_height;
-    uint32_t sensor_out_format;
-} SensorObj;
+    SensorObj               sensor_obj;
+    vx_uint8                enable_error_detection;
+    char                    target_string[TIVX_TARGET_MAX_NAME];
+} TIOVXCaptureNodeCfg;
 
-vx_status tiovx_sensor_module_query(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_init(SensorObj *sensorObj);
-void tiovx_sensor_module_deinit(SensorObj *sensorObj);
-void tiovx_sensor_module_params_init(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_start(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_stop(SensorObj *sensorObj);
-vx_status tiovx_init_sensor(SensorObj *sensorObj, char *objName);
+void tiovx_capture_init_cfg(TIOVXCaptureNodeCfg *cfg);
+vx_status tiovx_capture_init_node(NodeObj *node);
+vx_status tiovx_capture_create_node(NodeObj *node);
+vx_status tiovx_capture_post_verify_graph(NodeObj *node);
+vx_status tiovx_capture_delete_node(NodeObj *node);
+vx_uint32 tiovx_capture_get_cfg_size();
+vx_uint32 tiovx_capture_get_priv_size();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_SENSOR_MODULE
+#endif // _TIOVX_CAPTURE_MODULE
