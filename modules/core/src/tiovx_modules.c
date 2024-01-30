@@ -79,6 +79,7 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
     tivxHwaLoadKernels(graph->tiovx_context);
     tivxVideoIOLoadKernels(graph->tiovx_context);
     graph->tiovx_graph = vxCreateGraph(graph->tiovx_context);
+    graph->schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL;
 
     status = VX_SUCCESS;
 
@@ -330,7 +331,7 @@ vx_status tiovx_modules_verify_graph(GraphObj *graph)
     }
 
     status = vxSetGraphScheduleConfig(graph->tiovx_graph,
-                                      VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL,
+                                      graph->schedule_mode,
                                       graph->num_graph_params,
                                       graph->graph_params_list);
 
@@ -392,12 +393,22 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
 
 vx_status tiovx_modules_schedule_graph(GraphObj *graph)
 {
-    return vxScheduleGraph(graph->tiovx_graph);
+    vx_status status = VX_SUCCESS;
+    if (graph->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL)
+    {
+        status = vxScheduleGraph(graph->tiovx_graph);
+    }
+    return status;
 }
 
 vx_status tiovx_modules_wait_graph(GraphObj *graph)
 {
-    return vxWaitGraph(graph->tiovx_graph);
+    vx_status status = VX_SUCCESS;
+    if (graph->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL)
+    {
+        status = vxWaitGraph(graph->tiovx_graph);
+    }
+    return status;
 }
 
 vx_status tiovx_modules_delete_node(NodeObj *node)
