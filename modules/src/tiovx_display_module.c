@@ -61,6 +61,9 @@
  */
 #include "tiovx_display_module.h"
 
+#define DEFAULT_DISPLAY_WIDTH 1920
+#define DEFAULT_DISPLAY_HEIGHT 1080
+
 typedef struct {
     vx_user_data_object     config;
 } TIOVXDisplayNodePriv;
