@@ -69,13 +69,10 @@
 extern "C" {
 #endif
 
-#define DEFAULT_DISPLAY_WIDTH 1920
-#define DEFAULT_DISPLAY_HEIGHT 1080
-
 typedef struct {
     vx_int32                    width;
     vx_int32                    height;
-    ImgCfg                      input_cfg;;
+    ImgCfg                      input_cfg;
     vx_int32                    num_channels;
     char                        target_string[TIVX_TARGET_MAX_NAME];
     tivx_display_params_t       params;
