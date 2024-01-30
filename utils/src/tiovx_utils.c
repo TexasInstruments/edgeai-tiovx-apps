@@ -61,6 +61,7 @@
  */
 
 #include "tiovx_utils.h"
+#include "app_mem.h"
 
 vx_status readRawImage(char* file_name, tivx_raw_image image)
 {
@@ -670,4 +671,47 @@ vx_status writeTensor(char* file_name, vx_tensor tensor)
     }
 
     return(status);
+}
+
+int getDmaFd(vx_reference ref)
+{
+    tivx_raw_image image = (tivx_raw_image)ref;
+    vx_uint32 width, height;
+    vx_imagepatch_addressing_t image_addr;
+    vx_rectangle_t rect;
+    vx_map_id map_id;
+    tivx_raw_image_format_t format[3];
+    vx_uint32 num_exposures;
+    vx_bool line_interleaved = vx_false_e;
+    void *data_ptr;
+    uint32_t dmabuf_fd_offset;
+    int ret = -1;
+
+    tivxQueryRawImage(image, TIVX_RAW_IMAGE_WIDTH, &width, sizeof(vx_uint32));
+    tivxQueryRawImage(image, TIVX_RAW_IMAGE_HEIGHT, &height, sizeof(vx_uint32));
+    tivxQueryRawImage(image, TIVX_RAW_IMAGE_FORMAT, &format, sizeof(format));
+    tivxQueryRawImage(image, TIVX_RAW_IMAGE_NUM_EXPOSURES, &num_exposures, sizeof(num_exposures));
+    tivxQueryRawImage(image, TIVX_RAW_IMAGE_LINE_INTERLEAVED, &line_interleaved, sizeof(line_interleaved));
+
+    rect.start_x = 0;
+    rect.start_y = 0;
+    rect.end_x = width;
+    rect.end_y = height;
+
+    tivxMapRawImagePatch(image,
+        &rect,
+        0,
+        &map_id,
+        &image_addr,
+        &data_ptr,
+        VX_WRITE_ONLY,
+        VX_MEMORY_TYPE_HOST,
+        TIVX_RAW_IMAGE_PIXEL_BUFFER
+        );
+
+    ret = appMemGetDmaBufFd(data_ptr, &dmabuf_fd_offset);
+
+    tivxUnmapRawImagePatch(image, map_id);
+
+    return ret;
 }
