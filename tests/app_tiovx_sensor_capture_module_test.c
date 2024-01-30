@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2020 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,50 +59,83 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_SENSOR_MODULE
-#define _TIOVX_SENSOR_MODULE
 
-#define TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0 (0)
-#define TIOVX_SENSOR_MODULE_FEATURE_CFG_UC1 (1)
-#define TIOVX_SENSOR_MODULE_FEATURE_CFG_UC2 (2)
+#include <tiovx_modules.h>
+#include <tiovx_utils.h>
 
-#include <utils/iss/include/app_iss.h>
-#include <tiovx_modules_types.h>
+#define APP_BUFQ_DEPTH   (1)
+#define NUM_ITERATIONS   (4)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define APP_NUM_CH       (1)
+#define APP_NUM_OUTPUTS  (1)
 
-typedef struct {
-    IssSensor_CreateParams sensorParams;
-    char    availableSensorNames[ISS_SENSORS_MAX_SUPPORTED_SENSOR][ISS_SENSORS_MAX_NAME];
-    vx_char sensor_name[ISS_SENSORS_MAX_NAME];
-    uint8_t num_sensors_found;
-    uint32_t sensor_features_enabled;
-    uint32_t sensor_features_supported;
-    uint32_t sensor_dcc_enabled;
-    uint32_t sensor_wdr_enabled;
-    uint32_t sensor_exp_control_enabled;
-    uint32_t sensor_gain_control_enabled;
-    uint32_t num_cameras_enabled;
-    uint32_t ch_mask;
-    vx_int32 sensor_index;
-    vx_int32 usecase_option;
-    vx_int32 image_width;
-    vx_int32 image_height;
-    uint32_t sensor_out_format;
-} SensorObj;
+vx_status app_modules_sensor_capture_test(vx_int32 argc, vx_char* argv[])
+{
+    vx_status status = VX_FAILURE;
+    GraphObj graph;
+    SensorObj  sensorObj;
+    NodeObj *capture_node = NULL;
+    TIOVXCaptureNodeCfg capture_cfg;
+    BufPool *out_buf_pool = NULL;
+    Buf *outbuf = NULL;
+    char output_filename[100];
+    int32_t i, frame_count;
 
-vx_status tiovx_sensor_module_query(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_init(SensorObj *sensorObj);
-void tiovx_sensor_module_deinit(SensorObj *sensorObj);
-void tiovx_sensor_module_params_init(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_start(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_stop(SensorObj *sensorObj);
-vx_status tiovx_init_sensor(SensorObj *sensorObj, char *objName);
+    sprintf(output_filename, "%s/output/imx390_1936x1096_capture_nv12.yuv", EDGEAI_DATA_PATH);
 
-#ifdef __cplusplus
+    status = tiovx_modules_initialize_graph(&graph);
+    graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
+
+    /* Sensor module */
+    tiovx_sensor_module_params_init(&sensorObj);
+
+    sensorObj.ch_mask = 1;
+    sensorObj.sensor_index = 0; /* 0 for IMX390 2MP cameras */
+
+    tiovx_sensor_module_query(&sensorObj);
+
+    status = tiovx_sensor_module_init(&sensorObj);
+
+    /* Capture */
+    tiovx_capture_init_cfg(&capture_cfg);
+
+    capture_cfg.sensor_obj = sensorObj;
+    capture_cfg.enable_error_detection = 0;
+
+    capture_node = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+
+    capture_node->srcs[0].bufq_depth = 4; /* This must be greater than 3 */
+
+    status = tiovx_modules_verify_graph(&graph);
+
+    status = tiovx_sensor_module_start(&sensorObj);
+
+    out_buf_pool = capture_node->srcs[0].buf_pool;
+
+    for (i = 0; i < out_buf_pool->bufq_depth; i++)
+    {
+        outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+        tiovx_modules_enqueue_buf(outbuf);
+    }
+
+    tiovx_modules_schedule_graph(&graph);
+    tiovx_modules_wait_graph(&graph);
+
+    frame_count = 0;
+    while (frame_count < NUM_ITERATIONS)
+    {
+        outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
+        writeRawImage(output_filename, (tivx_raw_image)outbuf->handle);
+        tiovx_modules_enqueue_buf(outbuf);
+        frame_count++;
+    }
+
+    tiovx_sensor_module_stop(&sensorObj);
+    tiovx_sensor_module_deinit(&sensorObj);
+
+    tiovx_modules_release_buf(outbuf);
+
+    tiovx_modules_clean_graph(&graph);
+
+    return status;
 }
-#endif
-
-#endif //_TIOVX_SENSOR_MODULE
