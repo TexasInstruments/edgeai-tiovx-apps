@@ -23,6 +23,7 @@ if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${
     list(APPEND
          SRC_FILES
          app_tiovx_dl_pipeline_test.c
+         app_tiovx_sensor_capture_module_test.c
          app_tiovx_display_module_test.c)
 endif()
 
