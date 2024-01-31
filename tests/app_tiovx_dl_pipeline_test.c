@@ -1169,8 +1169,8 @@ vx_status app_modules_dl_pipeline_test(int argc, char* argv[])
     tiovx_modules_link_pads(&multiScaler2Node->srcs[0], &dlPreProcNode->sinks[0]);
     tiovx_modules_link_pads(&dlPreProcNode->srcs[0], &tidlNode->sinks[0]);
 
-    tiovx_modules_link_pads(&tidlNode->srcs[0], &dlPostProcNode->sinks[1]); // Tensor pad
-    tiovx_modules_link_pads(&multiScaler1Node->srcs[1], &dlPostProcNode->sinks[0]); // Image Pad
+    tiovx_modules_link_pads(&tidlNode->srcs[0], &dlPostProcNode->sinks[0]); // Tensor pad
+    tiovx_modules_link_pads(&multiScaler1Node->srcs[1], &dlPostProcNode->sinks[1]); // Image Pad
 
     tiovx_modules_link_pads(&dlPostProcNode->srcs[0], &displayNode->sinks[0]);
 

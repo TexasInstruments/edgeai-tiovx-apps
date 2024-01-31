@@ -1123,9 +1123,8 @@ vx_status app_modules_dl_post_proc_test(int argc, char* argv[])
 
     status = tiovx_modules_verify_graph(&graph);
 
-
-    in_image_buf_pool = node->sinks[0].buf_pool;
-    in_tensor_buf_pool = node->sinks[1].buf_pool;
+    in_tensor_buf_pool = node->sinks[0].buf_pool;
+    in_image_buf_pool = node->sinks[1].buf_pool;
     out_image_buf_pool = node->srcs[0].buf_pool;
 
     in_image_buf = tiovx_modules_acquire_buf(in_image_buf_pool);
