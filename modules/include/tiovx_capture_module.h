@@ -72,7 +72,10 @@ extern "C" {
 #endif
 
 typedef struct {
-    SensorObj               sensor_obj;
+    char                    sensor_name[ISS_SENSORS_MAX_NAME];
+    uint32_t                ch_mask;
+    vx_int32                sensor_index;
+    vx_int32                usecase_option;
     vx_uint8                enable_error_detection;
     char                    target_string[TIVX_TARGET_MAX_NAME];
 } TIOVXCaptureNodeCfg;

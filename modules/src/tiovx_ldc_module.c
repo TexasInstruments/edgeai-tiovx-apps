@@ -329,7 +329,7 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
 
     CLR(node_priv);
 
-    status = tiovx_init_sensor(&node_priv->sensor_obj, node_cfg->sensor_name);
+    status = tiovx_init_sensor_obj(&node_priv->sensor_obj, node_cfg->sensor_name);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[LDC] Sensor Init Failed\n");
         return status;
