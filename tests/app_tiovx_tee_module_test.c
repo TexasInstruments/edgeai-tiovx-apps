@@ -109,6 +109,7 @@ vx_status app_modules_tee_test(vx_int32 argc, vx_char* argv[])
     Buf *inbuf = NULL, *outbuf[4] = {NULL, NULL, NULL, NULL};
     char input_filename[100];
     char output_filename[4][100];
+    vx_uint32 bytes_read;
 
     sprintf(input_filename, "%s/raw_images/modules_test/imx390_raw_image_1936x1096_16bpp_exp0.raw", EDGEAI_DATA_PATH);
     sprintf(output_filename[0], "%s/output/tee_test_out_nv12_640x480.yuv", EDGEAI_DATA_PATH);
@@ -324,7 +325,7 @@ vx_status app_modules_tee_test(vx_int32 argc, vx_char* argv[])
     status = tiovx_modules_verify_graph(&graph);
 
     inbuf = tiovx_modules_acquire_buf(input_pad->buf_pool);
-    readRawImage(input_filename, (tivx_raw_image)inbuf->handle);
+    readRawImage(input_filename, (tivx_raw_image)inbuf->handle, &bytes_read);
     tiovx_modules_enqueue_buf(inbuf);
 
     outbuf[0] = tiovx_modules_acquire_buf(output_pad[0]->buf_pool);

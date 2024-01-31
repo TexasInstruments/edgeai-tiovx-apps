@@ -77,7 +77,7 @@ vx_status readImage(char* file_name, vx_image img);
 vx_status writeImage(char* file_name, vx_image img);
 vx_status resetImage(vx_image img, int32_t value);
 
-vx_status readRawImage(char* file_name, tivx_raw_image img);
+vx_status readRawImage(char* file_name, tivx_raw_image img, vx_uint32 *bytes_read);
 vx_status writeRawImage(char* file_name, tivx_raw_image img);
 
 vx_status readTensor(char* file_name, vx_tensor tensor);
