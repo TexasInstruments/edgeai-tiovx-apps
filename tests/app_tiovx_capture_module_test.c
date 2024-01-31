@@ -69,11 +69,10 @@
 #define APP_NUM_CH       (1)
 #define APP_NUM_OUTPUTS  (1)
 
-vx_status app_modules_sensor_capture_test(vx_int32 argc, vx_char* argv[])
+vx_status app_modules_capture_test(vx_int32 argc, vx_char* argv[])
 {
     vx_status status = VX_FAILURE;
     GraphObj graph;
-    SensorObj  sensorObj;
     NodeObj *capture_node = NULL;
     TIOVXCaptureNodeCfg capture_cfg;
     BufPool *out_buf_pool = NULL;
@@ -86,20 +85,11 @@ vx_status app_modules_sensor_capture_test(vx_int32 argc, vx_char* argv[])
     status = tiovx_modules_initialize_graph(&graph);
     graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
 
-    /* Sensor module */
-    tiovx_sensor_module_params_init(&sensorObj);
-
-    sensorObj.ch_mask = 1;
-    sensorObj.sensor_index = 0; /* 0 for IMX390 2MP cameras */
-
-    tiovx_sensor_module_query(&sensorObj);
-
-    status = tiovx_sensor_module_init(&sensorObj);
-
     /* Capture */
     tiovx_capture_init_cfg(&capture_cfg);
 
-    capture_cfg.sensor_obj = sensorObj;
+    capture_cfg.ch_mask = 1;
+    capture_cfg.sensor_index = 0; /* 0 for IMX390 2MP cameras */
     capture_cfg.enable_error_detection = 0;
 
     capture_node = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
@@ -107,8 +97,6 @@ vx_status app_modules_sensor_capture_test(vx_int32 argc, vx_char* argv[])
     capture_node->srcs[0].bufq_depth = 4; /* This must be greater than 3 */
 
     status = tiovx_modules_verify_graph(&graph);
-
-    status = tiovx_sensor_module_start(&sensorObj);
 
     out_buf_pool = capture_node->srcs[0].buf_pool;
 
@@ -118,9 +106,6 @@ vx_status app_modules_sensor_capture_test(vx_int32 argc, vx_char* argv[])
         tiovx_modules_enqueue_buf(outbuf);
     }
 
-    tiovx_modules_schedule_graph(&graph);
-    tiovx_modules_wait_graph(&graph);
-
     frame_count = 0;
     while (frame_count < NUM_ITERATIONS)
     {
@@ -129,9 +114,6 @@ vx_status app_modules_sensor_capture_test(vx_int32 argc, vx_char* argv[])
         tiovx_modules_enqueue_buf(outbuf);
         frame_count++;
     }
-
-    tiovx_sensor_module_stop(&sensorObj);
-    tiovx_sensor_module_deinit(&sensorObj);
 
     tiovx_modules_release_buf(outbuf);
 
