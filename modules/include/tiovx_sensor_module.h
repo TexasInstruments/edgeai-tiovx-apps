@@ -93,13 +93,12 @@ typedef struct {
     uint32_t sensor_out_format;
 } SensorObj;
 
-vx_status tiovx_sensor_module_query(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_init(SensorObj *sensorObj);
-void tiovx_sensor_module_deinit(SensorObj *sensorObj);
-void tiovx_sensor_module_params_init(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_start(SensorObj *sensorObj);
-vx_status tiovx_sensor_module_stop(SensorObj *sensorObj);
-vx_status tiovx_init_sensor(SensorObj *sensorObj, char *objName);
+vx_status tiovx_init_sensor_obj(SensorObj *sensorObj, char *objName);
+vx_status tiovx_sensor_query(SensorObj *sensorObj);
+vx_status tiovx_sensor_init(SensorObj *sensorObj);
+void tiovx_sensor_deinit(SensorObj *sensorObj);
+vx_status tiovx_sensor_start(SensorObj *sensorObj);
+vx_status tiovx_sensor_stop(SensorObj *sensorObj);
 
 #ifdef __cplusplus
 }
