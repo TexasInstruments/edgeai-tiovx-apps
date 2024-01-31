@@ -18,7 +18,8 @@ set(SRC_FILES
     app_tiovx_dl_pipeline_test.c
     app_tiovx_mosaic_module_test.c
     app_tiovx_display_module_test.c
-    app_tiovx_sensor_capture_module_test.c
+    app_tiovx_capture_module_test.c
+    app_tiovx_capture_viss_ldc_msc_display_test.c
     main.c)
 
 build_app(${PROJ_NAME}
