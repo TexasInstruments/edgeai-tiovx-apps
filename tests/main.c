@@ -82,6 +82,7 @@
 #define APP_MODULES_TEST_DISPLAY (0)
 #define APP_MODULES_TEST_V4L2_CAPTURE (0)
 #define APP_MODULES_TEST_CAPTURE_VISS_LDC_MSC_DISPLAY (0)
+#define APP_MODULES_TEST_CAPTURE_DL_DISPLAY (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -247,6 +248,15 @@ int main(int argc, char *argv[])
         int app_modules_capture_viss_ldc_msc_display_test(int argc, char* argv[]);
 
         status = app_modules_capture_viss_ldc_msc_display_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_CAPTURE_DL_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->dl->display test\n");
+        int app_modules_capture_dl_display_test(int argc, char* argv[]);
+
+        status = app_modules_capture_dl_display_test(argc, argv);
     }
 #endif
 #endif
