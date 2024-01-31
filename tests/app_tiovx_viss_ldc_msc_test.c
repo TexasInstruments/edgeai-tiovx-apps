@@ -107,6 +107,7 @@ vx_status app_modules_viss_ldc_msc_test(vx_int32 argc, vx_char* argv[])
     Buf *inbuf = NULL, *outbuf = NULL;
     char input_filename[100];
     char output_filename[100];
+    vx_uint32 bytes_read;
 
     sprintf(input_filename, "%s/raw_images/modules_test/imx390_raw_image_1936x1096_16bpp_exp0.raw", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/imx390_960x540_capture_nv12.yuv", EDGEAI_DATA_PATH);
@@ -179,7 +180,7 @@ vx_status app_modules_viss_ldc_msc_test(vx_int32 argc, vx_char* argv[])
     status = tiovx_modules_verify_graph(&graph);
     in_buf_pool = viss_node->sinks[0].buf_pool;
     inbuf = tiovx_modules_acquire_buf(in_buf_pool);
-    readRawImage(input_filename, (tivx_raw_image)inbuf->handle);
+    readRawImage(input_filename, (tivx_raw_image)inbuf->handle, &bytes_read);
     tiovx_modules_enqueue_buf(inbuf);
 
     out_buf_pool = msc_node->srcs[0].buf_pool;

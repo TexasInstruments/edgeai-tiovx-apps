@@ -77,6 +77,7 @@ typedef struct {
     vx_int32                sensor_index;
     vx_int32                usecase_option;
     vx_uint8                enable_error_detection;
+    char                    error_frame_filename[256];
     char                    target_string[TIVX_TARGET_MAX_NAME];
 } TIOVXCaptureNodeCfg;
 
