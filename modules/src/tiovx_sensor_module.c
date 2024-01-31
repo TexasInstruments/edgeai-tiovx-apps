@@ -64,7 +64,57 @@
 
 static char availableSensorNames[ISS_SENSORS_MAX_SUPPORTED_SENSOR][ISS_SENSORS_MAX_NAME];
 
-vx_status tiovx_sensor_module_query(SensorObj *sensorObj)
+vx_status tiovx_init_sensor_obj(SensorObj *sensorObj, char *objName)
+{
+    vx_status status = VX_SUCCESS;
+    sensorObj->sensor_dcc_enabled=1;
+    sensorObj->sensor_exp_control_enabled=0;
+    sensorObj->sensor_gain_control_enabled=0;
+    sensorObj->sensor_wdr_enabled=0;
+    sensorObj->num_cameras_enabled=1;
+    sensorObj->ch_mask=1;
+    snprintf(sensorObj->sensor_name, ISS_SENSORS_MAX_NAME, "%s", objName);
+    sensorObj->num_sensors_found = 1;
+    sensorObj->sensor_features_enabled = 0;
+    sensorObj->sensor_features_supported = 0;
+    sensorObj->usecase_option = TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0;
+    sensorObj->sensor_index = 0;
+    sensorObj->sensor_out_format = 0;
+
+    TIOVX_MODULE_PRINTF("[SENSOR-MODULE] Sensor name = %s\n", sensorObj->sensor_name);
+
+    if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX390_UB953_D3") == 0)
+    {
+        sensorObj->sensorParams.dccId=390;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0820_UB953_LI") == 0)
+    {
+        sensorObj->sensorParams.dccId=820;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0233_UB953_MARS") == 0)
+    {
+        sensorObj->sensorParams.dccId=233;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX219_RPI") == 0)
+    {
+        sensorObj->sensorParams.dccId=219;
+    }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_OV2312_UB953_LI") == 0)
+    {
+        sensorObj->sensorParams.dccId=2312;
+    }
+    else
+    {
+        TIOVX_MODULE_ERROR("[SENSOR-MODULE] Invalid sensor name\n");
+        status = VX_FAILURE;
+    }
+
+    TIOVX_MODULE_PRINTF("[SENSOR-MODULE] Dcc ID = %d\n", sensorObj->sensorParams.dccId);
+
+    return status;
+}
+
+vx_status tiovx_sensor_query(SensorObj *sensorObj)
 {
     vx_status status = VX_SUCCESS;
     char* sensor_list[ISS_SENSORS_MAX_SUPPORTED_SENSOR];
@@ -202,7 +252,7 @@ vx_status tiovx_sensor_module_query(SensorObj *sensorObj)
     return status;
 }
 
-vx_status tiovx_sensor_module_init(SensorObj *sensorObj)
+vx_status tiovx_sensor_init(SensorObj *sensorObj)
 {
     vx_status status = VX_SUCCESS;
     int32_t sensor_init_status = -1;
@@ -220,29 +270,12 @@ vx_status tiovx_sensor_module_init(SensorObj *sensorObj)
     return status;
 }
 
-void tiovx_sensor_module_deinit(SensorObj *sensorObj)
+void tiovx_sensor_deinit(SensorObj *sensorObj)
 {
     appDeInitImageSensor(sensorObj->sensor_name);
 }
 
-void tiovx_sensor_module_params_init(SensorObj *sensorObj)
-{
-    strcpy(sensorObj->sensor_name, SENSOR_SONY_IMX390_UB953_D3);
-    sensorObj->num_sensors_found = 0;
-    sensorObj->sensor_features_enabled = 0;
-    sensorObj->sensor_features_supported = 0;
-    sensorObj->sensor_dcc_enabled = 0;
-    sensorObj->sensor_wdr_enabled = 0;
-    sensorObj->sensor_exp_control_enabled = 0;
-    sensorObj->sensor_gain_control_enabled = 0;
-    sensorObj->ch_mask = 1;
-    sensorObj->num_cameras_enabled = 1;
-    sensorObj->usecase_option = TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0;
-    sensorObj->sensor_index = 0;
-    sensorObj->sensor_out_format = 0;
-}
-
-vx_status tiovx_sensor_module_start(SensorObj *sensorObj)
+vx_status tiovx_sensor_start(SensorObj *sensorObj)
 {
     vx_status status = VX_SUCCESS;
 
@@ -251,58 +284,11 @@ vx_status tiovx_sensor_module_start(SensorObj *sensorObj)
     return status;
 }
 
-vx_status tiovx_sensor_module_stop(SensorObj *sensorObj)
+vx_status tiovx_sensor_stop(SensorObj *sensorObj)
 {
     vx_status status = VX_SUCCESS;
 
     status = appStopImageSensor(sensorObj->sensor_name, sensorObj->ch_mask);
-
-    return status;
-}
-
-vx_status tiovx_init_sensor(SensorObj *sensorObj, char *objName)
-{
-    vx_status status = VX_SUCCESS;
-    sensorObj->sensor_dcc_enabled=1;
-    sensorObj->sensor_exp_control_enabled=0;
-    sensorObj->sensor_gain_control_enabled=0;
-    sensorObj->sensor_wdr_enabled=0;
-    sensorObj->num_cameras_enabled=1;
-    sensorObj->ch_mask=1;
-    sensorObj->sensor_out_format=1;
-    snprintf(sensorObj->sensor_name, ISS_SENSORS_MAX_NAME, "%s", objName);
-
-    TIOVX_MODULE_PRINTF("[SENSOR-MODULE] Sensor name = %s\n", sensorObj->sensor_name);
-
-    if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX390_UB953_D3") == 0)
-    {
-        sensorObj->sensorParams.dccId=390;
-        sensorObj->sensor_out_format=0;
-    }
-    else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0820_UB953_LI") == 0)
-    {
-        sensorObj->sensorParams.dccId=820;
-        sensorObj->sensor_out_format=1;
-    }
-    else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0233_UB953_MARS") == 0)
-    {
-        sensorObj->sensorParams.dccId=233;
-    }
-    else if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX219_RPI") == 0)
-    {
-        sensorObj->sensorParams.dccId=219;
-    }
-    else if(strcmp(sensorObj->sensor_name, "SENSOR_OV2312_UB953_LI") == 0)
-    {
-        sensorObj->sensorParams.dccId=2312;
-    }
-    else
-    {
-        TIOVX_MODULE_ERROR("[SENSOR-MODULE] Invalid sensor name\n");
-        status = VX_FAILURE;
-    }
-
-    TIOVX_MODULE_PRINTF("[SENSOR-MODULE] Dcc ID = %d\n", sensorObj->sensorParams.dccId);
 
     return status;
 }
