@@ -142,6 +142,7 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .delete_node = tiovx_mosaic_delete_node,
         .get_cfg_size = tiovx_mosaic_get_cfg_size,
         .get_priv_size = tiovx_mosaic_get_priv_size
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
     },
     {
         .init_node = tiovx_display_init_node,
@@ -151,4 +152,7 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_cfg_size = tiovx_display_get_cfg_size,
         .get_priv_size = tiovx_display_get_priv_size
     }
+#else
+    }
+#endif
 };

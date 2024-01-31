@@ -17,9 +17,14 @@ set(SRC_FILES
     src/tiovx_dl_pre_proc_module.c
     src/tiovx_dl_post_proc_module.c
     src/tiovx_mosaic_module.c
-    src/tiovx_display_module.c
     src/v4l2_capture_module.c
     )
+
+if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4")
+    list(APPEND
+         SRC_FILES
+         src/tiovx_display_module.c)
+endif()
 
 build_lib(${PROJECT_NAME}  # Named argument: library name
           SHARED           # Named argument: library type
