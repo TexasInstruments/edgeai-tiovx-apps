@@ -61,7 +61,10 @@
  */
 #include "tiovx_capture_module.h"
 
+#define TIOVX_MODULES_DEFAULT_CAPTURE_SENSOR "SENSOR_SONY_IMX390_UB953_D3"
+
 typedef struct {
+    SensorObj               sensor_obj;
     vx_user_data_object     config;
     tivx_raw_image          error_frame_raw_image;
     vx_uint32               capture_format;
@@ -76,7 +79,7 @@ vx_status tiovx_capture_configure_params(NodeObj *node)
 
     vx_uint32   num_capt_instances = 0;
     vx_int32    id, lane, ch, vcNum;
-    int32_t     ch_mask = node_cfg->sensor_obj.ch_mask;
+    int32_t     ch_mask = node_priv->sensor_obj.ch_mask;
 
     if (ch_mask <= 0xF)
     {
@@ -99,7 +102,7 @@ vx_status tiovx_capture_configure_params(NodeObj *node)
         return status;
     }
 
-    node_priv->capture_format = node_cfg->sensor_obj.sensor_out_format;
+    node_priv->capture_format = node_priv->sensor_obj.sensor_out_format;
 
     tivx_capture_params_init(&node_priv->params);
 
@@ -109,14 +112,14 @@ vx_status tiovx_capture_configure_params(NodeObj *node)
         node_priv->params.timeoutInitial = 500;
     }
     node_priv->params.numInst  = num_capt_instances;
-    node_priv->params.numCh    = node_cfg->sensor_obj.num_cameras_enabled;
+    node_priv->params.numCh    = node_priv->sensor_obj.num_cameras_enabled;
 
     for(id = 0; id < num_capt_instances; id++)
     {
         node_priv->params.instId[id]                       = id;
         node_priv->params.instCfg[id].enableCsiv2p0Support = (uint32_t)vx_true_e;
-        node_priv->params.instCfg[id].numDataLanes         = node_cfg->sensor_obj.sensorParams.sensorInfo.numDataLanes;
-        node_priv->params.instCfg[id].laneBandSpeed        = node_cfg->sensor_obj.sensorParams.sensorInfo.csi_laneBandSpeed;
+        node_priv->params.instCfg[id].numDataLanes         = node_priv->sensor_obj.sensorParams.sensorInfo.numDataLanes;
+        node_priv->params.instCfg[id].laneBandSpeed        = node_priv->sensor_obj.sensorParams.sensorInfo.csi_laneBandSpeed;
 
         for (lane = 0; lane < node_priv->params.instCfg[id].numDataLanes; lane++)
         {
@@ -281,7 +284,7 @@ vx_status tiovx_capture_create_error_detection_frame(NodeObj *node)
     TIOVXCaptureNodeCfg *node_cfg = (TIOVXCaptureNodeCfg *)node->node_cfg;
     TIOVXCaptureNodePriv *node_priv = (TIOVXCaptureNodePriv *)node->node_priv;
 
-    IssSensor_CreateParams *sensor_params = &node_cfg->sensor_obj.sensorParams;
+    IssSensor_CreateParams *sensor_params = &node_priv->sensor_obj.sensorParams;
 
     /*Error detection is currently enabled only for RAW input*/
     if(0 != node_priv->capture_format)
@@ -362,6 +365,10 @@ vx_status tiovx_capture_module_send_error_frame(NodeObj *node)
 
 void tiovx_capture_init_cfg(TIOVXCaptureNodeCfg *node_cfg)
 {
+    sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_CAPTURE_SENSOR);
+    node_cfg->ch_mask = 1;
+    node_cfg->sensor_index = 0;
+    node_cfg->usecase_option = TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0;
     node_cfg->enable_error_detection = 0;
     sprintf(node_cfg->target_string, TIVX_TARGET_CAPTURE1);
 }
@@ -372,7 +379,32 @@ vx_status tiovx_capture_init_node(NodeObj *node)
     TIOVXCaptureNodeCfg *node_cfg = (TIOVXCaptureNodeCfg *)node->node_cfg;
     TIOVXCaptureNodePriv *node_priv = (TIOVXCaptureNodePriv *)node->node_priv;
     vx_reference exemplar;
-    IssSensor_CreateParams *sensor_params = &node_cfg->sensor_obj.sensorParams;
+    IssSensor_CreateParams *sensor_params;
+
+    status = tiovx_init_sensor_obj(&node_priv->sensor_obj, node_cfg->sensor_name);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[CAPTURE] Init Sensor Obj Failed\n");
+        return status;
+    }
+
+    node_priv->sensor_obj.ch_mask = node_cfg->ch_mask;
+    node_priv->sensor_obj.sensor_index = node_cfg->sensor_index;
+    node_priv->sensor_obj.usecase_option = node_cfg->usecase_option;
+
+    status = tiovx_sensor_query(&node_priv->sensor_obj);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[CAPTURE] Sensor Query Failed\n");
+        return status;
+    }
+
+    status = tiovx_sensor_init(&node_priv->sensor_obj);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[CAPTURE] Sensor Init Failed\n");
+        return status;
+    }
 
     status = tiovx_capture_configure_params(node);
     if (VX_SUCCESS != status)
@@ -395,13 +427,15 @@ vx_status tiovx_capture_init_node(NodeObj *node)
         return status;
     }
 
+    sensor_params = &node_priv->sensor_obj.sensorParams;
+
     node->num_inputs = 0;
     node->num_outputs = 1;
 
     node->srcs[0].node = node;
     node->srcs[0].pad_index = 0;
     node->srcs[0].node_parameter_index = 1;
-    node->srcs[0].num_channels = node_cfg->sensor_obj.num_cameras_enabled;
+    node->srcs[0].num_channels = node_priv->sensor_obj.num_cameras_enabled;
 
     if (0 == node_priv->capture_format) // RAW
     {
@@ -456,6 +490,10 @@ vx_status tiovx_capture_delete_node(NodeObj *node)
     vx_status status = VX_FAILURE;
     TIOVXCaptureNodePriv *node_priv = (TIOVXCaptureNodePriv *)node->node_priv;
 
+    status = tiovx_sensor_stop(&node_priv->sensor_obj);
+
+    tiovx_sensor_deinit(&node_priv->sensor_obj);
+
     status = vxReleaseNode(&node->tiovx_node);
 
     status = vxReleaseUserDataObject(&node_priv->config);
@@ -471,6 +509,9 @@ vx_status tiovx_capture_delete_node(NodeObj *node)
 vx_status tiovx_capture_post_verify_graph(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
+    TIOVXCaptureNodePriv *node_priv = (TIOVXCaptureNodePriv *)node->node_priv;
+
+    status = tiovx_sensor_start(&node_priv->sensor_obj);
 
     status = tiovx_capture_module_send_error_frame(node);
 

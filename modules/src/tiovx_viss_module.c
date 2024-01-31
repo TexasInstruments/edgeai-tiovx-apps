@@ -270,7 +270,7 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
     vx_reference exemplar;
 
-    status = tiovx_init_sensor(&node_priv->sensor_obj, node_cfg->sensor_name);
+    status = tiovx_init_sensor_obj(&node_priv->sensor_obj, node_cfg->sensor_name);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[VISS] Sensor Init Failed\n");
         return status;
