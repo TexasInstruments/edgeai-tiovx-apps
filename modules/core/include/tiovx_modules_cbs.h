@@ -72,8 +72,11 @@
 #include "tiovx_dl_pre_proc_module.h"
 #include "tiovx_dl_post_proc_module.h"
 #include "tiovx_mosaic_module.h"
+
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
 #include "tiovx_display_module.h"
 #include "tiovx_capture_module.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
