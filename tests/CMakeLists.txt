@@ -22,8 +22,9 @@ set(SRC_FILES
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4")
     list(APPEND
          SRC_FILES
+         app_tiovx_capture_module_test.c
+         app_tiovx_capture_viss_ldc_msc_display_test.c
          app_tiovx_dl_pipeline_test.c
-         app_tiovx_sensor_capture_module_test.c
          app_tiovx_display_module_test.c)
 endif()
 
