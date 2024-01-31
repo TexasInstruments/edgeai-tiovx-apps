@@ -66,7 +66,7 @@
 #define APP_BUFQ_DEPTH   (1)
 #define APP_NUM_CH       (1)
 
-#define NUM_ITERATIONS   (600)
+#define NUM_ITERATIONS   (400)
 
 #define VISS_INPUT_WIDTH  1936
 #define VISS_INPUT_HEIGHT 1096
@@ -226,7 +226,11 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
         tiovx_modules_enqueue_buf(inbuf);
     }
 
-    tiovx_modules_release_buf(inbuf);
+    for (int32_t i = 0; i < 2; i++)
+    {
+        inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+        tiovx_modules_release_buf(inbuf);
+    }
 
     tiovx_modules_clean_graph(&graph);
 

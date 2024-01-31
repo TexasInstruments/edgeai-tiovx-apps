@@ -61,6 +61,8 @@
  */
 #include "tiovx_capture_module.h"
 
+#include <tiovx_utils.h>
+
 #define TIOVX_MODULES_DEFAULT_CAPTURE_SENSOR "SENSOR_SONY_IMX390_UB953_D3"
 
 typedef struct {
@@ -183,101 +185,6 @@ vx_status tiovx_capture_create_config(NodeObj *node)
     return status;
 }
 
-static tivx_raw_image read_error_image_raw(vx_context context,
-                                           IssSensor_Info *sensorInfo,
-                                           char raw_image_fname[],
-                                           vx_int32 *bytes_read)
-{
-    FILE * fp;
-    vx_uint32 width, height, i;
-    vx_imagepatch_addressing_t image_addr;
-    vx_rectangle_t rect;
-    vx_map_id map_id;
-    void *data_ptr;
-    vx_uint32 num_bytes_per_pixel = 2; /*Supports only RAW 12b Unpacked format*/
-    vx_uint32 num_bytes_read_from_file;
-    tivx_raw_image raw_image = NULL;
-    tivx_raw_image_format_t format;
-    vx_uint32 imgaddr_width, imgaddr_height, imgaddr_stride;
-    vx_status status = VX_SUCCESS;
-
-    /* Nothing is being populated here - just an empty frame */
-    raw_image = tivxCreateRawImage(context, &(sensorInfo->raw_params));
-
-    status = vxGetStatus((vx_reference)raw_image);
-
-    if(status == VX_SUCCESS)
-    {
-        vxSetReferenceName((vx_reference)raw_image, "capture_node_error_frame_raw_image");
-    }
-    else
-    {
-        TIOVX_MODULE_ERROR("[CAPTURE] Unable to create error frame RAW image!\n");
-    }
-
-    if ((vx_status)VX_SUCCESS == status)
-    {
-        tivxQueryRawImage(raw_image, TIVX_RAW_IMAGE_WIDTH, &width, sizeof(vx_uint32));
-        tivxQueryRawImage(raw_image, TIVX_RAW_IMAGE_HEIGHT, &height, sizeof(vx_uint32));
-        tivxQueryRawImage(raw_image, TIVX_RAW_IMAGE_FORMAT, &format, sizeof(format));
-
-        rect.start_x = 0;
-        rect.start_y = 0;
-        rect.end_x = width;
-        rect.end_y = height;
-
-        tivxMapRawImagePatch(raw_image,
-            &rect,
-            0,
-            &map_id,
-            &image_addr,
-            &data_ptr,
-            VX_WRITE_ONLY,
-            VX_MEMORY_TYPE_HOST,
-            TIVX_RAW_IMAGE_PIXEL_BUFFER
-            );
-
-        if(!data_ptr)
-        {
-            TIOVX_MODULE_ERROR("data_ptr is NULL \n");
-            tivxReleaseRawImage(&raw_image);
-            return NULL;
-        }
-
-        TIOVX_MODULE_PRINTF("Reading test RAW image %s \n", raw_image_fname);
-        fp = fopen(raw_image_fname, "rb");
-
-        if(!fp)
-        {
-            TIOVX_MODULE_ERROR("read_test_image_raw : Unable to open file %s, setting error message as all 0s\n", raw_image_fname);
-            memset(data_ptr, 0x00, image_addr.stride_y*height);
-            *bytes_read = 0;
-        }
-        else
-        {
-            num_bytes_read_from_file = 0;
-
-            imgaddr_width  = image_addr.dim_x;
-            imgaddr_height = image_addr.dim_y;
-            imgaddr_stride = image_addr.stride_y;
-
-            for(i=0;i<imgaddr_height;i++)
-            {
-                num_bytes_read_from_file += fread(data_ptr, 1, imgaddr_width*num_bytes_per_pixel, fp);
-                data_ptr += imgaddr_stride;
-            }
-
-            fclose(fp);
-
-            TIOVX_MODULE_PRINTF("%d bytes read from %s\n", num_bytes_read_from_file, raw_image_fname);
-            *bytes_read = num_bytes_read_from_file;
-        }
-
-        tivxUnmapRawImagePatch(raw_image, map_id);
-    }
-    return raw_image;
-}
-
 vx_status tiovx_capture_create_error_detection_frame(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
@@ -285,6 +192,9 @@ vx_status tiovx_capture_create_error_detection_frame(NodeObj *node)
     TIOVXCaptureNodePriv *node_priv = (TIOVXCaptureNodePriv *)node->node_priv;
 
     IssSensor_CreateParams *sensor_params = &node_priv->sensor_obj.sensorParams;
+    IssSensor_Info         *sensor_info = &sensor_params->sensorInfo;
+
+    vx_uint32 bytes_read;
 
     /*Error detection is currently enabled only for RAW input*/
     if(0 != node_priv->capture_format)
@@ -295,39 +205,27 @@ vx_status tiovx_capture_create_error_detection_frame(NodeObj *node)
     /* If error detection is enabled, send the test frame */
     if (1 == node_cfg->enable_error_detection)
     {
-        uint32_t path_index = 0;
-        vx_int32 bytes_read = 0;
-#if defined (QNX)
-        const char * test_data_path = "/ti_fs/vision_apps/test_data/";
-#elif defined (PC)
-        const char * test_data_path = "./";
-#else
-        const char * test_data_path = "/opt/vision_apps/test_data/";
-#endif
-        char raw_image_fname[256] = {0};
-        const char test_image_paths[3][64] =
+        node_priv->error_frame_raw_image = tivxCreateRawImage(node->graph->tiovx_context,
+                                                              &sensor_info->raw_params);
+
+        status = vxGetStatus((vx_reference)node_priv->error_frame_raw_image);
+        if(VX_SUCCESS != status)
         {
-            "psdkra/app_single_cam/IMX390_001/input2",  /* Used in test mode */
-            "psdkra/app_single_cam/AR0233_001/input2",  /* Used in test mode */
-            "img_test"                                  /* Used as error frame when not in test mode */
-        };
+            TIOVX_MODULE_ERROR("[CAPTURE] Unable to create error frame RAW image!\n");
+            return status;
+        }
 
-        path_index = ((sizeof(test_image_paths)/64)/sizeof(char))-1;
+        vxSetReferenceName((vx_reference)node_priv->error_frame_raw_image,
+                           "capture_node_error_frame_raw_image");
 
-        snprintf(raw_image_fname, 256, "%s/%s.raw", test_data_path, test_image_paths[path_index]);
-
-        node_priv->error_frame_raw_image = read_error_image_raw(node->graph->tiovx_context,
-                                                                &(sensor_params->sensorInfo),
-                                                                raw_image_fname,
-                                                                &bytes_read);
-
-        TIOVX_MODULE_PRINTF("%d bytes were read by read_error_image_raw() from path %s\n",
-                            bytes_read, test_image_paths[sensorObj->sensor_index]);
+        status = readRawImage(node_cfg->error_frame_filename,
+                              node_priv->error_frame_raw_image,
+                              &bytes_read);
 
         status = vxGetStatus((vx_reference)node_priv->error_frame_raw_image);
         if(VX_SUCCESS != VX_SUCCESS)
         {
-            TIOVX_MODULE_ERROR("[CAPTURE] Unable to create error frame RAW image!\n");
+            TIOVX_MODULE_ERROR("[CAPTURE] Unable to populate error frame RAW image!\n");
             return status;
         }
 

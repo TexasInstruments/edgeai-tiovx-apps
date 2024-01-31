@@ -62,7 +62,7 @@
 
 #include "tiovx_utils.h"
 
-vx_status readRawImage(char* file_name, tivx_raw_image image)
+vx_status readRawImage(char* file_name, tivx_raw_image image, vx_uint32 *bytes_read)
 {
     vx_status status;
 
@@ -72,6 +72,7 @@ vx_status readRawImage(char* file_name, tivx_raw_image image)
     {
         FILE * fp = fopen(file_name,"rb");
         vx_int32  j;
+        *bytes_read = 0;
 
         if(fp == NULL)
         {
@@ -156,6 +157,8 @@ vx_status readRawImage(char* file_name, tivx_raw_image image)
                         pIn += image_addr.stride_y;
                     }
                 }
+
+                *bytes_read = num_bytes;
 
                 plane_size = (image_addr.dim_y * image_addr.dim_x* bpp);
 
