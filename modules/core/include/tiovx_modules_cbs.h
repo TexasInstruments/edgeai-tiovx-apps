@@ -89,7 +89,9 @@ typedef enum {
     TIOVX_DL_PRE_PROC,
     TIOVX_DL_POST_PROC,
     TIOVX_MOSAIC,
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
     TIOVX_DISPLAY,
+#endif
     TIOVX_MODULES_NUM_MODULES,
 } NODE_TYPES;
 

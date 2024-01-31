@@ -191,15 +191,6 @@ int main(int argc, char *argv[])
         status = app_modules_dl_post_proc_test(argc, argv);
     }
 #endif
-#if (APP_MODULES_TEST_DL_PIPELINE)
-    if(status==0)
-    {
-        printf("Running dl pipeline module test\n");
-        int app_modules_dl_pipeline_test(int argc, char* argv[]);
-
-        status = app_modules_dl_pipeline_test(argc, argv);
-    }
-#endif
 #if (APP_MODULES_TEST_MOSAIC)
     if(status==0)
     {
@@ -207,15 +198,6 @@ int main(int argc, char *argv[])
         int app_modules_mosaic_test(int argc, char* argv[]);
 
         status = app_modules_mosaic_test(argc, argv);
-    }
-#endif
-#if (APP_MODULES_TEST_DISPLAY)
-    if(status==0)
-    {
-        printf("Running display module test\n");
-        int app_modules_display_test(int argc, char* argv[]);
-
-        status = app_modules_display_test(argc, argv);
     }
 #endif
 #if (APP_MODULES_TEST_V4L2_CAPTURE)
@@ -226,6 +208,27 @@ int main(int argc, char *argv[])
 
         status = app_modules_v4l2_capture_test(argc, argv);
     }
+#endif
+
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
+#if (APP_MODULES_TEST_DISPLAY)
+    if(status==0)
+    {
+        printf("Running display module test\n");
+        int app_modules_display_test(int argc, char* argv[]);
+
+        status = app_modules_display_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_DL_PIPELINE)
+    if(status==0)
+    {
+        printf("Running dl pipeline module test\n");
+        int app_modules_dl_pipeline_test(int argc, char* argv[]);
+
+        status = app_modules_dl_pipeline_test(argc, argv);
+    }
+#endif
 #endif
 
     printf("All tests complete!\n");
