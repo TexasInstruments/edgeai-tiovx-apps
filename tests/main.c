@@ -79,6 +79,7 @@
 #define APP_MODULES_TEST_DL_PIPELINE (0)
 #define APP_MODULES_TEST_MOSAIC (1)
 #define APP_MODULES_TEST_DISPLAY (0)
+#define APP_MODULES_TEST_V4L2_CAPTURE (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -215,6 +216,15 @@ int main(int argc, char *argv[])
         int app_modules_display_test(int argc, char* argv[]);
 
         status = app_modules_display_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_V4L2_CAPTURE)
+    if(status==0)
+    {
+        printf("Running v4l2 capture module test\n");
+        int app_modules_v4l2_capture_test(int argc, char* argv[]);
+
+        status = app_modules_v4l2_capture_test(argc, argv);
     }
 #endif
 
