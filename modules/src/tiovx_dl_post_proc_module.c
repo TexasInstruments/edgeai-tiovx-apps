@@ -197,22 +197,6 @@ vx_status tiovx_dl_post_proc_init_node(NodeObj *node)
         return status;
     }
 
-    node->sinks[0].node = node;
-    node->sinks[0].pad_index = 0;
-    node->sinks[0].node_parameter_index = 1;
-    node->sinks[0].num_channels = node_cfg->num_channels;
-    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
-                                           node_cfg->input_image_cfg.width,
-                                           node_cfg->input_image_cfg.height,
-                                           node_cfg->input_image_cfg.color_format);
-    status = tiovx_module_create_pad_exemplar(&node->sinks[0], exemplar);
-    if (VX_SUCCESS != status)
-    {
-        TIOVX_MODULE_ERROR("[DL_PRE_PROC] Create Input Image failed\n");
-        return status;
-    }
-    vxReleaseReference(&exemplar);
-
     for(i = 0; i < node_cfg->num_input_tensors; i++)
     {
 
@@ -220,16 +204,16 @@ vx_status tiovx_dl_post_proc_init_node(NodeObj *node)
         tensor_sizes[1] = node_cfg->input_tensor_cfg[i].dim_sizes[1];
         tensor_sizes[2] = node_cfg->input_tensor_cfg[i].dim_sizes[2];
 
-        node->sinks[i+1].node = node;
-        node->sinks[i+1].pad_index = i+1;
-        node->sinks[i+1].node_parameter_index = (3 + i);
-        node->sinks[i+1].num_channels = node_cfg->num_channels;
+        node->sinks[i].node = node;
+        node->sinks[i].pad_index = i;
+        node->sinks[i].node_parameter_index = (3 + i);
+        node->sinks[i].num_channels = node_cfg->num_channels;
         exemplar = (vx_reference)vxCreateTensor(node->graph->tiovx_context,
                                                 node_cfg->input_tensor_cfg[i].num_dims,
                                                 tensor_sizes,
                                                 node_cfg->input_tensor_cfg[i].datatype,
                                                 0);
-        status = tiovx_module_create_pad_exemplar(&node->sinks[i+1], exemplar);
+        status = tiovx_module_create_pad_exemplar(&node->sinks[i], exemplar);
         if (VX_SUCCESS != status)
         {
             TIOVX_MODULE_ERROR("[DL_POST_PROC] Create Tensor %d failed\n", i);
@@ -237,6 +221,25 @@ vx_status tiovx_dl_post_proc_init_node(NodeObj *node)
         }
         vxReleaseReference(&exemplar);
     }
+
+
+    // Image pad will always be the last one
+    node->sinks[node->num_inputs - 1].node = node;
+    node->sinks[node->num_inputs - 1].pad_index = node->num_inputs - 1;
+    node->sinks[node->num_inputs - 1].node_parameter_index = 1;
+    node->sinks[node->num_inputs - 1].num_channels = node_cfg->num_channels;
+    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
+                                           node_cfg->input_image_cfg.width,
+                                           node_cfg->input_image_cfg.height,
+                                           node_cfg->input_image_cfg.color_format);
+    status = tiovx_module_create_pad_exemplar(&node->sinks[node->num_inputs - 1],
+                                              exemplar);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[DL_PRE_PROC] Create Input Image failed\n");
+        return status;
+    }
+    vxReleaseReference(&exemplar);
 
     node->srcs[0].node = node;
     node->srcs[0].pad_index = 0;
@@ -274,11 +277,11 @@ vx_status tiovx_dl_post_proc_create_node(NodeObj *node)
     vx_int32 i;
     vx_bool replicate[8];
 
-    input_image = (vx_image)(node->sinks[0].exemplar);
 
     for(i = 0; i < node_cfg->num_input_tensors; i++)
-        input_tensors[i] = (vx_tensor)(node->sinks[i+1].exemplar);
+        input_tensors[i] = (vx_tensor)(node->sinks[i].exemplar);
 
+    input_image = (vx_image)(node->sinks[node->num_inputs - 1].exemplar);
     output_image = (vx_image)(node->srcs[0].exemplar);
 
     node->tiovx_node = tivxDLPostProcNode(node->graph->tiovx_graph,
