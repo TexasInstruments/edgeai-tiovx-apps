@@ -127,14 +127,36 @@ vx_status tiovx_dl_pre_proc_set_cfg(NodeObj *node)
 
     node_cfg->output_cfg.num_dims = 3;
 
-    node_cfg->output_cfg.dim_sizes[0] = node_cfg->io_buf_desc.inWidth[0];
+    if(node_cfg->params.channel_order == 0) //NCHW
+    {
+        node_cfg->output_cfg.dim_sizes[0] = node_cfg->io_buf_desc.inWidth[0]+
+                                            node_cfg->io_buf_desc.inPadL[0] +
+                                            node_cfg->io_buf_desc.inPadR[0];
 
-    node_cfg->output_cfg.dim_sizes[1] = node_cfg->io_buf_desc.inHeight[0];
+        node_cfg->output_cfg.dim_sizes[1] = node_cfg->io_buf_desc.inHeight[0]+
+                                            node_cfg->io_buf_desc.inPadT[0]  +
+                                            node_cfg->io_buf_desc.inPadB[0];
 
-    node_cfg->output_cfg.dim_sizes[2] = node_cfg->io_buf_desc.inNumChannels[0];
+        node_cfg->output_cfg.dim_sizes[2] = node_cfg->io_buf_desc.inNumChannels[0];
 
-    node_cfg->input_cfg.width = node_cfg->output_cfg.dim_sizes[0];
-    node_cfg->input_cfg.height = node_cfg->output_cfg.dim_sizes[1];
+        node_cfg->input_cfg.width = node_cfg->output_cfg.dim_sizes[0];
+        node_cfg->input_cfg.height = node_cfg->output_cfg.dim_sizes[1];
+    }
+    else
+    {
+        node_cfg->output_cfg.dim_sizes[0] = node_cfg->io_buf_desc.inNumChannels[0];
+
+        node_cfg->output_cfg.dim_sizes[1] = node_cfg->io_buf_desc.inWidth[0]+
+                                            node_cfg->io_buf_desc.inPadL[0] +
+                                            node_cfg->io_buf_desc.inPadR[0];
+
+        node_cfg->output_cfg.dim_sizes[2] = node_cfg->io_buf_desc.inHeight[0]+
+                                            node_cfg->io_buf_desc.inPadT[0]  +
+                                            node_cfg->io_buf_desc.inPadB[0];
+
+        node_cfg->input_cfg.width = node_cfg->output_cfg.dim_sizes[1];
+        node_cfg->input_cfg.height = node_cfg->output_cfg.dim_sizes[2];
+    }
 
     node_cfg->width = node_cfg->input_cfg.width;
     node_cfg->height = node_cfg->input_cfg.height;
