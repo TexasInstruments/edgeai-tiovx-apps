@@ -718,3 +718,54 @@ int getDmaFd(vx_reference ref)
 
     return ret;
 }
+
+int getImageDmaFd(vx_reference ref, vx_int32 *fd, vx_uint32 *pitch, vx_uint64 *size, vx_uint32 *offset, vx_uint32 count)
+{
+    vx_image img = (vx_image)ref;
+    vx_rectangle_t rect;
+    vx_imagepatch_addressing_t image_addr;
+    vx_map_id map_id;
+    void * data_ptr;
+    vx_uint32  img_width;
+    vx_uint32  img_height;
+    vx_size    num_planes;
+    vx_df_image img_format;
+    vx_status status;
+
+    vxQueryImage(img, VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
+    vxQueryImage(img, VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
+    vxQueryImage(img, VX_IMAGE_PLANES, &num_planes, sizeof(vx_size));
+    vxQueryImage(img, VX_IMAGE_FORMAT, &img_format, sizeof(vx_df_image));
+
+    if (num_planes > count) {
+        TIOVX_MODULE_ERROR("Count < number of planes\n");
+        return -1;
+    }
+
+    for (vx_uint32 plane = 0; plane < num_planes; plane++)
+    {
+        rect.start_x = 0;
+        rect.start_y = 0;
+        rect.end_x = img_width;
+        rect.end_y = img_height;
+        status = vxMapImagePatch(img,
+                                &rect,
+                                plane,
+                                &map_id,
+                                &image_addr,
+                                &data_ptr,
+                                VX_WRITE_ONLY,
+                                VX_MEMORY_TYPE_HOST,
+                                VX_NOGAP_X);
+        if(VX_SUCCESS != status) {
+            TIOVX_MODULE_ERROR("Map Image failed\n");
+            return -1;
+        }
+        pitch[plane] = image_addr.stride_y;
+        size[plane] = (image_addr.dim_y/image_addr.step_y) * ((image_addr.dim_x * image_addr.stride_x)/image_addr.step_x);
+        fd[plane] = appMemGetDmaBufFd(data_ptr, &offset[plane]);
+        vxUnmapImagePatch(img, map_id);
+    }
+
+    return num_planes;
+}

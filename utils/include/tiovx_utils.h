@@ -84,6 +84,7 @@ vx_status readTensor(char* file_name, vx_tensor tensor);
 vx_status writeTensor(char* file_name, vx_tensor tensor);
 
 int getDmaFd(vx_reference ref);
+int getImageDmaFd(vx_reference ref, vx_int32 *fd, vx_uint32 *pitch, vx_uint64 *size, vx_uint32 *offset, vx_uint32 count);
 
 #ifdef __cplusplus
 }
