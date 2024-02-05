@@ -184,6 +184,7 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
         buf_pool->bufs[i].handle = vxGetObjectArrayItem(buf_pool->bufs[i].arr,
                                                         0);
         buf_pool->bufs[i].pool = buf_pool;
+        buf_pool->bufs[i].buf_index = i;
         buf_pool->bufs[i].acquired = vx_true_e;
         buf_pool->bufs[i].queued = vx_false_e;
         buf_pool->bufs[i].num_channels = pad->num_channels;

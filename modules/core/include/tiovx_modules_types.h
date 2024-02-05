@@ -116,6 +116,7 @@ typedef struct _BufPool     BufPool;
 
 struct _Buf {
     BufPool             *pool;
+    vx_int32            buf_index;
     vx_bool             acquired;
     vx_bool             queued;
     vx_object_array     arr;
