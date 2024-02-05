@@ -100,12 +100,14 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${TARGET_FS}/usr/include/processor_sdk/app_utils/
                     ${TARGET_FS}/usr/include/processor_sdk/video_io/kernels/include/
                     ${TARGET_FS}/usr/include/processor_sdk/app_utils/utils/mem/include
+                    ${TARGET_FS}/usr/include/drm
                    )
 
 set(SYSTEM_LINK_LIBS
     tivision_apps
     edgeai-tiovx-kernels
     edgeai-apps-utils
+    drm
     )
 
 set(COMMON_LINK_LIBS
