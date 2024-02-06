@@ -104,7 +104,10 @@ void tiovx_mosaic_init_cfg(TIOVXMosaicNodeCfg *node_cfg)
 {
     node_cfg->color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->num_inputs = 1;
-    node_cfg->num_channels = 1;
+    for(int32_t i = 0; i < TIVX_IMG_MOSAIC_MAX_INPUTS; i++)
+    {
+        node_cfg->num_channels[i] = 1;
+    }
     node_cfg->input_cfgs[0].width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->input_cfgs[0].height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->background_cfg.width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
@@ -140,7 +143,7 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
         node->sinks[i].node = node;
         node->sinks[i].pad_index = i;
         node->sinks[i].node_parameter_index = (3+i);
-        node->sinks[i].num_channels = node_cfg->num_channels;
+        node->sinks[i].num_channels = node_cfg->num_channels[i];
         exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
                                                node_cfg->input_cfgs[i].width,
                                                node_cfg->input_cfgs[i].height,
@@ -157,7 +160,7 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
     node->sinks[node_cfg->num_inputs].node = node;
     node->sinks[node_cfg->num_inputs].pad_index = node_cfg->num_inputs;
     node->sinks[node_cfg->num_inputs].node_parameter_index = 2;
-    node->sinks[node_cfg->num_inputs].num_channels = node_cfg->num_channels;
+    node->sinks[node_cfg->num_inputs].num_channels = 1;
     exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
                                            node_cfg->background_cfg.width,
                                            node_cfg->background_cfg.height,
@@ -174,7 +177,7 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
     node->srcs[0].node = node;
     node->srcs[0].pad_index = 0;
     node->srcs[0].node_parameter_index = 1;
-    node->srcs[0].num_channels = node_cfg->num_channels;
+    node->srcs[0].num_channels = 1;
     exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
                                            node_cfg->output_cfg.width,
                                            node_cfg->output_cfg.height,

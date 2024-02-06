@@ -75,7 +75,7 @@ typedef struct {
     ImgCfg                      output_cfg;
     vx_int32                    num_inputs;
     vx_int32                    color_format;
-    vx_int32                    num_channels;
+    vx_int32                    num_channels[TIVX_IMG_MOSAIC_MAX_INPUTS];
     char                        target_string[TIVX_TARGET_MAX_NAME];
     tivxImgMosaicParams         params;
 } TIOVXMosaicNodeCfg;
