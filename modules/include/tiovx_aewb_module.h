@@ -72,10 +72,12 @@ extern "C" {
 #endif
 
 typedef struct {
-    SensorObj       sensor_obj;
-    uint32_t        starting_channel;
-    uint32_t        num_cameras_enabled;
-    vx_object_array h3a_stats_arr;
+    vx_int32        num_cameras_enabled;
+    vx_char         sensor_name[ISS_SENSORS_MAX_NAME];
+    uint8_t         awb_mode;
+    uint8_t         awb_num_skip_frames;
+    uint8_t         ae_num_skip_frames;
+    uint8_t         starting_channel;
 } TIOVXAewbNodeCfg;
 
 void tiovx_aewb_init_cfg(TIOVXAewbNodeCfg *cfg);
