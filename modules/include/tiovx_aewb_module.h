@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 Texas Instruments Incorporated
+ * Copyright (c) 2024 Texas Instruments Incorporated
  *
  * All rights reserved not granted herein.
  *
@@ -59,51 +59,34 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
+ #ifndef _TIOVX_AEWB_MODULE
+ #define _TIOVX_AEWB_MODULE
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
+#include "tiovx_modules_types.h"
 
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
-#include "tiovx_display_module.h"
-#include "tiovx_capture_module.h"
-#include "tiovx_aewb_module.h"
-#endif
+#include <TI/j7_imaging_aewb.h>
+#include <tiovx_sensor_module.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
-    TIOVX_DISPLAY,
-    TIOVX_CAPTURE,
-    TIOVX_AEWB,
-#endif
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+typedef struct {
+    SensorObj       sensor_obj;
+    uint32_t        starting_channel;
+    uint32_t        num_cameras_enabled;
+    vx_object_array h3a_stats_arr;
+} TIOVXAewbNodeCfg;
+
+void tiovx_aewb_init_cfg(TIOVXAewbNodeCfg *cfg);
+vx_status tiovx_aewb_init_node(NodeObj *node);
+vx_status tiovx_aewb_create_node(NodeObj *node);
+vx_status tiovx_aewb_delete_node(NodeObj *node);
+vx_uint32 tiovx_aewb_get_cfg_size();
+vx_uint32 tiovx_aewb_get_priv_size();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_MODULES_CBS
+#endif // _TIOVX_AEWB_MODULE
