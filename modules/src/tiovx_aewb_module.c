@@ -61,30 +61,33 @@
  */
 #include "tiovx_aewb_module.h"
 
+#define TIOVX_MODULES_DEFAULT_AEWB_SENSOR "SENSOR_SONY_IMX390_UB953_D3"
+
 typedef struct {
     vx_object_array         config_arr;
     vx_user_data_object     dcc_config;
     vx_object_array         histogram_arr;
+    vx_object_array         aewb_out_arr;
     tivx_aewb_config_t      params;
+    SensorObj               sensor_obj;
 } TIOVXAewbNodePriv;
 
 vx_status tiovx_aewb_create_dcc(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-    TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
     TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
 
-    if(node_cfg->sensor_obj.sensor_dcc_enabled)
+    if(node_priv->sensor_obj.sensor_dcc_enabled)
     {
         int32_t     dcc_buff_size;
         uint8_t     *dcc_buf;
         vx_map_id   dcc_buf_map_id;
 
-        dcc_buff_size = appIssGetDCCSize2A(node_cfg->sensor_obj.sensor_name,
-                                        node_cfg->sensor_obj.sensor_wdr_enabled);
+        dcc_buff_size = appIssGetDCCSize2A(node_priv->sensor_obj.sensor_name,
+                                        node_priv->sensor_obj.sensor_wdr_enabled);
         if(dcc_buff_size < 0)
         {
-            TIOVX_MODULE_ERROR("[AEWB-MODULE] Invalid DCC size for 2A! \n");
+            TIOVX_MODULE_ERROR("[AEWB] Invalid DCC size for 2A! \n");
             status = VX_FAILURE;
             return status;
         }
@@ -96,7 +99,7 @@ vx_status tiovx_aewb_create_dcc(NodeObj *node)
         status = vxGetStatus((vx_reference)node_priv->dcc_config);
         if(VX_SUCCESS != status)
         {
-            TIOVX_MODULE_ERROR("[AEWB-MODULE] Unable to create DCC config object!\n");
+            TIOVX_MODULE_ERROR("[AEWB] Unable to create DCC config object!\n");
             return status;
         }
 
@@ -112,13 +115,13 @@ vx_status tiovx_aewb_create_dcc(NodeObj *node)
                             VX_MEMORY_TYPE_HOST,
                             0);
 
-        status = appIssGetDCCBuff2A(node_cfg->sensor_obj.sensor_name,
-                                    node_cfg->sensor_obj.sensor_wdr_enabled,
+        status = appIssGetDCCBuff2A(node_priv->sensor_obj.sensor_name,
+                                    node_priv->sensor_obj.sensor_wdr_enabled,
                                     dcc_buf,
                                     dcc_buff_size);
         if(status != VX_SUCCESS)
         {
-            TIOVX_MODULE_ERROR("[AEWB-MODULE] Error getting 2A DCC buffer! \n");
+            TIOVX_MODULE_ERROR("[AEWB] Error getting 2A DCC buffer! \n");
             return status;
         }
         vxUnmapUserDataObject(node_priv->dcc_config, dcc_buf_map_id);
@@ -138,31 +141,27 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
     vx_status status = VX_FAILURE;
     TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
     TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
-
     vx_user_data_object config;
     vx_int32 ch;
     vx_int32 ch_mask;
     vx_uint32 array_obj_index;
 
-    node_priv->params.sensor_dcc_id       = node_cfg->sensor_obj.sensorParams.dccId;
-    node_priv->params.sensor_img_format   = 0;
-    node_priv->params.sensor_img_phase    = 3;
+    node_priv->params.sensor_dcc_id = node_priv->sensor_obj.sensorParams.dccId;
+    node_priv->params.sensor_img_format = 0;
+    node_priv->params.sensor_img_phase = 3;
 
-    if(node_cfg->sensor_obj.sensor_exp_control_enabled
-       ||
-       node_cfg->sensor_obj.sensor_gain_control_enabled)
+    if(node_priv->sensor_obj.sensor_exp_control_enabled ||
+       node_priv->sensor_obj.sensor_gain_control_enabled)
     {
         node_priv->params.ae_mode = ALGORITHMS_ISS_AE_AUTO;
-    }
-    else
-    {
+    } else {
         node_priv->params.ae_mode = ALGORITHMS_ISS_AE_DISABLED;
     }
 
-    node_priv->params.awb_mode            = ALGORITHMS_ISS_AWB_AUTO;
-    node_priv->params.awb_num_skip_frames = 9;
-    node_priv->params.ae_num_skip_frames  = 9;
-    node_priv->params.channel_id          = node_cfg->starting_channel;
+    node_priv->params.awb_mode = node_cfg->awb_mode;
+    node_priv->params.awb_num_skip_frames = node_cfg->awb_num_skip_frames;
+    node_priv->params.ae_num_skip_frames = node_cfg->ae_num_skip_frames;
+    node_priv->params.channel_id = node_cfg->starting_channel;
 
     config = vxCreateUserDataObject(node->graph->tiovx_context,
                                     "tivx_aewb_config_t",
@@ -190,7 +189,7 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
 
     array_obj_index = 0;
     ch = 0;
-    ch_mask = node_cfg->sensor_obj.ch_mask >> node_cfg->starting_channel;
+    ch_mask = node_priv->sensor_obj.ch_mask >> node_cfg->starting_channel;
     while(ch_mask > 0)
     {
         if(ch_mask & 0x1)
@@ -214,6 +213,32 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
             break;
         }
     }
+
+    return status;
+}
+
+vx_status tiovx_aewb_create_aewb_out(NodeObj *node)
+{
+    vx_status status = VX_FAILURE;
+    TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
+    TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
+    vx_reference exemplar;
+
+    exemplar = (vx_reference)vxCreateUserDataObject(node->graph->tiovx_context,
+                                                    "tivx_ae_awb_params_t",
+                                                    sizeof(tivx_ae_awb_params_t),
+                                                    NULL);
+
+    node_priv->aewb_out_arr = vxCreateObjectArray(node->graph->tiovx_context,
+                                                 exemplar,
+                                                 node_cfg->num_cameras_enabled);
+    status = vxGetStatus((vx_reference)node_priv->aewb_out_arr);
+    if(VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[AEWB] Unable to create aewb in object array! \n");
+    }
+
+    vxReleaseReference(&exemplar);
 
     return status;
 }
@@ -253,16 +278,43 @@ vx_status tiovx_aewb_create_histogram(NodeObj *node)
 
 void tiovx_aewb_init_cfg(TIOVXAewbNodeCfg *node_cfg)
 {
-    node_cfg->starting_channel = 0;
     node_cfg->num_cameras_enabled = 1;
+    sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_AEWB_SENSOR);
+    node_cfg->awb_mode = ALGORITHMS_ISS_AWB_AUTO;
+    node_cfg->awb_num_skip_frames = 9;
+    node_cfg->ae_num_skip_frames  = 9;
+    node_cfg->starting_channel = 0;
 }
 
 vx_status tiovx_aewb_init_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
     TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
-
+    TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
     vx_reference exemplar;
+
+    CLR(node_priv);
+
+    status = tiovx_init_sensor_obj(&node_priv->sensor_obj,
+                                    node_cfg->sensor_name);
+    if (VX_SUCCESS != status) {
+        TIOVX_MODULE_ERROR("[AEWB] Sensor Init Failed\n");
+        return status;
+    }
+
+    status = tiovx_sensor_query(&node_priv->sensor_obj);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[AEWB] Sensor Query Failed\n");
+        return status;
+    }
+
+    status = tiovx_sensor_init(&node_priv->sensor_obj);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[AEWB] Sensor Init Failed\n");
+        return status;
+    }
 
     status = tiovx_aewb_create_dcc(node);
     if (VX_SUCCESS != status)
@@ -285,26 +337,32 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
         return status;
     }
 
-    node->num_inputs = 0;
-    node->num_outputs = 1;
-
-    node->srcs[0].node = node;
-    node->srcs[0].pad_index = 0;
-    node->srcs[0].node_parameter_index = 1;
-    node->srcs[0].num_channels = node_cfg->num_cameras_enabled;
-
-
-    exemplar = (vx_reference)vxCreateUserDataObject(node->graph->tiovx_context,
-                                                    "tivx_ae_awb_params_t",
-                                                    sizeof(tivx_ae_awb_params_t),
-                                                    NULL);
-
-    status = tiovx_module_create_pad_exemplar(&node->srcs[0], exemplar);
+    status = tiovx_aewb_create_aewb_out(node);
     if (VX_SUCCESS != status)
     {
-        TIOVX_MODULE_ERROR("[AEWB] Create Output Failed\n");
+        TIOVX_MODULE_ERROR("[AEWB] Create aewb in failed\n");
         return status;
     }
+
+    node->num_inputs = 1;
+    node->num_outputs = 0;
+
+    node->sinks[0].node = node;
+    node->sinks[0].pad_index = 0;
+    node->sinks[0].node_parameter_index = 2;
+    node->sinks[0].num_channels = node_cfg->num_cameras_enabled;
+
+    exemplar = (vx_reference)vxCreateUserDataObject(node->graph->tiovx_context,
+                                                    "tivx_h3a_data_t",
+                                                    sizeof(tivx_h3a_data_t),
+                                                    NULL);
+    status = tiovx_module_create_pad_exemplar(&node->sinks[0], exemplar);
+    if (VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR("[AEWB] Create Input Failed\n");
+        return status;
+    }
+
     vxReleaseReference(&exemplar);
 
     return status;
@@ -313,34 +371,31 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
 vx_status tiovx_aewb_create_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-    TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
     TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
 
     vx_bool replicate[] = { vx_true_e,  vx_true_e, vx_true_e,
                             vx_false_e, vx_true_e, vx_false_e};
 
-    vx_user_data_object aewb_output;
-    vx_user_data_object h3a_stats;
     vx_user_data_object config;
+    vx_user_data_object aewb_out;
     vx_distribution     histogram;
 
     config = (vx_user_data_object)vxGetObjectArrayItem(node_priv->config_arr, 0);
     histogram  = (vx_distribution)vxGetObjectArrayItem(node_priv->histogram_arr, 0);
-    h3a_stats   = (vx_user_data_object)vxGetObjectArrayItem(node_cfg->h3a_stats_arr, 0);
-    aewb_output = (vx_user_data_object)vxGetObjectArrayItem(node->srcs[0].exemplar_arr,0);
+    aewb_out  = (vx_user_data_object)vxGetObjectArrayItem(node_priv->aewb_out_arr, 0);
 
-    node->tiovx_node = tivxAewbNode(node->graph->tiovx_graph,
-                                    config,
-                                    histogram,
-                                    h3a_stats,
-                                    NULL,
-                                    aewb_output,
-                                    node_priv->dcc_config);
+    node->tiovx_node = tivxAewbNode(
+                                node->graph->tiovx_graph,
+                                config,
+                                histogram,
+                                (vx_user_data_object)(node->sinks[0].exemplar),
+                                NULL,
+                                aewb_out,
+                                node_priv->dcc_config);
 
-    vxReleaseUserDataObject(&aewb_output);
-    vxReleaseUserDataObject(&h3a_stats);
     vxReleaseUserDataObject(&config);
     vxReleaseDistribution(&histogram);
+    vxReleaseUserDataObject(&aewb_out);
 
     status = vxGetStatus((vx_reference)node->tiovx_node);
     if (VX_SUCCESS != status)
@@ -356,7 +411,6 @@ vx_status tiovx_aewb_create_node(NodeObj *node)
 #endif
 
     vxSetReferenceName((vx_reference)node->tiovx_node, "aewb_node");
-
     vxReplicateNode(node->graph->tiovx_graph, node->tiovx_node, replicate, 6);
 
     return status;
@@ -371,6 +425,7 @@ vx_status tiovx_aewb_delete_node(NodeObj *node)
 
     vxReleaseObjectArray(&node_priv->histogram_arr);
     vxReleaseObjectArray(&node_priv->config_arr);
+    vxReleaseObjectArray(&node_priv->aewb_out_arr);
 
     if(node_priv->dcc_config != NULL)
     {
