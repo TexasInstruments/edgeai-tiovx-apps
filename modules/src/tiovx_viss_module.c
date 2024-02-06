@@ -245,6 +245,8 @@ void tiovx_viss_init_cfg(TIOVXVissNodeCfg *node_cfg)
     node_cfg->num_channels = 1;
     sprintf(node_cfg->target_string, TIVX_TARGET_VPAC_VISS1);
     sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_VISS_SENSOR);
+    node_cfg->enable_h3a_pad = vx_false_e;
+    node_cfg->enable_aewb_pad = vx_false_e;
 
     node_cfg->input_cfg.params.num_exposures = 1;
     node_cfg->input_cfg.params.line_interleaved = vx_false_e;
@@ -337,6 +339,47 @@ vx_status tiovx_viss_init_node(NodeObj *node)
         }
     }
 
+    if (node_cfg->enable_aewb_pad == vx_true_e) {
+        node->sinks[1].node = node;
+        node->sinks[1].pad_index = 1;
+        node->sinks[1].node_parameter_index = 1;
+        node->sinks[1].num_channels = node_cfg->num_channels;
+        exemplar = (vx_reference)vxCreateUserDataObject(
+                                        node->graph->tiovx_context,
+                                        "tivx_ae_awb_params_t",
+                                        sizeof(tivx_ae_awb_params_t),
+                                        NULL);
+        status = tiovx_module_create_pad_exemplar(&node->sinks[1], exemplar);
+        if (VX_SUCCESS != status) {
+            TIOVX_MODULE_ERROR("[VISS] Create AEWB Input Failed\n");
+            return status;
+        }
+        vxReleaseReference(&exemplar);
+        node->sinks[1].bufq_depth = 1;
+        node->num_inputs++;
+    }
+
+    if (node_cfg->enable_h3a_pad == vx_true_e) {
+        node->srcs[node->num_outputs].node = node;
+        node->srcs[node->num_outputs].pad_index = node->num_outputs;
+        node->srcs[node->num_outputs].node_parameter_index = 9;
+        node->srcs[node->num_outputs].num_channels = node_cfg->num_channels;
+        exemplar = (vx_reference)vxCreateUserDataObject(
+                                        node->graph->tiovx_context,
+                                        "tivx_h3a_data_t",
+                                        sizeof(tivx_h3a_data_t),
+                                        NULL);
+        status = tiovx_module_create_pad_exemplar(&node->srcs[node->num_outputs],
+                                                  exemplar);
+        if (VX_SUCCESS != status) {
+            TIOVX_MODULE_ERROR("[VISS] Create H3A Output Failed\n");
+            return status;
+        }
+        vxReleaseReference(&exemplar);
+        node->srcs[node->num_outputs].bufq_depth = 1;
+        node->num_outputs++;
+    }
+
     tiovx_viss_module_configure_params(node);
     tiovx_viss_module_configure_dcc_params(node);
 
@@ -356,6 +399,19 @@ vx_status tiovx_viss_create_node(NodeObj *node)
                            vx_false_e, vx_false_e, vx_false_e,
                            vx_false_e, vx_false_e, vx_false_e,
                            vx_false_e};
+
+    if (node_cfg->enable_aewb_pad == vx_true_e) {
+        replicate[1] = vx_true_e;
+
+        ae_awb_result = (vx_user_data_object)node->sinks[1].exemplar;
+    }
+
+    if (node_cfg->enable_h3a_pad == vx_true_e) {
+        replicate[9] = vx_true_e;
+
+        h3a_stats =
+            (vx_user_data_object)node->srcs[node->num_outputs - 1].exemplar;
+    }
 
     for (int i = 0, j = 0; i < TIOVX_VISS_MODULE_MAX_OUTPUTS; i++) {
         if (node_cfg->output_select[i] == TIOVX_VISS_MODULE_OUTPUT_EN) {
