@@ -64,6 +64,7 @@
 #include <tiovx_utils.h>
 #include <v4l2_capture_module.h>
 #include <kms_display_module.h>
+#include <linux_aewb_module.h>
 
 #define APP_BUFQ_DEPTH      (4)
 #define APP_NUM_CH          (1)
@@ -82,12 +83,15 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
     NodeObj *node = NULL;
     TIOVXVissNodeCfg cfg;
     BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
-    Buf *inbuf = NULL, *outbuf = NULL;
+    BufPool *h3a_buf_pool = NULL, *aewb_buf_pool = NULL;
+    Buf *inbuf = NULL, *outbuf = NULL, *h3a_buf = NULL, *aewb_buf = NULL;
     char output_filename[100];
     v4l2CaptureCfg v4l2_capture_cfg;
     v4l2CaptureHandle *v4l2_capture_handle;
     kmsDisplayCfg kms_display_cfg;
     kmsDisplayHandle *kms_display_handle;
+    AewbCfg aewb_cfg;
+    AewbHandle *aewb_handle;
 
     tiovx_viss_init_cfg(&cfg);
 
@@ -99,6 +103,8 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 
     cfg.input_cfg.params.format[0].pixel_container = TIVX_RAW_IMAGE_8_BIT;
     cfg.input_cfg.params.format[0].msb = 7;
+    cfg.enable_aewb_pad = vx_true_e;
+    cfg.enable_h3a_pad = vx_true_e;
 
     status = tiovx_modules_initialize_graph(&graph);
     node = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&cfg);
@@ -124,6 +130,17 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 
     kms_display_handle = kms_display_create_handle(&kms_display_cfg);
 
+    aewb_init_cfg(&aewb_cfg);
+    sprintf(aewb_cfg.device, "/dev/v4l-rpi-subdev0");
+    sprintf(aewb_cfg.dcc_2a_file, "/opt/imaging/imx219/linear/dcc_2a.bin");
+
+    aewb_handle = aewb_create_handle(&aewb_cfg);
+
+    h3a_buf_pool = node->srcs[node->num_outputs - 1].buf_pool;
+    h3a_buf = tiovx_modules_acquire_buf(h3a_buf_pool);
+    aewb_buf_pool = node->sinks[1].buf_pool;
+    aewb_buf = tiovx_modules_acquire_buf(node->sinks[1].buf_pool);
+
     for (int i = 0; i < out_buf_pool->bufq_depth; i++) {
         kms_display_register_buf(kms_display_handle, &out_buf_pool->bufs[i]);
     }
@@ -142,6 +159,9 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
         outbuf = tiovx_modules_acquire_buf(out_buf_pool);
         tiovx_modules_enqueue_buf(outbuf);
 
+        tiovx_modules_enqueue_buf(h3a_buf);
+        tiovx_modules_enqueue_buf(aewb_buf);
+
         tiovx_modules_schedule_graph(&graph);
         tiovx_modules_wait_graph(&graph);
 
@@ -156,6 +176,10 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 
         kms_display_render_buf(kms_display_handle, outbuf);
         tiovx_modules_release_buf(outbuf);
+
+        aewb_process(aewb_handle, h3a_buf, aewb_buf);
+        h3a_buf = tiovx_modules_dequeue_buf(h3a_buf_pool);
+        aewb_buf = tiovx_modules_dequeue_buf(aewb_buf_pool);
     }
 
     v4l2_capture_stop(v4l2_capture_handle);
