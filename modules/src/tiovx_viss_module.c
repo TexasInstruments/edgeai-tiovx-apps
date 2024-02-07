@@ -354,6 +354,18 @@ vx_status tiovx_viss_init_node(NodeObj *node)
             TIOVX_MODULE_ERROR("[VISS] Create AEWB Input Failed\n");
             return status;
         }
+        for (int i=0; i < node->sinks[1].num_channels; i++) {
+            void *map_ptr;
+            vx_map_id map_id;
+            vx_user_data_object obj = NULL;
+
+            obj = (vx_user_data_object)vxGetObjectArrayItem(
+                                                 node->sinks[1].exemplar_arr, i);
+            vxMapUserDataObject(obj, 0, sizeof(tivx_ae_awb_params_t),
+                        &map_id, &map_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+            vxUnmapUserDataObject(obj, map_id);
+            vxReleaseReference((vx_reference *)&obj);
+        }
         vxReleaseReference(&exemplar);
         node->sinks[1].bufq_depth = 1;
         node->num_inputs++;
