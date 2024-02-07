@@ -1173,6 +1173,7 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         viss_cfg.width = VISS_INPUT_WIDTH;
         viss_cfg.height = VISS_INPUT_HEIGHT;
         sprintf(viss_cfg.target_string, TIVX_TARGET_VPAC_VISS1);
+        viss_cfg.enable_h3a_pad = vx_true_e;
 
         viss_cfg.input_cfg.params.format[0].pixel_container = TIVX_RAW_IMAGE_16_BIT;
         viss_cfg.input_cfg.params.format[0].msb = 11;
@@ -1183,6 +1184,27 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         tiovx_modules_link_pads(output_pad[0], &viss_node->sinks[0]);
 
         output_pad[0] = &viss_node->srcs[0];
+        output_pad[1] = &viss_node->srcs[1];
+    }
+
+    /* AEWB */
+    {
+        TIOVXAewbNodeCfg aewb_cfg;
+        NodeObj *aewb_node;
+
+        tiovx_aewb_init_cfg(&aewb_cfg);
+
+        sprintf(aewb_cfg.sensor_name, SENSOR_NAME);
+        aewb_cfg.num_cameras_enabled = 1;
+        aewb_cfg.awb_mode = ALGORITHMS_ISS_AWB_AUTO;
+        aewb_cfg.awb_num_skip_frames = 9;
+        aewb_cfg.ae_num_skip_frames  = 9;
+        aewb_cfg.starting_channel = 0;
+
+        aewb_node = tiovx_modules_add_node(&graph, TIOVX_AEWB, (void *)&aewb_cfg);
+
+        /* Link VISS to AEWB */
+        tiovx_modules_link_pads(output_pad[1], &aewb_node->sinks[0]);
     }
 
     /* LDC */
@@ -1325,7 +1347,7 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         NodeObj *dl_post_proc_node;
 
         tiovx_dl_post_proc_init_cfg(&dl_post_proc_cfg);
-    
+
         dl_post_proc_cfg.width = POST_PROC_OUT_WIDTH;
         dl_post_proc_cfg.height = POST_PROC_OUT_HEIGHT;
 
