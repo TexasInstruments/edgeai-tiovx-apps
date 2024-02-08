@@ -160,6 +160,36 @@ vx_status tiovx_modules_release_buf(Buf *buf)
     return status;
 }
 
+vx_status tiovx_modules_reference_alloc_mem(vx_reference ref)
+{
+    vx_status status = VX_FAILURE;
+    void *addr[TIOVX_MODULES_MAX_REF_HANDLES] = {NULL};
+    vx_uint32 size[TIOVX_MODULES_MAX_REF_HANDLES], num_entries;
+
+    status = tivxReferenceExportHandle(ref, addr, size,
+                                       TIOVX_MODULES_MAX_REF_HANDLES,
+                                       &num_entries);
+    if(status != VX_SUCCESS)
+    {
+        TIOVX_MODULE_ERROR("Error exporting handles\n");
+        return status;
+    }
+
+    for(int i = 0; i < num_entries; i++)
+    {
+        addr[i] = tivxMemAlloc(size[i], TIVX_MEM_EXTERNAL);
+    }
+
+    status = tivxReferenceImportHandle(ref, (const void **)addr,
+                                       size, num_entries);
+    if(status != VX_SUCCESS)
+    {
+        TIOVX_MODULE_ERROR("Error importing handles\n");
+    }
+
+    return status;
+}
+
 BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
 {
     vx_status status = VX_FAILURE;
@@ -182,9 +212,7 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
         if(status != VX_SUCCESS)
         {
             TIOVX_MODULE_ERROR("Creating Bufpool failed\n");
-            free(buf_pool);
-            buf_pool = NULL;
-            break;
+            goto err;
         }
 
         buf_pool->bufs[i].handle = vxGetObjectArrayItem(buf_pool->bufs[i].arr,
@@ -196,10 +224,25 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
         buf_pool->bufs[i].num_channels = pad->num_channels;
         buf_pool->ref_list[i] = (vx_reference)buf_pool->bufs[i].arr;
 
+        for (uint8_t j=0; j < pad->num_channels; j++) {
+            vx_reference ref = vxGetObjectArrayItem(buf_pool->bufs[i].arr, j);
+            status = tiovx_modules_reference_alloc_mem(ref);
+            if(status != VX_SUCCESS)
+            {
+                TIOVX_MODULE_ERROR("Memory alloc failed\n");
+                goto err;
+            }
+            vxReleaseReference(&ref);
+        }
+
         tiovx_modules_release_buf(&buf_pool->bufs[i]);
     }
 
     return buf_pool;
+
+err:
+    free(buf_pool);
+    return NULL;
 }
 
 void tiovx_modules_free_bufpool(BufPool *buf_pool)
