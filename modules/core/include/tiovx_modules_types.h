@@ -102,6 +102,7 @@ extern "C" {
 
 #define TIOVX_MODULES_DEFAULT_BUFQ_DEPTH      (2u)
 #define TIOVX_MODULES_DEFAULT_NUM_CHANNELS    (1u)
+#define TIOVX_MODULES_MAX_REF_HANDLES     (16u)
 
 typedef enum {
     SRC = 0,
