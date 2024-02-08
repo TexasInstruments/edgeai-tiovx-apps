@@ -85,7 +85,6 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
     BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
     BufPool *h3a_buf_pool = NULL, *aewb_buf_pool = NULL;
     Buf *inbuf = NULL, *outbuf = NULL, *h3a_buf = NULL, *aewb_buf = NULL;
-    char output_filename[100];
     v4l2CaptureCfg v4l2_capture_cfg;
     v4l2CaptureHandle *v4l2_capture_handle;
     kmsDisplayCfg kms_display_cfg;
@@ -169,10 +168,6 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
         outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
 
         v4l2_capture_enqueue_buf(v4l2_capture_handle, inbuf);
-
-        sprintf(output_filename,
-                "%s/output/imx219_1920x1080_v4l2_capture_nv12_%d.yuv",
-                EDGEAI_DATA_PATH, i);
 
         kms_display_render_buf(kms_display_handle, outbuf);
         tiovx_modules_release_buf(outbuf);
