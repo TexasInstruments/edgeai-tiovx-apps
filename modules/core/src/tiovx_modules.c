@@ -253,9 +253,286 @@ void tiovx_modules_free_bufpool(BufPool *buf_pool)
     }
 }
 
-vx_bool tiovx_modules_compare_exemplars(vx_reference exempler1, vx_reference exemplar2)
+vx_bool tiovx_modules_compare_images(vx_image image1, vx_image image2)
 {
-    return vx_true_e;
+    vx_status status = VX_FAILURE;
+    vx_uint32 dim1, dim2;
+    vx_df_image fmt1, fmt2;
+    vx_bool ret = vx_false_e;
+
+    status = vxQueryImage (image1, VX_IMAGE_WIDTH, (void *)&dim1, sizeof(dim1));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Width Query of image1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryImage (image2, VX_IMAGE_WIDTH, (void *)&dim2, sizeof(dim2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Width Query of image2 failed\n");
+        return ret;
+    }
+
+    if (dim1 != dim2) {
+        TIOVX_MODULE_ERROR("image widths don't match\n");
+        return ret;
+    }
+
+    status = vxQueryImage (image1, VX_IMAGE_HEIGHT, (void *)&dim1, sizeof(dim1));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Height Query of image1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryImage (image2, VX_IMAGE_HEIGHT, (void *)&dim2, sizeof(dim2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Height Query of image2 failed\n");
+        return ret;
+    }
+
+    if (dim1 != dim2) {
+        TIOVX_MODULE_ERROR("image heights don't match\n");
+        return ret;
+    }
+
+    status = vxQueryImage (image1, VX_IMAGE_FORMAT, (void *)&fmt1, sizeof(fmt1));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Format Query of image1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryImage (image2, VX_IMAGE_FORMAT, (void *)&fmt2, sizeof(fmt2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Format Query of image2 failed\n");
+        return ret;
+    }
+
+    if (fmt1 != fmt2) {
+        TIOVX_MODULE_ERROR("image formats don't match\n");
+        return ret;
+    }
+
+    ret = vx_true_e;
+
+    return ret;
+}
+
+vx_bool tiovx_modules_compare_tensors(vx_tensor tensor1, vx_tensor tensor2)
+{
+    vx_status status = VX_FAILURE;
+    vx_size num_dims1, num_dims2;
+    vx_enum type1, type2;
+    vx_bool ret = vx_false_e;
+    vx_size dim1[TIVX_CONTEXT_MAX_TENSOR_DIMS], dim2[TIVX_CONTEXT_MAX_TENSOR_DIMS];
+
+    status = vxQueryTensor(tensor1, VX_TENSOR_NUMBER_OF_DIMS, (void *)&num_dims1,
+                           sizeof(num_dims1));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Num dims Query of tensor1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryTensor(tensor2, VX_TENSOR_NUMBER_OF_DIMS, (void *)&num_dims2,
+                           sizeof(num_dims2));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Num dims Query of tensor2 failed\n");
+        return ret;
+    }
+
+    if (num_dims1 != num_dims2) {
+        TIOVX_MODULE_ERROR("Tensor num dims don't match\n");
+        return ret;
+    }
+
+    status = vxQueryTensor(tensor1, VX_TENSOR_DATA_TYPE, (void *)&type1,
+                           sizeof(type1));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Type Query of tensor1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryTensor(tensor2, VX_TENSOR_DATA_TYPE, (void *)&type2,
+                           sizeof(type2));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Type Query of tensor2 failed\n");
+        return ret;
+    }
+
+    if (type1 != type2) {
+        TIOVX_MODULE_ERROR("Tensor types don't match\n");
+        return ret;
+    }
+
+    status = vxQueryTensor(tensor1, VX_TENSOR_DIMS, (void *)dim1,
+                           num_dims1 * sizeof(vx_size));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Dims Query of tensor1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryTensor(tensor2, VX_TENSOR_DIMS, (void *)dim2,
+                           num_dims2 * sizeof(vx_size));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Dims Query of tensor2 failed\n");
+        return ret;
+    }
+
+    for (int i = 0; i < num_dims2; i++) {
+        if (dim1[i] != dim2[i]) {
+            TIOVX_MODULE_ERROR("Tensor dim %d don't match\n", i);
+            return ret;
+        }
+    }
+
+    ret = vx_true_e;
+
+    return ret;
+}
+
+vx_bool tiovx_modules_compare_raw_images(tivx_raw_image image1,
+                                         tivx_raw_image image2)
+{
+    vx_status status = VX_FAILURE;
+    vx_uint32 dim1, dim2;
+    tivx_raw_image_format_t fmt1, fmt2;
+    vx_bool ret = vx_false_e;
+
+    status = tivxQueryRawImage (image1, TIVX_RAW_IMAGE_WIDTH, (void *)&dim1,
+                                sizeof(dim1));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Width Query of image1 failed\n");
+        return ret;
+    }
+
+    status = tivxQueryRawImage (image2, TIVX_RAW_IMAGE_WIDTH, (void *)&dim2,
+                                sizeof(dim2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Width Query of image2 failed\n");
+        return ret;
+    }
+
+    if (dim1 != dim2) {
+        TIOVX_MODULE_ERROR("image widths don't match\n");
+        return ret;
+    }
+
+    status = tivxQueryRawImage (image1, TIVX_RAW_IMAGE_HEIGHT, (void *)&dim1,
+                                sizeof(dim1));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Height Query of image1 failed\n");
+        return ret;
+    }
+
+    status = tivxQueryRawImage (image2, TIVX_RAW_IMAGE_HEIGHT, (void *)&dim2,
+                                sizeof(dim2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Height Query of image2 failed\n");
+        return ret;
+    }
+
+    if (dim1 != dim2) {
+        TIOVX_MODULE_ERROR("image heights don't match\n");
+        return ret;
+    }
+
+    status = tivxQueryRawImage (image1, TIVX_RAW_IMAGE_FORMAT, (void *)&fmt1,
+                                sizeof(fmt1));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Format Query of image1 failed\n");
+        return ret;
+    }
+
+    status = tivxQueryRawImage (image2, TIVX_RAW_IMAGE_FORMAT, (void *)&fmt2,
+                                sizeof(fmt2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Format Query of image2 failed\n");
+        return ret;
+    }
+
+    if (fmt1.pixel_container != fmt2.pixel_container) {
+        TIOVX_MODULE_ERROR("image pixel_containers don't match\n");
+        return ret;
+    }
+
+    if (fmt1.msb != fmt2.msb) {
+        TIOVX_MODULE_ERROR("image fmt msb don't match\n");
+        return ret;
+    }
+
+    ret = vx_true_e;
+
+    return ret;
+}
+
+vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exemplar2)
+{
+    vx_status status = VX_FAILURE;
+    vx_bool ret = vx_false_e;
+    vx_enum type1, type2;
+
+    status = vxQueryReference(exemplar1, VX_REFERENCE_TYPE,
+                              (void *)&type1, sizeof(type1));
+    if (status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Type Query of exemplar1 failed\n");
+        return ret;
+    }
+
+    status = vxQueryReference(exemplar1, VX_REFERENCE_TYPE,
+                              (void *)&type2, sizeof(type2));
+    if(status != VX_SUCCESS) {
+        TIOVX_MODULE_ERROR("Type Query of exemplar2 failed\n");
+        return ret;
+    }
+
+    if (type1 != type2) {
+        TIOVX_MODULE_ERROR("exemplar types don't match\n");
+        return ret;
+    }
+
+    switch (type1) {
+        case VX_TYPE_IMAGE:
+            ret = tiovx_modules_compare_images((vx_image)exemplar1,
+                                               (vx_image)exemplar2);
+            break;
+        case VX_TYPE_TENSOR:
+            ret = tiovx_modules_compare_tensors((vx_tensor)exemplar1,
+                                                (vx_tensor)exemplar2);
+            break;
+        case TIVX_TYPE_RAW_IMAGE:
+            ret = tiovx_modules_compare_raw_images((tivx_raw_image)exemplar1,
+                                                   (tivx_raw_image)exemplar2);
+            break;
+        case VX_TYPE_USER_DATA_OBJECT:
+            vx_size size1, size2;
+
+            status = vxQueryUserDataObject ((vx_user_data_object)exemplar1,
+                                            VX_USER_DATA_OBJECT_SIZE,
+                                            (void *)&size1, sizeof(size1));
+            if(status != VX_SUCCESS) {
+                TIOVX_MODULE_ERROR("Size Query of exemplar1 failed\n");
+                return ret;
+            }
+
+            status = vxQueryUserDataObject ((vx_user_data_object)exemplar2,
+                                            VX_USER_DATA_OBJECT_SIZE,
+                                            (void *)&size2, sizeof(size2));
+            if(status != VX_SUCCESS) {
+                TIOVX_MODULE_ERROR("Size Query of exemplar2 failed\n");
+                return ret;
+            }
+
+            if (size1 != size2) {
+                TIOVX_MODULE_ERROR("exemplar sizes don't match\n");
+                return ret;
+            }
+
+            ret = vx_true_e;
+            break;
+        default:
+            ret = vx_true_e;
+            break;
+    }
+
+    return ret;
 }
 
 vx_status tiovx_modules_link_pads(Pad *src_pad, Pad *sink_pad)
