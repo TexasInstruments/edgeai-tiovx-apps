@@ -86,6 +86,7 @@ typedef struct {
     uint32_t sensor_gain_control_enabled;
     uint32_t num_cameras_enabled;
     uint32_t ch_mask;
+    uint32_t starting_channel;
     vx_int32 sensor_index;
     vx_int32 usecase_option;
     vx_int32 image_width;
