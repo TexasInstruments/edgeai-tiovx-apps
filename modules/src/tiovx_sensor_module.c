@@ -73,6 +73,7 @@ vx_status tiovx_init_sensor_obj(SensorObj *sensorObj, char *objName)
     sensorObj->sensor_wdr_enabled=0;
     sensorObj->num_cameras_enabled=1;
     sensorObj->ch_mask=1;
+    sensorObj->starting_channel=0;
     snprintf(sensorObj->sensor_name, ISS_SENSORS_MAX_NAME, "%s", objName);
     sensorObj->num_sensors_found = 1;
     sensorObj->sensor_features_enabled = 0;
@@ -175,13 +176,21 @@ vx_status tiovx_sensor_query(SensorObj *sensorObj)
     if(sensorObj->ch_mask > 0)
     {
         vx_uint32 mask = sensorObj->ch_mask;
+        vx_bool start_found = vx_false_e;
+        vx_uint32 current_pos = 0;
         sensorObj->num_cameras_enabled = 0;
         while(mask > 0)
         {
             if(mask & 0x1)
             {
                 sensorObj->num_cameras_enabled++;
+                if (vx_false_e == start_found)
+                {
+                    start_found = vx_true_e;
+                    sensorObj->starting_channel = current_pos;
+                }
             }
+            current_pos ++;
             mask = mask >> 1;
         }
     }

@@ -1195,11 +1195,10 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         tiovx_aewb_init_cfg(&aewb_cfg);
 
         sprintf(aewb_cfg.sensor_name, SENSOR_NAME);
-        aewb_cfg.num_cameras_enabled = 1;
+        aewb_cfg.ch_mask = 1;
         aewb_cfg.awb_mode = ALGORITHMS_ISS_AWB_AUTO;
         aewb_cfg.awb_num_skip_frames = 9;
         aewb_cfg.ae_num_skip_frames  = 9;
-        aewb_cfg.starting_channel = 0;
 
         aewb_node = tiovx_modules_add_node(&graph, TIOVX_AEWB, (void *)&aewb_cfg);
 

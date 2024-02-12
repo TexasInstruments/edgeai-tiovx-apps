@@ -161,7 +161,7 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
     node_priv->params.awb_mode = node_cfg->awb_mode;
     node_priv->params.awb_num_skip_frames = node_cfg->awb_num_skip_frames;
     node_priv->params.ae_num_skip_frames = node_cfg->ae_num_skip_frames;
-    node_priv->params.channel_id = node_cfg->starting_channel;
+    node_priv->params.channel_id = node_priv->sensor_obj.starting_channel;
 
     config = vxCreateUserDataObject(node->graph->tiovx_context,
                                     "tivx_aewb_config_t",
@@ -176,7 +176,7 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
 
     node_priv->config_arr = vxCreateObjectArray(node->graph->tiovx_context,
                                                 (vx_reference)config,
-                                                node_cfg->num_cameras_enabled);
+                                                node_priv->sensor_obj.num_cameras_enabled);
     status = vxGetStatus((vx_reference)node_priv->config_arr);
     if(VX_SUCCESS != status)
     {
@@ -189,7 +189,7 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
 
     array_obj_index = 0;
     ch = 0;
-    ch_mask = node_priv->sensor_obj.ch_mask >> node_cfg->starting_channel;
+    ch_mask = node_priv->sensor_obj.ch_mask >> node_priv->sensor_obj.starting_channel;
     while(ch_mask > 0)
     {
         if(ch_mask & 0x1)
@@ -197,7 +197,7 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
             vx_user_data_object config = (vx_user_data_object)vxGetObjectArrayItem(node_priv->config_arr,
                                                                                    array_obj_index);
             array_obj_index++;
-            node_priv->params.channel_id = ch + node_cfg->starting_channel;
+            node_priv->params.channel_id = ch + node_priv->sensor_obj.starting_channel;
             vxCopyUserDataObject(config,
                                  0,
                                  sizeof(tivx_aewb_config_t),
@@ -208,7 +208,7 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
         }
         ch++;
         ch_mask = ch_mask >> 1;
-        if (ch >= node_cfg->num_cameras_enabled)
+        if (ch >= node_priv->sensor_obj.num_cameras_enabled)
         {
             break;
         }
@@ -220,7 +220,6 @@ vx_status tiovx_aewb_create_config(NodeObj *node)
 vx_status tiovx_aewb_create_aewb_out(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-    TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
     TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
     vx_reference exemplar;
 
@@ -231,7 +230,7 @@ vx_status tiovx_aewb_create_aewb_out(NodeObj *node)
 
     node_priv->aewb_out_arr = vxCreateObjectArray(node->graph->tiovx_context,
                                                  exemplar,
-                                                 node_cfg->num_cameras_enabled);
+                                                 node_priv->sensor_obj.num_cameras_enabled);
     status = vxGetStatus((vx_reference)node_priv->aewb_out_arr);
     if(VX_SUCCESS != status)
     {
@@ -246,7 +245,6 @@ vx_status tiovx_aewb_create_aewb_out(NodeObj *node)
 vx_status tiovx_aewb_create_histogram(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-    TIOVXAewbNodeCfg *node_cfg = (TIOVXAewbNodeCfg *)node->node_cfg;
     TIOVXAewbNodePriv *node_priv = (TIOVXAewbNodePriv *)node->node_priv;
 
     vx_distribution histogram;
@@ -261,7 +259,7 @@ vx_status tiovx_aewb_create_histogram(NodeObj *node)
 
     node_priv->histogram_arr = vxCreateObjectArray(node->graph->tiovx_context,
                                                    (vx_reference)histogram,
-                                                   node_cfg->num_cameras_enabled);
+                                                   node_priv->sensor_obj.num_cameras_enabled);
     status = vxGetStatus((vx_reference)node_priv->histogram_arr);
     if(VX_SUCCESS != status)
     {
@@ -278,12 +276,11 @@ vx_status tiovx_aewb_create_histogram(NodeObj *node)
 
 void tiovx_aewb_init_cfg(TIOVXAewbNodeCfg *node_cfg)
 {
-    node_cfg->num_cameras_enabled = 1;
     sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_AEWB_SENSOR);
     node_cfg->awb_mode = ALGORITHMS_ISS_AWB_AUTO;
     node_cfg->awb_num_skip_frames = 9;
     node_cfg->ae_num_skip_frames  = 9;
-    node_cfg->starting_channel = 0;
+    node_cfg->ch_mask  = 1;
 }
 
 vx_status tiovx_aewb_init_node(NodeObj *node)
@@ -302,6 +299,7 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
         return status;
     }
 
+    node_priv->sensor_obj.ch_mask = node_cfg->ch_mask;
     status = tiovx_sensor_query(&node_priv->sensor_obj);
     if (VX_SUCCESS != status)
     {
@@ -350,7 +348,7 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
     node->sinks[0].node = node;
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index = 2;
-    node->sinks[0].num_channels = node_cfg->num_cameras_enabled;
+    node->sinks[0].num_channels = node_priv->sensor_obj.num_cameras_enabled;
 
     exemplar = (vx_reference)vxCreateUserDataObject(node->graph->tiovx_context,
                                                     "tivx_h3a_data_t",
