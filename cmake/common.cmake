@@ -101,6 +101,7 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${TARGET_FS}/usr/include/processor_sdk/video_io/kernels/include/
                     ${TARGET_FS}/usr/include/processor_sdk/app_utils/utils/mem/include
                     ${TARGET_FS}/usr/include/drm
+                    ${TARGET_FS}/usr/include/edgeai-apps-utils/
                    )
 
 set(SYSTEM_LINK_LIBS
@@ -108,6 +109,7 @@ set(SYSTEM_LINK_LIBS
     edgeai-tiovx-kernels
     edgeai-apps-utils
     drm
+    yaml-cpp
     )
 
 set(COMMON_LINK_LIBS
