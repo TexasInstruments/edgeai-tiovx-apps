@@ -129,6 +129,8 @@ vx_status tiovx_dl_pre_proc_set_cfg(NodeObj *node)
 
     if(TIDL_LT_NCHW == node_cfg->io_buf_desc.inLayout[0])
     {
+        node_cfg->params.channel_order = 0;
+
         node_cfg->output_cfg.dim_sizes[0] = node_cfg->io_buf_desc.inWidth[0]+
                                             node_cfg->io_buf_desc.inPadL[0] +
                                             node_cfg->io_buf_desc.inPadR[0];
@@ -144,6 +146,8 @@ vx_status tiovx_dl_pre_proc_set_cfg(NodeObj *node)
     }
     else
     {
+        node_cfg->params.channel_order = 1;
+
         node_cfg->output_cfg.dim_sizes[0] = node_cfg->io_buf_desc.inNumChannels[0];
 
         node_cfg->output_cfg.dim_sizes[1] = node_cfg->io_buf_desc.inWidth[0]+
@@ -175,6 +179,7 @@ void tiovx_dl_pre_proc_init_cfg(TIOVXDLPreProcNodeCfg *node_cfg)
     node_cfg->input_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->num_channels = 1;
     sprintf(node_cfg->target_string, TIVX_TARGET_MPU_0);
+    node_cfg->params.channel_order = 0;
     node_cfg->params.tensor_format = 1;
     node_cfg->params.scale[0] = 1.0;
     node_cfg->params.scale[1] = 1.0;
