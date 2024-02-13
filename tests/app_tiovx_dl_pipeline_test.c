@@ -1115,7 +1115,6 @@ vx_status app_modules_dl_pipeline_test(int argc, char* argv[])
 
     tiovx_dl_pre_proc_init_cfg(&dlPreProcCfg);
     dlPreProcCfg.io_config_path = TIDL_IO_CONFIG_FILE_PATH;
-    dlPreProcCfg.params.channel_order = 0; //NCHW
     dlPreProcCfg.params.tensor_format = 1; //BGR
     dlPreProcNode = tiovx_modules_add_node(&graph, TIOVX_DL_PRE_PROC, (void *)&dlPreProcCfg);
 

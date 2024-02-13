@@ -204,7 +204,7 @@ vx_status tiovx_tidl_set_cfg(NodeObj *node)
     TIOVXTIDLNodeCfg *node_cfg = (TIOVXTIDLNodeCfg *)node->node_cfg;
     TIOVXTIDLNodePriv *node_priv = (TIOVXTIDLNodePriv *)node->node_priv;
 
-    vx_int32 i, j;
+    vx_int32 i;
 
     node_priv->io_config = tiovx_tidl_read_io_config(node->graph,
                                                     node_cfg->io_config_path,
@@ -218,45 +218,72 @@ vx_status tiovx_tidl_set_cfg(NodeObj *node)
     node_cfg->num_input_tensors  = node_cfg->io_buf_desc.numInputBuf;
     node_cfg->num_output_tensors = node_cfg->io_buf_desc.numOutputBuf;
 
-    for(i = 0; i < node_cfg->io_buf_desc.numInputBuf; i++)
+    for(i = 0; i < node_cfg->num_input_tensors; i++)
     {
         vx_char name[VX_MAX_REFERENCE_NAME];
-
         snprintf(name, VX_MAX_REFERENCE_NAME, "tidl_node_input_tensors_%d", i);
 
-        for(j = 0; j < node_cfg->num_input_tensors; j++)
+        node_cfg->input_cfg[i].num_dims = 3;
+        node_cfg->input_cfg[i].datatype = get_vx_tensor_datatype(node_cfg->io_buf_desc.inElementType[i]);
+
+        if (TIDL_LT_NCHW == node_cfg->io_buf_desc.inLayout[i])
         {
-            node_cfg->input_cfg[j].num_dims = 3;
+            node_cfg->input_cfg[i].dim_sizes[0] = (node_cfg->io_buf_desc.inWidth[i] +
+                                                    node_cfg->io_buf_desc.inPadL[i] +
+                                                    node_cfg->io_buf_desc.inPadR[i]);
 
-            node_cfg->input_cfg[j].dim_sizes[0] = (node_cfg->io_buf_desc.inWidth[i] +
-                                                   node_cfg->io_buf_desc.inPadL[i] +
-                                                   node_cfg->io_buf_desc.inPadR[i]);
+            node_cfg->input_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.inHeight[i] +
+                                                    node_cfg->io_buf_desc.inPadT[i] +
+                                                    node_cfg->io_buf_desc.inPadB[i]);
 
-            node_cfg->input_cfg[j].dim_sizes[1] = (node_cfg->io_buf_desc.inHeight[i] +
-                                                   node_cfg->io_buf_desc.inPadT[i] +
-                                                   node_cfg->io_buf_desc.inPadB[i]);
+            node_cfg->input_cfg[i].dim_sizes[2] = node_cfg->io_buf_desc.inNumChannels[i];
+        }
+        else
+        {
+            node_cfg->input_cfg[i].dim_sizes[0] = node_cfg->io_buf_desc.inNumChannels[i];
 
-            node_cfg->input_cfg[j].dim_sizes[2] = node_cfg->io_buf_desc.inNumChannels[i];
+            node_cfg->input_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.inWidth[i] +
+                                                    node_cfg->io_buf_desc.inPadL[i] +
+                                                    node_cfg->io_buf_desc.inPadR[i]);
 
-            node_cfg->input_cfg[j].datatype = get_vx_tensor_datatype(node_cfg->io_buf_desc.inElementType[i]);
+            node_cfg->input_cfg[i].dim_sizes[2] = (node_cfg->io_buf_desc.inHeight[i] +
+                                                    node_cfg->io_buf_desc.inPadT[i] +
+                                                    node_cfg->io_buf_desc.inPadB[i]);
         }
     }
 
     for(i = 0; i < node_cfg->num_output_tensors; i++)
     {
+        vx_char name[VX_MAX_REFERENCE_NAME];
+        snprintf(name, VX_MAX_REFERENCE_NAME, "tidl_node_output_tensors_%d", i);
+
         node_cfg->output_cfg[i].num_dims = 3;
-
-        node_cfg->output_cfg[i].dim_sizes[0] = (node_cfg->io_buf_desc.outWidth[i] +
-                                                node_cfg->io_buf_desc.outPadL[i] +
-                                                node_cfg->io_buf_desc.outPadR[i]);
-
-        node_cfg->output_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.outHeight[i] +
-                                                node_cfg->io_buf_desc.outPadT[i] +
-                                                node_cfg->io_buf_desc.outPadB[i]);
-
-        node_cfg->output_cfg[i].dim_sizes[2] = node_cfg->io_buf_desc.outNumChannels[i];
-
         node_cfg->output_cfg[i].datatype = get_vx_tensor_datatype(node_cfg->io_buf_desc.outElementType[i]);
+
+        if (TIDL_LT_NCHW == node_cfg->io_buf_desc.outLayout[i])
+        {
+            node_cfg->output_cfg[i].dim_sizes[0] = (node_cfg->io_buf_desc.outWidth[i] +
+                                                    node_cfg->io_buf_desc.outPadL[i] +
+                                                    node_cfg->io_buf_desc.outPadR[i]);
+
+            node_cfg->output_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.outHeight[i] +
+                                                    node_cfg->io_buf_desc.outPadT[i] +
+                                                    node_cfg->io_buf_desc.outPadB[i]);
+
+            node_cfg->output_cfg[i].dim_sizes[2] = node_cfg->io_buf_desc.outNumChannels[i];
+        }
+        else
+        {
+            node_cfg->output_cfg[i].dim_sizes[0] = node_cfg->io_buf_desc.outNumChannels[i];
+
+            node_cfg->output_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.outWidth[i] +
+                                                    node_cfg->io_buf_desc.outPadL[i] +
+                                                    node_cfg->io_buf_desc.outPadR[i]);
+
+            node_cfg->output_cfg[i].dim_sizes[2] = (node_cfg->io_buf_desc.outHeight[i] +
+                                                    node_cfg->io_buf_desc.outPadT[i] +
+                                                    node_cfg->io_buf_desc.outPadB[i]);
+        }
     }
 
     node->num_inputs = node_cfg->num_input_tensors;
