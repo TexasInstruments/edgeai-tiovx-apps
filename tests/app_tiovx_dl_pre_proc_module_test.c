@@ -91,7 +91,6 @@ vx_status app_modules_dl_pre_proc_test(vx_int32 argc, vx_char* argv[])
 
     cfg.io_config_path = TIDL_CONFIG_FILE_PATH;
 
-    cfg.params.channel_order = 0;
     cfg.params.tensor_format = 1;
     cfg.params.scale[0] = 1.0; //For R or Y plane
     cfg.params.scale[1] = 1.0; //For G or U plane
