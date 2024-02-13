@@ -6,6 +6,7 @@ set(SRC_FILES
     core/src/tiovx_modules.c
     core/src/tiovx_modules_cbs.c
     ../utils/src/tiovx_utils.c
+    ../utils/src/yaml_parser.cpp
     src/tiovx_multi_scaler_module.c
     src/tiovx_dl_color_convert_module.c
     src/tiovx_color_convert_module.c
