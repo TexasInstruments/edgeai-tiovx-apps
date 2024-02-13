@@ -1309,7 +1309,6 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         tiovx_dl_pre_proc_init_cfg(&dl_pre_proc_cfg);
 
         dl_pre_proc_cfg.io_config_path = TIDL_IO_CONFIG_FILE_PATH;
-        dl_pre_proc_cfg.params.channel_order = 0; //NCHW
         dl_pre_proc_cfg.params.tensor_format = 1; //BGR
 
         dl_pre_proc_node = tiovx_modules_add_node(&graph, TIOVX_DL_PRE_PROC, (void *)&dl_pre_proc_cfg);

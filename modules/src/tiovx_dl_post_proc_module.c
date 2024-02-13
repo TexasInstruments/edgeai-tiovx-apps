@@ -142,14 +142,30 @@ vx_status tiovx_dl_post_proc_set_cfg(NodeObj *node)
 
         node_cfg->input_tensor_cfg[i].num_dims = 3;
 
-        node_cfg->input_tensor_cfg[i].dim_sizes[0] = (node_cfg->io_buf_desc.outWidth[i] +
-                                                      node_cfg->io_buf_desc.outPadL[i] +
-                                                      node_cfg->io_buf_desc.outPadR[i]);
+        if(TIDL_LT_NCHW == node_cfg->io_buf_desc.outLayout[i])
+        {
+            node_cfg->input_tensor_cfg[i].dim_sizes[0] = (node_cfg->io_buf_desc.outWidth[i] +
+                                                        node_cfg->io_buf_desc.outPadL[i] +
+                                                        node_cfg->io_buf_desc.outPadR[i]);
 
-        node_cfg->input_tensor_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.outHeight[i] +
-                                                      node_cfg->io_buf_desc.outPadT[i] +
-                                                      node_cfg->io_buf_desc.outPadB[i]);
-        node_cfg->input_tensor_cfg[i].dim_sizes[2] = node_cfg->io_buf_desc.outNumChannels[i];
+            node_cfg->input_tensor_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.outHeight[i] +
+                                                        node_cfg->io_buf_desc.outPadT[i] +
+                                                        node_cfg->io_buf_desc.outPadB[i]);
+
+            node_cfg->input_tensor_cfg[i].dim_sizes[2] = node_cfg->io_buf_desc.outNumChannels[i];
+        }
+        else
+        {
+            node_cfg->input_tensor_cfg[i].dim_sizes[0] = node_cfg->io_buf_desc.outNumChannels[i];
+
+            node_cfg->input_tensor_cfg[i].dim_sizes[1] = (node_cfg->io_buf_desc.outWidth[i] +
+                                                        node_cfg->io_buf_desc.outPadL[i] +
+                                                        node_cfg->io_buf_desc.outPadR[i]);
+
+            node_cfg->input_tensor_cfg[i].dim_sizes[2] = (node_cfg->io_buf_desc.outHeight[i] +
+                                                        node_cfg->io_buf_desc.outPadT[i] +
+                                                        node_cfg->io_buf_desc.outPadB[i]);
+        }
     }
 
     node->num_inputs = 1 + node_cfg->num_input_tensors;
