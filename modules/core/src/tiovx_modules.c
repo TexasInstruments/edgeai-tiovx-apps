@@ -680,6 +680,15 @@ vx_status tiovx_modules_verify_graph(GraphObj *graph)
     return status;
 }
 
+vx_status tiovx_modules_export_graph(GraphObj *graph, char *path, char *prefix)
+{
+    vx_status status = VX_FAILURE;
+    
+    status = tivxExportGraphToDot(graph->tiovx_graph, path, prefix);
+
+    return status;
+}
+
 vx_status tiovx_modules_enqueue_buf(Buf *buf)
 {
     vx_status status = VX_FAILURE;
