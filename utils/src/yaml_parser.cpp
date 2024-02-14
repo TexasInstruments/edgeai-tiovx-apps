@@ -194,8 +194,9 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         /* Parse format. */
         if (input_node["format"])
         {
-            sprintf(input_info->format,
-                    input_node["format"].as<std::string>().data());
+            std::string format = input_node["format"].as<std::string>();
+            transform(format.begin(), format.end(), format.begin(), ::toupper);
+            sprintf(input_info->format,format.data());
         }
         else
         {
