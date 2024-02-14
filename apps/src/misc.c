@@ -62,8 +62,6 @@
 
 #include <apps/include/misc.h>
 
-#include <edgeai_nv12_drawing_utils.h>
-
 void *map_image(vx_image image, uint8_t plane)
 {
     vx_rectangle_t rect;
@@ -145,4 +143,29 @@ void set_mosaic_background(vx_image image, char *title)
              big_font.height + 2,
              &medium_font,
              &color_green);
+}
+
+void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle)
+{
+    vx_uint32 img_width;
+    vx_uint32 img_height;
+    void *y_ptr;
+    void *uv_ptr;
+
+    vxQueryImage(image, VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
+    vxQueryImage(image, VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
+
+    y_ptr = map_image(image, 0);
+    uv_ptr = map_image(image, 1);
+
+    perf_stats_handle->overlay.imgYPtr = (uint8_t *)y_ptr;
+    perf_stats_handle->overlay.imgUVPtr = (uint8_t *)uv_ptr;
+    perf_stats_handle->overlay.imgWidth = img_width;
+    perf_stats_handle->overlay.imgHeight = img_height;
+    perf_stats_handle->overlay.xPos = 0;
+    perf_stats_handle->overlay.yPos = 0;
+    perf_stats_handle->overlay.width = img_width;
+    perf_stats_handle->overlay.height = img_height;
+
+    update_edgeai_perf_stats(perf_stats_handle);
 }

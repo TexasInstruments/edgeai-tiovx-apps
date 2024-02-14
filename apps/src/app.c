@@ -222,8 +222,6 @@ int32_t connect_blocks(GraphObj *graph,
         }
     }
 
-    printf("Num output blocks=%d\n",*num_output_blocks);
-
     for(i = 0; i < num_flows; i++)
     {  
         /* Initialize Input Block */
@@ -574,17 +572,22 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
     BufPool *in_buf_pool = NULL;
     Buf *inbuf = NULL;
 
-    BufPool *out_buf_pool = NULL;
-    Buf *outbuf = NULL;
-
-    BufPool *mosaic_bg_buf_pool = NULL;
-    Buf *mosaic_bg_buf = NULL;
-
     BufPool *linux_h3a_buf_pool = NULL;
     Buf *linux_h3a_buf = NULL;
 
     BufPool *linux_aewb_buf_pool = NULL;
     Buf *linux_aewb_buf = NULL;
+
+    BufPool *out_buf_pool = NULL;
+    Buf *outbuf = NULL;
+
+    BufPool *perf_overlay_buf_pool = NULL;
+    Buf *perf_overlay_buf = NULL;
+
+    BufPool *mosaic_bg_buf_pool = NULL;
+    Buf *mosaic_bg_buf = NULL;
+
+    EdgeAIPerfStats perf_stats_handle;
 
     /* Capture SIGINT to stop loop */
     signal(SIGINT, interrupt_handler);
@@ -594,7 +597,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
     {
         pthread_mutex_init(&r_thread_lock[i], NULL);
         pthread_mutex_init(&w_thread_lock[i], NULL);
-    } 
+    }
 
     /* Initialize the graph */
     status = tiovx_modules_initialize_graph(&graph);
@@ -636,6 +639,10 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
         TIOVX_APPS_ERROR("Error exporting graph as dot\n");
         goto clean_graph;
     }
+
+    /* Initialize perf stats */
+    initialize_edgeai_perf_stats(&perf_stats_handle);
+    perf_stats_handle.overlayType = OVERLAY_TYPE_GRAPH;
 
     /* Enqueue buffers at start based on input sources in all input blocks */
     for(i = 0; i < num_input_blocks; i++)
@@ -725,6 +732,15 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
             }
         }
 
+        /*Set perf overlay and enqueue*/
+        if(NULL != output_blocks[i].perf_overlay_pad)
+        {
+            perf_overlay_buf_pool = output_blocks[i].perf_overlay_pad->buf_pool;
+            perf_overlay_buf = tiovx_modules_acquire_buf(perf_overlay_buf_pool);
+            update_perf_overlay((vx_image)perf_overlay_buf->handle, &perf_stats_handle);
+            tiovx_modules_enqueue_buf(perf_overlay_buf);
+        }
+
         /* Set mosaic background and enqueue background buffers */
         mosaic_bg_buf_pool = output_blocks[i].mosaic_bg_pad->buf_pool;
         mosaic_bg_buf = tiovx_modules_acquire_buf(mosaic_bg_buf_pool);
@@ -801,6 +817,15 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
                 tiovx_modules_enqueue_buf(outbuf);
             }
 
+            /* Dequeue and enqueue perf overlay buffer */
+            if(NULL != output_blocks[i].perf_overlay_pad)
+            {
+                perf_overlay_buf_pool = output_blocks[i].perf_overlay_pad->buf_pool;
+                perf_overlay_buf = tiovx_modules_dequeue_buf(perf_overlay_buf_pool);
+                update_perf_overlay((vx_image)perf_overlay_buf->handle, &perf_stats_handle);
+                tiovx_modules_enqueue_buf(perf_overlay_buf);
+            }
+
             /* Dequeue and enqueue mosaic background buffer */
             mosaic_bg_buf_pool = output_blocks[i].mosaic_bg_pad->buf_pool;
             mosaic_bg_buf = tiovx_modules_dequeue_buf(mosaic_bg_buf_pool);
@@ -858,6 +883,14 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
             outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
             tiovx_modules_release_buf(outbuf);
         }
+
+        if(NULL != output_blocks[i].perf_overlay_pad)
+        {
+            perf_overlay_buf_pool = output_blocks[i].perf_overlay_pad->buf_pool;
+            perf_overlay_buf = tiovx_modules_dequeue_buf(perf_overlay_buf_pool);
+            tiovx_modules_release_buf(perf_overlay_buf);
+        }
+
         mosaic_bg_buf_pool = output_blocks[i].mosaic_bg_pad->buf_pool;
         mosaic_bg_buf = tiovx_modules_dequeue_buf(mosaic_bg_buf_pool);
         tiovx_modules_release_buf(mosaic_bg_buf);
