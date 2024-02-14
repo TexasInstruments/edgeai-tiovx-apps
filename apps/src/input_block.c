@@ -395,6 +395,59 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         }
     }
 
+    /* RAW_IMG */
+    if(RAW_IMG == input_info->source)
+    {
+        /* Add color convert block if input format != NV12*/
+        if(0 != strcmp("NV12", input_info->format))
+        {
+            TIOVXDLColorConvertNodeCfg dl_color_convert_cfg;
+            NodeObj *dl_color_convert_node = NULL;
+
+            tiovx_dl_color_convert_init_cfg(&dl_color_convert_cfg);
+
+            dl_color_convert_cfg.width = input_info->width;
+            dl_color_convert_cfg.height = input_info->height;
+            dl_color_convert_cfg.num_channels = input_info->num_channels;
+            dl_color_convert_cfg.output_cfg.color_format = VX_DF_IMAGE_NV12;
+
+            if(0 == strcmp("RGB", input_info->format))
+            {
+                dl_color_convert_cfg.input_cfg.color_format = VX_DF_IMAGE_RGB;
+            }
+            else if(0 == strcmp("I420", input_info->format))
+            {
+                dl_color_convert_cfg.input_cfg.color_format = VX_DF_IMAGE_IYUV;
+            }
+            else if(0 == strcmp("UYVY", input_info->format))
+            {
+                dl_color_convert_cfg.input_cfg.color_format = VX_DF_IMAGE_UYVY;
+            }
+            else if(0 == strcmp("YUY2", input_info->format))
+            {
+                dl_color_convert_cfg.input_cfg.color_format = VX_DF_IMAGE_YUYV;
+            }
+            else if(0 == strcmp("GRAY8", input_info->format))
+            {
+                dl_color_convert_cfg.input_cfg.color_format = VX_DF_IMAGE_U8;
+            }
+            else
+            {
+                TIOVX_APPS_ERROR("Invalid input format %s."
+                                 "Cannot convert to NV12\n",
+                                 input_info->format);
+                return -1;
+            }
+
+            dl_color_convert_node = tiovx_modules_add_node(graph,
+                                                           TIOVX_DL_COLOR_CONVERT,
+                                                           (void *)&dl_color_convert_cfg);
+
+            input_pad = &dl_color_convert_node->sinks[0];
+            output_pad = &dl_color_convert_node->srcs[0];
+        }
+    }
+
     /* TEE */
     {
         TIOVXTeeNodeCfg tee_cfg;
