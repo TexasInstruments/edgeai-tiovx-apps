@@ -525,6 +525,8 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
     output_info->crtc = 0;
 
     output_info->connector = 0;
+    
+    output_info->overlay_perf = true;
 
     if(output_node["crtc"])
     {
@@ -534,6 +536,11 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
     if(output_node["connector"])
     {
         output_info->connector =  output_node["connector"].as<uint32_t>();
+    }
+
+    if(output_node["overlay-perf"])
+    {
+        output_info->overlay_perf =  output_node["overlay-perf"].as<bool>();
     }
 
     if(IMG_DIR == output_info->sink)

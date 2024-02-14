@@ -97,6 +97,9 @@ typedef struct {
     /* Background pad of mosaic. */
     Pad                     *mosaic_bg_pad;
 
+    /* Background pad of perf overlay. */
+    Pad                     *perf_overlay_pad;
+
     /* Number of inputs to this block. */
     uint32_t                num_inputs;
 
