@@ -97,6 +97,7 @@ typedef enum {
 typedef enum {
     RTOS_DISPLAY = 0,
     LINUX_DISPLAY,
+    IMG_DIR,
     NUM_OUTPUT_SINKS
 } OutputSink;
 
@@ -260,6 +261,12 @@ typedef struct {
 
     /* Connector for kms display */
     uint32_t        connector;
+
+    /* Output directory for saving image */
+    char            output_path[MAX_CHAR_ARRAY_SIZE];
+
+    /* Framerate for saving image */
+    float           framerate;
 } OutputInfo;
 
 /*
@@ -304,9 +311,6 @@ typedef struct {
 
     /* Max height amongst provided mosaic info. */
     uint32_t    max_mosaic_height;
-
-    /* Number of mosaic info. */
-    uint32_t    num_mosaic_info;
 } SubflowInfo;
 
 /*

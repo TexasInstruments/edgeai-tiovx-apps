@@ -76,16 +76,29 @@
 #include <math.h>
 
 static volatile int run_loop = 1;
-
-pthread_mutex_t thread_lock[MAX_FLOWS];
+pthread_mutex_t r_thread_lock[MAX_FLOWS];
+pthread_mutex_t w_thread_lock[MAX_FLOWS];
 
 /* Data required by read image thread */
 struct read_img_thread_data
 {
-  int32_t   id;
-  InputInfo *input_info;
-  Buf       *read_image_buf;
+  int32_t       id;
+  InputInfo     *input_info;
+  Buf           *read_image_buf;
 };
+
+/* Data required by write image thread */
+struct write_img_thread_data
+{
+  int32_t       id;
+  OutputInfo    *output_info;
+  Buf           *write_image_buf;
+};
+
+void interrupt_handler(int32_t x)
+{
+    run_loop = 0;
+}
 
 void *read_img_thread(void *arg) 
 {
@@ -111,23 +124,57 @@ void *read_img_thread(void *arg)
             counter = 0;
         }
 
-        pthread_mutex_lock(&thread_lock[data->id]);
+        pthread_mutex_lock(&r_thread_lock[data->id]);
 
         readImage(data->input_info->raw_img_paths[counter],
                   (vx_image)data->read_image_buf->handle);
 
-        pthread_mutex_unlock(&thread_lock[data->id]);
+        pthread_mutex_unlock(&r_thread_lock[data->id]);
 
         counter++;
         usleep(sleep_time);
     }
 
     return NULL;
-} 
+}
 
-void interrupt_handler(int32_t x)
+void *write_img_thread(void *arg)
 {
-    run_loop = 0;
+    /* This thread is used to write raw image to input directory.
+     * The loop then sleeps for some time to maintain user defined fps
+     */
+    uint32_t counter;
+    useconds_t sleep_time;
+    char output_filename[512];
+    struct write_img_thread_data *data;
+
+    data = (struct write_img_thread_data *)arg;
+    sleep_time = (useconds_t) (1000000/data->output_info->framerate);
+    counter = 0;
+
+    while (run_loop)
+    {
+        /* Max file written will be 9999 and then files will start getting
+         * overwritten
+         */
+        if (counter == 9999)
+        {
+            counter = 0;
+        }
+
+        sprintf(output_filename, "%s/%04d.yuv", data->output_info->output_path, counter);
+
+        printf("%s\n",output_filename);
+
+        pthread_mutex_lock(&w_thread_lock[data->id]);
+        writeImage(output_filename, (vx_image)data->write_image_buf->handle);
+        pthread_mutex_unlock(&w_thread_lock[data->id]);
+
+        counter++;
+        usleep(sleep_time);
+    }
+
+    return NULL;
 }
 
 int32_t connect_blocks(GraphObj *graph,
@@ -141,36 +188,41 @@ int32_t connect_blocks(GraphObj *graph,
     int32_t status;
     uint32_t i, j, k;
 
-    bool output_block_initialized[NUM_OUTPUT_SINKS];
-
     *num_input_blocks = 0;
     *num_output_blocks = 0;
-
-    /* Initialize output block with unique sink */
-    for(i = 0; i < NUM_OUTPUT_SINKS; i++)
-    {
-        output_block_initialized[i] = false;
-    }
 
     for(i = 0; i < num_flows; i++)
     {
         for (j = 0; j < flow_infos[i].num_subflows; j++)
         {
-            OutputSink  sink;
-            sink = flow_infos[i].subflow_infos[j].output_info.sink;
-            if(false == output_block_initialized[sink])
+            bool found = false;
+            char* output_name = flow_infos[i].subflow_infos[j].output_info.name;
+
+            /* Iterate through output_blocks and if sink already present the skip */
+            for (k = 0; k < *num_output_blocks; k++)
+            {
+                if (0 == strcmp(output_name, output_blocks[k].output_info->name))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found)
             {
                 OutputBlock output_block;
 
                 initialize_output_block(&output_block);
                 output_block.output_info = &flow_infos[i].subflow_infos[j].output_info;
 
-                output_blocks[sink] = output_block;
-  
-                output_block_initialized[sink] = true;
-            }
+                output_blocks[*num_output_blocks] = output_block;
+
+                *num_output_blocks = *num_output_blocks + 1;
+              }
         }
     }
+
+    printf("Num output blocks=%d\n",*num_output_blocks);
 
     for(i = 0; i < num_flows; i++)
     {  
@@ -330,12 +382,12 @@ int32_t connect_blocks(GraphObj *graph,
         /* Iterate through subflow and create deep learning block if needed. */
         for (j = 0; j < flow_infos[i].num_subflows; j++)
         {
-            OutputSink sink;
+            char *output_name;
             uint32_t crop_start_x, crop_start_y;
             float crop_x_pct, crop_y_pct;
             PreProcInfo pre_proc_info;
             
-            sink =  flow_infos[i].subflow_infos[j].output_info.sink;
+            output_name =  flow_infos[i].subflow_infos[j].output_info.name;
 
             if(flow_infos[i].subflow_infos[j].has_model)
             {
@@ -397,9 +449,16 @@ int32_t connect_blocks(GraphObj *graph,
                 }
                 
                 /* Link output pad to Output block */
-                connect_pad_to_output_block(&output_blocks[sink],
-                                            dl_block.output_pad,
-                                            &flow_infos[i].subflow_infos[j]);
+                for(k = 0; k < *num_output_blocks; k++)
+                {
+                    if (0 == strcmp(output_name, output_blocks[k].output_info->name))
+                    {
+                        connect_pad_to_output_block(&output_blocks[k],
+                                                    dl_block.output_pad,
+                                                    &flow_infos[i].subflow_infos[j]);
+                        break;
+                    }
+                }
             }
 
             else
@@ -448,13 +507,20 @@ int32_t connect_blocks(GraphObj *graph,
             /* Link exposed pad of resize group to output block */
             for(k = 0; k < resize_blocks[j].total_output_group; k++)
             {
-                uint32_t p;
+                uint32_t p, q;
                 for (p = 0; p < resize_blocks[j].output_group[k].num_exposed_pads; p++)
                 {
-                    OutputSink sink = resize_blocks[j].output_group[k].exposed_pad_info[p]->output_info.sink;
-                    connect_pad_to_output_block(&output_blocks[sink],
-                                                resize_blocks[j].output_group[k].exposed_pads[p],
-                                                resize_blocks[j].output_group[k].exposed_pad_info[p]);
+                    char *output_name = resize_blocks[j].output_group[k].exposed_pad_info[p]->output_info.name;
+                    for(q = 0; q < *num_output_blocks; q++)
+                    {
+                        if (0 == strcmp(output_name, output_blocks[q].output_info->name))
+                        {
+                            connect_pad_to_output_block(&output_blocks[q],
+                                                        resize_blocks[j].output_group[k].exposed_pads[p],
+                                                        resize_blocks[j].output_group[k].exposed_pad_info[p]);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -471,18 +537,13 @@ int32_t connect_blocks(GraphObj *graph,
     }
 
     /* Create all output blocks */
-    for(i = 0; i < NUM_OUTPUT_SINKS; i++)
+    for(i = 0; i < *num_output_blocks; i++)
     {
-        uint32_t sink = i;
-        if (true == output_block_initialized[sink])
+        status = create_output_block(graph, &output_blocks[i]);
+        if(0 != status)
         {
-            status = create_output_block(graph, &output_blocks[sink]);
-            if(0 != status)
-            {
-                TIOVX_APPS_ERROR("Cannot create output block\n");
-                return status;
-            }
-            *num_output_blocks = *num_output_blocks + 1;
+            TIOVX_APPS_ERROR("Cannot create output block\n");
+            return status;
         }
     }
 
@@ -493,9 +554,14 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
 {
     int32_t status;
     int32_t i, j;
+
     pthread_t read_img_thread_id[MAX_FLOWS];
-    struct read_img_thread_data thread_data[MAX_FLOWS];
-    uint32_t num_threads = 0;
+    struct read_img_thread_data r_thread_data[MAX_FLOWS];
+    uint32_t num_r_threads = 0;
+
+    pthread_t write_img_thread_id[MAX_FLOWS];
+    struct write_img_thread_data w_thread_data[MAX_FLOWS];
+    uint32_t num_w_threads = 0;
 
     InputBlock input_blocks[num_flows];
     OutputBlock output_blocks[NUM_OUTPUT_SINKS];
@@ -520,12 +586,14 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
     BufPool *linux_aewb_buf_pool = NULL;
     Buf *linux_aewb_buf = NULL;
 
+    /* Capture SIGINT to stop loop */
     signal(SIGINT, interrupt_handler);
 
-    /* Initialize mutex for read image thread */
+    /* Initialize mutex for read image and write image thread */
     for (i = 0; i < MAX_FLOWS; i++)
     {
-        pthread_mutex_init(&thread_lock[i], NULL);
+        pthread_mutex_init(&r_thread_lock[i], NULL);
+        pthread_mutex_init(&w_thread_lock[i], NULL);
     } 
 
     /* Initialize the graph */
@@ -614,30 +682,27 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
             inbuf = tiovx_modules_acquire_buf(in_buf_pool);
 
             /* Create a seperate thread for reading image */
-            thread_data[i].id = i;
-            thread_data[i].read_image_buf = inbuf;
-            thread_data[i].input_info = input_blocks[i].input_info;
-            pthread_create(&read_img_thread_id[num_threads],
+            r_thread_data[i].id = i;
+            r_thread_data[i].read_image_buf = inbuf;
+            r_thread_data[i].input_info = input_blocks[i].input_info;
+            pthread_create(&read_img_thread_id[num_r_threads],
                            NULL,
                            read_img_thread,
-                           (void *)&thread_data[i]);
-            num_threads++;
+                           (void *)&r_thread_data[i]);
+            num_r_threads++;
 
             tiovx_modules_enqueue_buf(inbuf);
         }
     }
 
-    for(i = 0; i < NUM_OUTPUT_SINKS; i++)
+    for(i = 0; i < num_output_blocks; i++)
     {
-        if(NULL == output_blocks[i].output_info)
-        {
-            continue;
-        }
-
         /* Enqueue buffers for output if output pad is exposed */
         if(NULL != output_blocks[i].output_pad)
         {
             out_buf_pool = output_blocks[i].output_pad->buf_pool;
+            outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+            tiovx_modules_enqueue_buf(outbuf);
             if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
             {
                 for (j = 0; j < out_buf_pool->bufq_depth; j++)
@@ -646,8 +711,18 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
                                              &out_buf_pool->bufs[j]);
                 }
             }
-            outbuf = tiovx_modules_acquire_buf(out_buf_pool);
-            tiovx_modules_enqueue_buf(outbuf);
+            else if(IMG_DIR == output_blocks[i].output_info->sink)
+            {
+                /* Create a seperate thread for writing image */
+                w_thread_data[i].id = i;
+                w_thread_data[i].write_image_buf = outbuf;
+                w_thread_data[i].output_info = output_blocks[i].output_info;
+                pthread_create(&write_img_thread_id[num_w_threads],
+                                NULL,
+                                write_img_thread,
+                                (void *)&w_thread_data[i]);
+                num_w_threads++;
+            }
         }
 
         /* Set mosaic background and enqueue background buffers */
@@ -693,21 +768,18 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
                 /* Dequeue the buffer, send to read image thread for filling
                  * the buffer and the enqueue it
                  */
-                pthread_mutex_lock(&thread_lock[i]);
                 inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-                thread_data[i].read_image_buf = inbuf;
+
+                pthread_mutex_lock(&r_thread_lock[i]);
+                r_thread_data[i].read_image_buf = inbuf;
+                pthread_mutex_unlock(&r_thread_lock[i]);
+
                 tiovx_modules_enqueue_buf(inbuf);
-                pthread_mutex_unlock(&thread_lock[i]);
             }
         }
 
-        for(i = 0; i < NUM_OUTPUT_SINKS; i++)
+        for(i = 0; i < num_output_blocks; i++)
         {
-            if(NULL == output_blocks[i].output_info)
-            {
-                continue;
-            }
-
             if(NULL != output_blocks[i].output_pad)
             {
                 /* Dequeue and enqueue output buffer if pad is present */
@@ -718,6 +790,13 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
                     /* Render the dequeued buffer on kms display */
                     kms_display_render_buf(output_blocks[i].kms_obj.kms_display_handle,
                                            outbuf);
+                }
+                else if (IMG_DIR == output_blocks[i].output_info->sink)
+                {
+                    /* Update write image thread buffer */
+                    pthread_mutex_lock(&w_thread_lock[i]);
+                    w_thread_data[i].write_image_buf = outbuf;
+                    pthread_mutex_unlock(&w_thread_lock[i]);
                 }
                 tiovx_modules_enqueue_buf(outbuf);
             }
@@ -730,9 +809,15 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
     }
 
     /* Stop all read image threads */
-    for (i = 0; i < num_threads; i++)
+    for (i = 0; i < num_r_threads; i++)
     {
         pthread_join(read_img_thread_id[i], NULL); 
+    }
+
+    /* Stop all write image threads */
+    for (i = 0; i < num_w_threads; i++)
+    {
+        pthread_join(write_img_thread_id[i], NULL);
     }
     
     /* Dequeue the remaining buffers in graph and release it */
@@ -765,13 +850,8 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
         }
     }
 
-    for(i = 0; i < NUM_OUTPUT_SINKS; i++)
+    for(i = 0; i < num_output_blocks; i++)
     {
-        if(NULL == output_blocks[i].output_info)
-        {
-            continue;
-        }
-
         if(NULL != output_blocks[i].output_pad)
         {
             out_buf_pool = output_blocks[i].output_pad->buf_pool;

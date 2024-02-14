@@ -506,6 +506,10 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
     {
         output_info->sink = LINUX_DISPLAY;
     }
+    else if("IMG_DIR" == sink)
+    {
+        output_info->sink = IMG_DIR;
+    }
     else
     {
         TIOVX_APPS_ERROR("Invalid sink '%s' specified.\n", sink.c_str());
@@ -532,6 +536,40 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
         output_info->connector =  output_node["connector"].as<uint32_t>();
     }
 
+    if(IMG_DIR == output_info->sink)
+    {
+        if(output_node["output_path"])
+        {
+            std::string output_path = output_node["output_path"].as<std::string>();
+            if(!std::filesystem::exists(output_path))
+            {
+                std::filesystem::create_directory(output_path);
+                if(!std::filesystem::exists(output_path))
+                {
+                    TIOVX_APPS_ERROR("Error creating directory %s.\n",
+                                     output_path.c_str());
+                    return -1;
+                }
+            }
+            sprintf(output_info->output_path, output_path.data());
+        }
+        else
+        {
+            TIOVX_APPS_ERROR("Please specify 'output_path' for %s.\n",
+                             output_info->name);
+            return -1;
+        }
+
+        if(output_node["framerate"])
+        {
+            output_info->framerate = output_node["framerate"].as<float>();
+        }
+        else
+        {
+            output_info->framerate = 1.0;
+        }
+    }
+
     return 0;
 }
 
@@ -542,63 +580,56 @@ int32_t parse_mosaic_node(SubflowInfo *subflow_info, const YAML::Node &mosaic_no
     uint32_t pos_x, pos_y, width, height;
     std::vector<std::vector<uint32_t>> mosaic_datas;
 
-    subflow_info->num_mosaic_info = 0;
+    uint32_t num_mosaic_info = 0;
 
-    if(!mosaic_node.IsNull())
+    mosaic_datas = mosaic_node.as<std::vector<std::vector<uint32_t>>>();
+    for (j = 0; j < mosaic_datas.size(); j++)
     {
-        mosaic_datas = mosaic_node.as<std::vector<std::vector<uint32_t>>>();
-        for (j = 0; j < mosaic_datas.size(); j++)
+        pos_x = mosaic_datas[j][0];
+        pos_y = mosaic_datas[j][1];
+        width = mosaic_datas[j][2];
+        height = mosaic_datas[j][3];
+
+        /* Verify mosaic info. */
+        if((pos_x + width) > subflow_info->output_info.width)
         {
-            pos_x = mosaic_datas[j][0];
-            pos_y = mosaic_datas[j][1];
-            width = mosaic_datas[j][2];
-            height = mosaic_datas[j][3];
-
-            /* Verify mosaic info. */
-            if((pos_x + width) > subflow_info->output_info.width)
-            {
-                TIOVX_APPS_ERROR("Mosaic (pos_x + width) > output_width\n");
-                return -1;
-            }
-
-            if((pos_y + height) > subflow_info->output_info.height)
-            {
-                TIOVX_APPS_ERROR("Mosaic (pos_y + height) > output_height\n");
-                return -1;
-            }
-
-            subflow_info->mosaic_info[j].pos_x = pos_x;
-            subflow_info->mosaic_info[j].pos_y = pos_y;
-            subflow_info->mosaic_info[j].width = width;
-            subflow_info->mosaic_info[j].height = height;
-
-            subflow_info->num_mosaic_info++;
-
-            if(mosaic_datas[j][2] > max_mosaic_width)
-            {
-                max_mosaic_width = mosaic_datas[j][2];
-            }
-            if(mosaic_datas[j][3] > max_mosaic_height)
-            {
-                max_mosaic_height = mosaic_datas[j][3];
-            }
+            TIOVX_APPS_ERROR("Mosaic (pos_x + width) > output_width\n");
+            return -1;
         }
-    }
-    else
-    {
-        subflow_info->mosaic_info[0].pos_x = 0;
-        subflow_info->mosaic_info[0].pos_y = 0;
-        subflow_info->mosaic_info[0].width = subflow_info->output_info.width;
-        subflow_info->mosaic_info[0].height = subflow_info->output_info.height;
 
-        subflow_info->num_mosaic_info = 1;
+        if((pos_y + height) > subflow_info->output_info.height)
+        {
+            TIOVX_APPS_ERROR("Mosaic (pos_y + height) > output_height\n");
+            return -1;
+        }
 
-        max_mosaic_width = subflow_info->output_info.width;
-        max_mosaic_height = subflow_info->output_info.height;
+        subflow_info->mosaic_info[j].pos_x = pos_x;
+        subflow_info->mosaic_info[j].pos_y = pos_y;
+        subflow_info->mosaic_info[j].width = width;
+        subflow_info->mosaic_info[j].height = height;
+
+        num_mosaic_info++;
+
+        if(mosaic_datas[j][2] > max_mosaic_width)
+        {
+            max_mosaic_width = mosaic_datas[j][2];
+        }
+        if(mosaic_datas[j][3] > max_mosaic_height)
+        {
+            max_mosaic_height = mosaic_datas[j][3];
+        }
     }
 
     subflow_info->max_mosaic_width = max_mosaic_width;
     subflow_info->max_mosaic_height = max_mosaic_height;
+
+    /* Check if number of mosaic matches the number of channels */
+    if (subflow_info->num_channels > num_mosaic_info)
+    {
+        TIOVX_APPS_ERROR("Mosaic Info provided is less than"
+                         "number of channels of the input\n");
+        return -1;
+    }
 
     return 0;
 }
@@ -743,20 +774,29 @@ int32_t parse_yaml_file(char       *input_filename,
             }
 
             /* Populate MosaicInfos */
-            status = parse_mosaic_node(&flow_infos[i].subflow_infos[s_idx],
-                                       n.second["mosaic"]);
-            if (0 != status)
+            if(n.second["mosaic"])
             {
-                return status;
+                status = parse_mosaic_node(&flow_infos[i].subflow_infos[s_idx],
+                                        n.second["mosaic"]);
+                if (0 != status)
+                {
+                    return status;
+                }
             }
-
-            /* Check if number of mosaic matches the number of input channels */
-            if (flow_infos[i].input_info.num_channels >
-                flow_infos[i].subflow_infos[s_idx].num_mosaic_info)
+            else
             {
-                TIOVX_APPS_ERROR("Mosaic Info provided is less than"
-                       "number of channels of the input\n");
-                return -1;
+                flow_infos[i].subflow_infos[s_idx].mosaic_info[0].pos_x = 0;
+                flow_infos[i].subflow_infos[s_idx].mosaic_info[0].pos_y = 0;
+                flow_infos[i].subflow_infos[s_idx].mosaic_info[0].width = flow_infos[i].subflow_infos[s_idx].output_info.width;
+                flow_infos[i].subflow_infos[s_idx].mosaic_info[0].height = flow_infos[i].subflow_infos[s_idx].output_info.height;
+                flow_infos[i].subflow_infos[s_idx].max_mosaic_width =  flow_infos[i].subflow_infos[s_idx].output_info.width;
+                flow_infos[i].subflow_infos[s_idx].max_mosaic_height =  flow_infos[i].subflow_infos[s_idx].output_info.height;
+                if (flow_infos[i].subflow_infos[s_idx].num_channels > 1)
+                {
+                    TIOVX_APPS_ERROR("Please provide mosaic information if "
+                                     "number of channels of the input > 1\n");
+                    return -1;
+                }
             }
             
             flow_infos[i].num_subflows++;
@@ -798,7 +838,7 @@ void dump_data(FlowInfo flow_infos[], uint32_t num_flows)
                    flow_infos[i].subflow_infos[j].output_info.name,
                    flow_infos[i].subflow_infos[j].output_info.sink_name);
             TIOVX_APPS_PRINTF("\t\tmosaic:");
-            for (k = 0; k < flow_infos[i].subflow_infos[j].num_mosaic_info; k++)
+            for (k = 0; k < flow_infos[i].subflow_infos[j].num_channels; k++)
             {
                 TIOVX_APPS_PRINTF(" (%u, %u, %u, %u)",
                        flow_infos[i].subflow_infos[j].mosaic_info[k].pos_x,
