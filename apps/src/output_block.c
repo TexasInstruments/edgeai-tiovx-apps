@@ -72,6 +72,7 @@ void initialize_output_block(OutputBlock *output_block)
     output_block->num_inputs = 0;
     output_block->output_pad = NULL;
     output_block->mosaic_bg_pad = NULL;
+    output_block->perf_overlay_pad = NULL;
 
     tiovx_mosaic_init_cfg(&output_block->mosaic_cfg);
     output_block->mosaic_cfg.num_inputs = 0;
@@ -144,6 +145,21 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
 
         mosaic_cfg = output_block->mosaic_cfg;
 
+        /* Add and configuration for perf overlay. */
+        if(output_info->overlay_perf)
+        {
+            mosaic_cfg.input_cfgs[mosaic_cfg.num_inputs].width = output_info->width;
+            mosaic_cfg.input_cfgs[mosaic_cfg.num_inputs].height = 0.18 * output_info->height;
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].startX  = 0;
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].startY  = output_info->height - (0.18 * output_info->height);
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].width   = output_info->width;
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].height  = 0.18 * output_info->height;
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].input_select   = mosaic_cfg.num_inputs;
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].channel_select = 0;
+            mosaic_cfg.params.num_windows += 1;
+            mosaic_cfg.num_inputs += 1;
+        }
+
         mosaic_cfg.output_cfg.width = output_info->width;
         mosaic_cfg.output_cfg.height = output_info->height;
 
@@ -154,11 +170,25 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
                                              (void *)&mosaic_cfg);
 
         /* Link Input pads to Mosaic */
-        for (i = 0; i < mosaic_cfg.num_inputs; i++)
+        if(output_info->overlay_perf)
         {
-            tiovx_modules_link_pads(output_block->input_pads[i], &mosaic_node->sinks[i]);
+            for (i = 0; i < mosaic_cfg.num_inputs - 1; i++)
+            {
+                tiovx_modules_link_pads(output_block->input_pads[i],
+                                        &mosaic_node->sinks[i]);
+            }
+            output_block->perf_overlay_pad = &mosaic_node->sinks[mosaic_cfg.num_inputs - 1];
         }
-        
+        else
+        {
+            for (i = 0; i < mosaic_cfg.num_inputs; i++)
+            {
+                tiovx_modules_link_pads(output_block->input_pads[i],
+                                        &mosaic_node->sinks[i]);
+            }
+            output_block->perf_overlay_pad = NULL;
+        }
+
         output_block->mosaic_bg_pad = &mosaic_node->sinks[mosaic_cfg.num_inputs];
         output_pad = &mosaic_node->srcs[0];
     }

@@ -267,6 +267,9 @@ typedef struct {
 
     /* Framerate for saving image */
     float           framerate;
+
+    /* Apply performance overlay */
+    bool            overlay_perf;
 } OutputInfo;
 
 /*

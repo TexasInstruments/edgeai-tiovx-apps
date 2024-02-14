@@ -63,6 +63,8 @@
 #define _TIOVX_APPS_MISC
 
 #include <tiovx_utils.h>
+#include <edgeai_nv12_drawing_utils.h>
+#include <edgeai_overlay_perf_stats_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,6 +72,7 @@ extern "C" {
 
 void *map_image(vx_image image, uint8_t plane);
 void set_mosaic_background(vx_image image, char *title);
+void update_perf_overlay(vx_image image,EdgeAIPerfStats *perf_stats_handle);
 
 #ifdef __cplusplus
 }
