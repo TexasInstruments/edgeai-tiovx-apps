@@ -307,13 +307,6 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
         return status;
     }
 
-    status = tiovx_sensor_init(&node_priv->sensor_obj);
-    if (VX_SUCCESS != status)
-    {
-        TIOVX_MODULE_ERROR("[AEWB] Sensor Init Failed\n");
-        return status;
-    }
-
     status = tiovx_aewb_create_dcc(node);
     if (VX_SUCCESS != status)
     {
