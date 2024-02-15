@@ -61,8 +61,11 @@
  */
 
 #include <tiovx_sensor_module.h>
+#include <pthread.h>
 
 static char availableSensorNames[ISS_SENSORS_MAX_SUPPORTED_SENSOR][ISS_SENSORS_MAX_NAME];
+static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
+static uint8_t g_num_sensors_found = 0;
 
 vx_status tiovx_init_sensor_obj(SensorObj *sensorObj, char *objName)
 {
@@ -122,24 +125,33 @@ vx_status tiovx_sensor_query(SensorObj *sensorObj)
     vx_uint16 selectedSensor = 0xFFF;
     int32_t i;
 
-    memset(availableSensorNames,
-           0,
-           (ISS_SENSORS_MAX_SUPPORTED_SENSOR * ISS_SENSORS_MAX_NAME));
-
     for(i = 0; i < ISS_SENSORS_MAX_SUPPORTED_SENSOR; i++)
     {
         sensor_list[i] = availableSensorNames[i];
     }
 
-    memset(&sensorObj->sensorParams, 0, sizeof(IssSensor_CreateParams));
-    status = appEnumerateImageSensor(sensor_list, &sensorObj->num_sensors_found);
+    pthread_mutex_lock(&g_lock);
+
+    if (g_num_sensors_found) {
+        goto unlock;
+    }
+
+    memset(availableSensorNames,
+           0,
+           (ISS_SENSORS_MAX_SUPPORTED_SENSOR * ISS_SENSORS_MAX_NAME));
+
+    status = appEnumerateImageSensor(sensor_list, &g_num_sensors_found);
     if(VX_SUCCESS != status)
     {
         TIOVX_MODULE_ERROR("[SENSOR-MODULE] appCreateImageSensor failed\n");
         return status;
     }
 
+unlock:
+    pthread_mutex_unlock(&g_lock);
 
+    sensorObj->num_sensors_found = g_num_sensors_found;
+    memset(&sensorObj->sensorParams, 0, sizeof(IssSensor_CreateParams));
     selectedSensor = sensorObj->sensor_index;
     if(selectedSensor > (sensorObj->num_sensors_found - 1))
     {
