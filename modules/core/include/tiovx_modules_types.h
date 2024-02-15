@@ -88,7 +88,7 @@ extern "C" {
 #define TIOVX_MODULES_MAX_BUFQ_DEPTH      (16u)
 #define TIOVX_MODULES_MAX_NODE_INPUTS     (16u)
 #define TIOVX_MODULES_MAX_NODE_OUTPUTS    (8u)
-#define TIOVX_MODULES_MAX_NODES           (32u)
+#define TIOVX_MODULES_MAX_NODES           (256u)
 #define TIOVX_MODULES_MAX_NUM_CHANNELS    (16u)
 #define TIOVX_MODULES_MAX_GRAPH_PARAMS    (16u)
 
