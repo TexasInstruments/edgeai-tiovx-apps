@@ -63,7 +63,15 @@
 #include <apps/include/resize_block.h>
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
+#if defined(SOC_J784S4)
+static char *g_msc_targets[] = {TIVX_TARGET_VPAC_MSC1, TIVX_TARGET_VPAC_MSC2,
+                              TIVX_TARGET_VPAC2_MSC1, TIVX_TARGET_VPAC2_MSC2};
+#else
+static char *g_msc_targets[] = {TIVX_TARGET_VPAC_MSC1, TIVX_TARGET_VPAC_MSC2};
+#endif
+
+static uint8_t g_msc_target_idx = 0;
 
 void initialize_resize_block(ResizeBlock *resize_block)
 {
@@ -178,6 +186,7 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
 {
     int32_t status = 0;
     uint32_t i, j;
+    uint32_t sec_msc_target_idx;
     uint32_t input_width, input_height;
     uint32_t output_width, output_height;
     uint32_t crop_start_x, crop_start_y;
@@ -231,6 +240,9 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
         msc_cfg.num_outputs = resize_block->total_output_group;
         msc_cfg.input_cfg.width = resize_block->input_width;
         msc_cfg.input_cfg.height = resize_block->input_height;
+        sprintf(msc_cfg.target_string, g_msc_targets[g_msc_target_idx]);
+
+        sec_msc_target_idx = (sizeof(g_msc_targets)/sizeof(g_msc_targets[0])) - 1 - g_msc_target_idx;
 
         tiovx_multi_scaler_module_crop_params_init(&msc_cfg);
 
@@ -282,6 +294,8 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
                 sec_msc_cfg.output_cfgs[0].width = output_width;
                 sec_msc_cfg.output_cfgs[0].height = output_height;
 
+                sprintf(sec_msc_cfg.target_string, g_msc_targets[sec_msc_target_idx]);
+
                 tiovx_multi_scaler_module_crop_params_init(&sec_msc_cfg);
 
                 sec_msc_node = tiovx_modules_add_node(graph,
@@ -290,11 +304,9 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
 
                 input_pads[i] = &sec_msc_node->sinks[0];
                 output_pads[i] = &sec_msc_node->srcs[0];
-                
 
                 msc_cfg.output_cfgs[i].width = sec_msc_cfg.input_cfg.width;
                 msc_cfg.output_cfgs[i].height = sec_msc_cfg.input_cfg.height;
-               
             }
             else
             {
@@ -323,6 +335,13 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
         }
 
         resize_block->input_pad = &msc_node->sinks[0];
+
+        /* Set target for next MSC in round robin fashion */
+        g_msc_target_idx++;
+        if(g_msc_target_idx >= sizeof(g_msc_targets)/sizeof(g_msc_targets[0]))
+        {
+            g_msc_target_idx = 0;
+        }
     }
 
     /* TEE */
@@ -347,11 +366,9 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
 
             tee_cfg.peer_pad = output_pads[i];
             tee_cfg.num_outputs = resize_block->output_group[i].num_total_pads;
-
             tee_node = tiovx_modules_add_node(graph,
                                               TIOVX_TEE,
                                               (void *)&tee_cfg);
-            
             for (j = 0; j < resize_block->output_group[i].num_connected_pads; j++)
             {
                 tiovx_modules_link_pads(&tee_node->srcs[tee_pad_idx],
