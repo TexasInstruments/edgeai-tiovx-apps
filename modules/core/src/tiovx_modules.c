@@ -80,6 +80,7 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
     tivxEdgeaiImgProcLoadKernels(graph->tiovx_context);
     tivxTIDLLoadKernels(graph->tiovx_context);
     tivxVideoIOLoadKernels(graph->tiovx_context);
+    tivxExtLoadKernels(graph->tiovx_context);
 #if !defined (SOC_AM62A)
     tivxImagingLoadKernels(graph->tiovx_context);
 #endif
@@ -823,6 +824,7 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
 #if !defined (SOC_AM62A)
     tivxImagingUnLoadKernels(graph->tiovx_context);
 #endif
+    tivxExtUnLoadKernels(graph->tiovx_context);
     tivxVideoIOUnLoadKernels(graph->tiovx_context);
     tivxTIDLUnLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcUnLoadKernels(graph->tiovx_context);
