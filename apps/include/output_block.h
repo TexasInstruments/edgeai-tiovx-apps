@@ -94,9 +94,6 @@ typedef struct {
     /* Output pad from the block */
     Pad                     *output_pad;
 
-    /* Background pad of mosaic. */
-    Pad                     *mosaic_bg_pad;
-
     /* Background pad of perf overlay. */
     Pad                     *perf_overlay_pad;
 

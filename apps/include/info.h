@@ -80,7 +80,10 @@
 extern "C" {
 #endif
 
-#define MAX_CHAR_ARRAY_SIZE (256)
+
+#define DEFAULT_CHAR_ARRAY_SIZE (64)
+
+#define MAX_CHAR_ARRAY_SIZE (128)
 #define MAX_FLOWS           (32)
 #define MAX_SUBFLOW         (32)
 #define MAX_MOSAIC_INPUT    (32)
@@ -106,13 +109,13 @@ typedef enum {
  */
 typedef struct {
     /* Unique input name */
-    char            name[MAX_CHAR_ARRAY_SIZE];
+    char            name[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Input source. Ex: RTOS_CAM, LINUX_CAM, RAW_IMG etc. */
     InputSource     source;
 
     /* Source name */
-    char            source_name[MAX_CHAR_ARRAY_SIZE];
+    char            source_name[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Width of the input. */
     uint32_t        width;
@@ -133,10 +136,10 @@ typedef struct {
     uint32_t        num_raw_img;
 
     /* Input format [Does not matter in case of RTOS_CAM]. */
-    char            format[MAX_CHAR_ARRAY_SIZE];
+    char            format[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Name of the camera to be used for RTOS_CAM. */
-    char            sensor_name[MAX_CHAR_ARRAY_SIZE];
+    char            sensor_name[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Channe mask for RTOS_CAM. */
     uint32_t        channel_mask;
@@ -145,10 +148,10 @@ typedef struct {
     bool            ldc_enabled;
 
     /* Device path for LINUX_CAM. */
-    char            device[MAX_CHAR_ARRAY_SIZE];
+    char            device[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Subdev path for LINUX_CAM. */
-    char            subdev[MAX_CHAR_ARRAY_SIZE];
+    char            subdev[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Number of channels of the input */
     uint32_t        num_channels;
@@ -196,7 +199,7 @@ typedef struct {
     bool            norm_detect;
 
     /* Task type. */
-    char            task_type[MAX_CHAR_ARRAY_SIZE];
+    char            task_type[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Formatter */
     int32_t         formatter[6];
@@ -218,7 +221,7 @@ typedef struct {
  */
 typedef struct {
     /* Unique model name */
-    char            name[MAX_CHAR_ARRAY_SIZE];
+    char            name[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Path of model directory. */
     char            model_path[MAX_CHAR_ARRAY_SIZE];
@@ -242,13 +245,13 @@ typedef struct {
  */
 typedef struct {
     /* Unique output name */
-    char            name[MAX_CHAR_ARRAY_SIZE];
+    char            name[DEFAULT_CHAR_ARRAY_SIZE];
 
     /* Name of the source. Ex: RTOS_DISPLAY, LINUX_DISPLAY etc. */
     OutputSink      sink;
 
     /* Sink name */
-    char            sink_name[MAX_CHAR_ARRAY_SIZE];
+    char            sink_name[DEFAULT_CHAR_ARRAY_SIZE];
     
     /* Width of the output. */
     uint32_t        width;
@@ -270,6 +273,9 @@ typedef struct {
 
     /* Apply performance overlay */
     bool            overlay_perf;
+
+    /* Background title */
+    char            title[DEFAULT_CHAR_ARRAY_SIZE];
 } OutputInfo;
 
 /*
