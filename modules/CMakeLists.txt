@@ -23,6 +23,7 @@ set(SRC_FILES
     src/v4l2_encode_module.c
     src/kms_display_module.c
     src/linux_aewb_module.c
+    src/tiovx_obj_array_split_module.c
     )
 
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4")
