@@ -110,6 +110,9 @@ set(SYSTEM_LINK_LIBS
     edgeai-apps-utils
     drm
     yaml-cpp
+    avformat
+    avutil
+    avcodec
     )
 
 set(COMMON_LINK_LIBS
