@@ -110,12 +110,11 @@ void tiovx_mosaic_init_cfg(TIOVXMosaicNodeCfg *node_cfg)
     }
     node_cfg->input_cfgs[0].width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->input_cfgs[0].height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
-    node_cfg->background_cfg.width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
-    node_cfg->background_cfg.height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->output_cfg.width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->output_cfg.height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     sprintf(node_cfg->target_string, TIVX_TARGET_VPAC_MSC1);
     tivxImgMosaicParamsSetDefaults(&node_cfg->params);
+    node_cfg->background_img = NULL;
 }
 
 vx_status tiovx_mosaic_init_node(NodeObj *node)
@@ -131,11 +130,7 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
 
     node_cfg->output_cfg.color_format = node_cfg->color_format;
 
-    node_cfg->background_cfg.color_format = node_cfg->color_format;
-    node_cfg->background_cfg.width = node_cfg->output_cfg.width;
-    node_cfg->background_cfg.height = node_cfg->output_cfg.height;
-
-    node->num_inputs = node_cfg->num_inputs + 1; // +1 for background
+    node->num_inputs = node_cfg->num_inputs;
     node->num_outputs = 1;
 
     for (i = 0; i < node_cfg->num_inputs; i++)
@@ -156,23 +151,6 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
         }
         vxReleaseReference(&exemplar);
     }
-
-    node->sinks[node_cfg->num_inputs].node = node;
-    node->sinks[node_cfg->num_inputs].pad_index = node_cfg->num_inputs;
-    node->sinks[node_cfg->num_inputs].node_parameter_index = 2;
-    node->sinks[node_cfg->num_inputs].num_channels = 1;
-    exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
-                                           node_cfg->background_cfg.width,
-                                           node_cfg->background_cfg.height,
-                                           node_cfg->background_cfg.color_format);
-    status = tiovx_module_create_pad_exemplar(&node->sinks[node_cfg->num_inputs],
-                                              exemplar);
-    if (VX_SUCCESS != status)
-    {
-        TIOVX_MODULE_ERROR("[MOSAIC] Create Background Failed\n");
-        return status;
-    }
-    vxReleaseReference(&exemplar);
 
     node->srcs[0].node = node;
     node->srcs[0].pad_index = 0;
@@ -198,7 +176,7 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
     }
 
     node_priv->kernel = tivxAddKernelImgMosaic(node->graph->tiovx_context,
-                                              node_cfg->num_inputs);
+                                               node_cfg->num_inputs);
     status = vxGetStatus((vx_reference)node_priv->kernel);
     if(VX_SUCCESS != status)
     {
@@ -226,7 +204,7 @@ vx_status tiovx_mosaic_create_node(NodeObj *node)
                                          node_priv->kernel,
                                          node_priv->config,
                                          (vx_image)(node->srcs[0].exemplar),
-                                         (vx_image)(node->sinks[node_cfg->num_inputs].exemplar),
+                                         node_cfg->background_img,
                                          inputs,
                                          node_cfg->num_inputs);
 

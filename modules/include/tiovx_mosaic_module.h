@@ -71,13 +71,13 @@ extern "C" {
 
 typedef struct {
     ImgCfg                      input_cfgs[TIVX_IMG_MOSAIC_MAX_INPUTS];
-    ImgCfg                      background_cfg;
     ImgCfg                      output_cfg;
     vx_int32                    num_inputs;
     vx_int32                    color_format;
     vx_int32                    num_channels[TIVX_IMG_MOSAIC_MAX_INPUTS];
     char                        target_string[TIVX_TARGET_MAX_NAME];
     tivxImgMosaicParams         params;
+    vx_image                    background_img;
 } TIOVXMosaicNodeCfg;
 
 void tiovx_mosaic_init_cfg(TIOVXMosaicNodeCfg *cfg);
