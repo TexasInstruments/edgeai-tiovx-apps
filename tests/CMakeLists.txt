@@ -18,6 +18,7 @@ set(SRC_FILES
     app_tiovx_mosaic_module_test.c
     app_tiovx_v4l2_capture_module_test.c
     app_tiovx_linux_capture_display_test.c
+    app_tiovx_linux_decode_display_test.c
     main.c)
 
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4")
