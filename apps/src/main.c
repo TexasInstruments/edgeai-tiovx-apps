@@ -73,7 +73,6 @@ int main(int argc, char *argv[])
 {
     int32_t     status = 0;
     char        config_file[64];
-    char        title[64];
     FlowInfo    flow_infos[MAX_FLOWS];
     uint32_t    num_flows = 0; 
 
@@ -89,8 +88,7 @@ int main(int argc, char *argv[])
     status = parse_yaml_file(config_file,
                              flow_infos,
                              MAX_FLOWS,
-                             &num_flows,
-                             title);
+                             &num_flows);
     if (0 != status)
     {
         TIOVX_APPS_ERROR("Could not parse %s.\n", config_file);
@@ -99,7 +97,7 @@ int main(int argc, char *argv[])
 
     status = appInit();
 
-    status = run_app(flow_infos, num_flows, title);
+    status = run_app(flow_infos, num_flows);
 
     appDeInit();
 

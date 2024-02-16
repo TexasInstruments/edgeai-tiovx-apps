@@ -67,7 +67,7 @@
 extern "C" {
 #endif
 
-int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title);
+int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows);
 
 #ifdef __cplusplus
 }

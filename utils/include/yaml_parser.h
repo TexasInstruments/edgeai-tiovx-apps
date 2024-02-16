@@ -71,8 +71,7 @@ extern "C" {
 extern int32_t parse_yaml_file(char       *input_filename,
                                FlowInfo   flow_infos[],
                                uint32_t   max_flows,
-                               uint32_t   *num_flows,
-                               char       *title);
+                               uint32_t   *num_flows);
 
 extern int32_t get_classname(char *model_path, char (*classnames)[256]);
 

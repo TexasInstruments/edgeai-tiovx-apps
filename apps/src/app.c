@@ -229,7 +229,7 @@ int32_t connect_blocks(GraphObj *graph,
 
         /* Array of all resize block required by this Input */
         ResizeBlock resize_blocks[MAX_SUBFLOW];
-        uint32_t num_resize_blocks;
+        uint32_t num_resize_blocks = 0;
 
         /* Array to contain unique subflow dims
          * [width, height, crop_x, crop_y, num]
@@ -548,7 +548,7 @@ int32_t connect_blocks(GraphObj *graph,
     return 0;
 }
 
-int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
+int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
 {
     int32_t status;
     int32_t i, j;
@@ -583,9 +583,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
 
     BufPool *perf_overlay_buf_pool = NULL;
     Buf *perf_overlay_buf = NULL;
-
-    BufPool *mosaic_bg_buf_pool = NULL;
-    Buf *mosaic_bg_buf = NULL;
 
     EdgeAIPerfStats perf_stats_handle;
 
@@ -633,7 +630,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
     }
 
     /* Dump graph as a dot file */
-    status = tiovx_modules_export_graph(&graph, ".", "graph");
+    status = tiovx_modules_export_graph(&graph, ".", "test_graph");
     if (VX_SUCCESS != status)
     {
         TIOVX_APPS_ERROR("Error exporting graph as dot\n");
@@ -740,12 +737,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
             update_perf_overlay((vx_image)perf_overlay_buf->handle, &perf_stats_handle);
             tiovx_modules_enqueue_buf(perf_overlay_buf);
         }
-
-        /* Set mosaic background and enqueue background buffers */
-        mosaic_bg_buf_pool = output_blocks[i].mosaic_bg_pad->buf_pool;
-        mosaic_bg_buf = tiovx_modules_acquire_buf(mosaic_bg_buf_pool);
-        set_mosaic_background((vx_image)mosaic_bg_buf->handle, title);
-        tiovx_modules_enqueue_buf(mosaic_bg_buf);
     }
 
     /* Main loop that runs till interrupt */
@@ -825,11 +816,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
                 update_perf_overlay((vx_image)perf_overlay_buf->handle, &perf_stats_handle);
                 tiovx_modules_enqueue_buf(perf_overlay_buf);
             }
-
-            /* Dequeue and enqueue mosaic background buffer */
-            mosaic_bg_buf_pool = output_blocks[i].mosaic_bg_pad->buf_pool;
-            mosaic_bg_buf = tiovx_modules_dequeue_buf(mosaic_bg_buf_pool);
-            tiovx_modules_enqueue_buf(mosaic_bg_buf);
         }
     }
 
@@ -890,10 +876,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, char *title)
             perf_overlay_buf = tiovx_modules_dequeue_buf(perf_overlay_buf_pool);
             tiovx_modules_release_buf(perf_overlay_buf);
         }
-
-        mosaic_bg_buf_pool = output_blocks[i].mosaic_bg_pad->buf_pool;
-        mosaic_bg_buf = tiovx_modules_dequeue_buf(mosaic_bg_buf_pool);
-        tiovx_modules_release_buf(mosaic_bg_buf);
     }
 
 clean_graph:

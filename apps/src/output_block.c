@@ -61,6 +61,8 @@
  */
 
 #include <apps/include/output_block.h>
+#include <apps/include/misc.h>
+
 
 void initialize_output_block(OutputBlock *output_block)
 {
@@ -71,7 +73,6 @@ void initialize_output_block(OutputBlock *output_block)
 
     output_block->num_inputs = 0;
     output_block->output_pad = NULL;
-    output_block->mosaic_bg_pad = NULL;
     output_block->perf_overlay_pad = NULL;
 
     tiovx_mosaic_init_cfg(&output_block->mosaic_cfg);
@@ -162,12 +163,22 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
 
         mosaic_cfg.output_cfg.width = output_info->width;
         mosaic_cfg.output_cfg.height = output_info->height;
-
         mosaic_cfg.params.clear_count  = 4;
+
+        sprintf(mosaic_cfg.target_string, TIVX_TARGET_VPAC_MSC2);
+
+        mosaic_cfg.background_img = vxCreateImage(graph->tiovx_context,
+                                                  output_info->width,
+                                                  output_info->height,
+                                                  VX_DF_IMAGE_NV12);
+
+        set_mosaic_background(mosaic_cfg.background_img, output_info->title);
 
         mosaic_node = tiovx_modules_add_node(graph,
                                              TIOVX_MOSAIC,
                                              (void *)&mosaic_cfg);
+
+        mosaic_node->srcs[0].bufq_depth = 4;
 
         /* Link Input pads to Mosaic */
         if(output_info->overlay_perf)
@@ -189,7 +200,6 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
             output_block->perf_overlay_pad = NULL;
         }
 
-        output_block->mosaic_bg_pad = &mosaic_node->sinks[mosaic_cfg.num_inputs];
         output_pad = &mosaic_node->srcs[0];
     }
 
