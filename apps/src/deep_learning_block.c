@@ -64,6 +64,11 @@
 
 #include <apps/include/deep_learning_block.h>
 
+static char *g_mpu_targets[] = {TIVX_TARGET_MPU_0, TIVX_TARGET_MPU_1,
+                                TIVX_TARGET_MPU_2, TIVX_TARGET_MPU_3};
+
+static uint8_t g_mpu_target_idx = 0;
+
 void initialize_deep_learning_block(DeepLearningBlock *dl_block)
 {
     dl_block->pre_proc_input_pad = NULL;
@@ -118,6 +123,8 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
 
         dl_pre_proc_cfg.io_config_path = model_info->io_config_path;
         dl_pre_proc_cfg.params.tensor_format = pre_proc_info->tensor_format;
+
+        sprintf(dl_pre_proc_cfg.target_string, g_mpu_targets[g_mpu_target_idx]);
 
         dl_pre_proc_node = tiovx_modules_add_node(graph,
                                                   TIOVX_DL_PRE_PROC,
@@ -236,6 +243,12 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
         dl_block->post_proc_input_pad = &dl_post_proc_node->sinks[dl_post_proc_node->num_inputs - 1];
 
         dl_block->output_pad = &dl_post_proc_node->srcs[0];
+    }
+
+    g_mpu_target_idx++;
+    if(g_mpu_target_idx >= sizeof(g_mpu_targets)/sizeof(g_mpu_targets[0]))
+    {
+        g_mpu_target_idx = 0;
     }
 
     return status;
