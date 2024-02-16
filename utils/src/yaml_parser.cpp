@@ -645,8 +645,7 @@ int32_t parse_mosaic_node(SubflowInfo *subflow_info, const YAML::Node &mosaic_no
 int32_t parse_yaml_file(char       *input_filename,
                         FlowInfo   flow_infos[],
                         uint32_t   max_flows,
-                        uint32_t   *num_flows,
-                        char       *title)
+                        uint32_t   *num_flows)
 {
     int32_t status = 0;
     uint32_t i = 0;
@@ -661,15 +660,6 @@ int32_t parse_yaml_file(char       *input_filename,
     }
 
     const YAML::Node &yaml = YAML::LoadFile(input_filename);
-    
-    if(yaml["title"])
-    {
-        sprintf(title, yaml["title"].as<std::string>().data());
-    }
-    else
-    {
-        sprintf(title, "No title");
-    }
 
     /* Get all unique inputs to be used. */
     for (auto &n : yaml["flows"])
@@ -756,6 +746,17 @@ int32_t parse_yaml_file(char       *input_filename,
 
             sprintf(flow_infos[i].subflow_infos[s_idx].output_info.name,
                     output_name.data());
+
+            if(yaml["title"])
+            {
+                sprintf(flow_infos[i].subflow_infos[s_idx].output_info.title,
+                        yaml["title"].as<std::string>().data());
+            }
+            else
+            {
+                sprintf(flow_infos[i].subflow_infos[s_idx].output_info.title,
+                        "No title");
+            }
 
             status = parse_output_node(&flow_infos[i].subflow_infos[s_idx].output_info,
                                        yaml["outputs"][output_name]);
