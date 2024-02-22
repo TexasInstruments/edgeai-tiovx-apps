@@ -534,6 +534,10 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
     {
         output_info->sink = LINUX_DISPLAY;
     }
+    else if("H264_ENCODE" == sink)
+    {
+        output_info->sink = H264_ENCODE;
+    }
     else if("IMG_DIR" == sink)
     {
         output_info->sink = IMG_DIR;
@@ -571,7 +575,22 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
         output_info->overlay_perf =  output_node["overlay-perf"].as<bool>();
     }
 
-    if(IMG_DIR == output_info->sink)
+    if(H264_ENCODE == output_info->sink)
+    {
+        if(output_node["output_path"])
+        {
+            std::string output_path = output_node["output_path"].as<std::string>();
+            sprintf(output_info->output_path, output_path.data());
+        }
+        else
+        {
+            TIOVX_APPS_ERROR("Please specify 'output_path' for %s.\n",
+                             output_info->name);
+            return -1;
+        }
+    }
+
+    else if(IMG_DIR == output_info->sink)
     {
         if(output_node["output_path"])
         {
