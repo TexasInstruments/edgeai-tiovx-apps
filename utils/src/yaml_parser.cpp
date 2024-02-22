@@ -26,6 +26,10 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
     {
         input_info->source = LINUX_CAM;
     }
+    else if("H264_VID" == source)
+    {
+        input_info->source = H264_VID;
+    }
     else if("RAW_IMG" == source)
     {
         input_info->source = RAW_IMG;
@@ -137,6 +141,28 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         }
     }
 
+    else if (input_info->source == H264_VID)
+    {
+        /* Get video path */
+        if (input_node["video_path"])
+        {
+            std::string video_path = input_node["video_path"].as<std::string>();
+            if (!std::filesystem::exists(video_path))
+            {
+                TIOVX_APPS_ERROR("%s does not exist.\n", video_path.c_str());
+                return -1;
+            }
+
+            sprintf(input_info->video_path, video_path.data());
+        }
+        else
+        {
+            TIOVX_APPS_ERROR("Please specify video_path for %s.\n",
+                    input_info->name);
+            return -1;
+        }
+    }
+
     else if (input_info->source == RAW_IMG)
     {
 
@@ -144,7 +170,8 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         {
             input_info->framerate = input_node["framerate"].as<float>();
         }
-            /* Get images */
+
+        /* Get images */
         if (input_node["image_path"])
         {
             std::string image_path = input_node["image_path"].as<std::string>();
