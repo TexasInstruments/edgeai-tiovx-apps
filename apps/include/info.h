@@ -93,6 +93,7 @@ extern "C" {
 typedef enum {
     RTOS_CAM = 0,
     LINUX_CAM,
+    H264_VID,
     RAW_IMG,
     NUM_INPUT_SOURCES
 } InputSource;
@@ -134,6 +135,9 @@ typedef struct {
 
     /* Number of total raw img */
     uint32_t        num_raw_img;
+
+    /* Video file path */
+    char            video_path[MAX_CHAR_ARRAY_SIZE];
 
     /* Input format [Does not matter in case of RTOS_CAM]. */
     char            format[DEFAULT_CHAR_ARRAY_SIZE];
