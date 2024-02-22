@@ -69,6 +69,7 @@
 #include <tiovx_modules.h>
 #include <v4l2_capture_module.h>
 #include <linux_aewb_module.h>
+#include <v4l2_decode_module.h>
 
 #include <apps/include/info.h>
 #include <apps/include/resize_block.h>
@@ -92,6 +93,9 @@ typedef struct {
 
     /* H3A Pad from viss */
     Pad                 *h3a_pad;
+
+    /* V4L2Decode handle in case input is video file */
+    v4l2DecodeHandle    *v4l2_decode_handle;
 
 } V4l2Objects;
 

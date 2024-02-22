@@ -681,6 +681,23 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             tiovx_modules_enqueue_buf(inbuf);
         }
 
+        else if (H264_VID == input_blocks[i].input_info->source)
+        {
+            /* Enqueue buffers to v4l2 decode handle*/
+            for (j = 0; j < in_buf_pool->bufq_depth; j++)
+            {
+                inbuf = tiovx_modules_acquire_buf(in_buf_pool);
+                v4l2_decode_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle, inbuf);
+            }
+
+            /* Start v4l2 decode*/
+            v4l2_decode_start(input_blocks[i].v4l2_obj.v4l2_decode_handle);
+
+            /* Get buffers from v4l2 handle and enqueue */
+            inbuf = v4l2_decode_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle);
+            tiovx_modules_enqueue_buf(inbuf);
+        }
+
         else if (RAW_IMG == input_blocks[i].input_info->source)
         {
             inbuf = tiovx_modules_acquire_buf(in_buf_pool);
@@ -772,6 +789,17 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 tiovx_modules_enqueue_buf(linux_aewb_buf);
             }
 
+            else if (H264_VID == input_blocks[i].input_info->source)
+            {
+                /* Dequeue from graph, enqueue to v4l2 for decode,
+                 * then dequeue from v4l2 and enqueue to graph
+                 */
+                inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+                v4l2_decode_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle, inbuf);
+                inbuf = v4l2_decode_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle);
+                tiovx_modules_enqueue_buf(inbuf);
+            }
+
             else if (RAW_IMG == input_blocks[i].input_info->source)
             {
                 /* Dequeue the buffer, send to read image thread for filling
@@ -858,6 +886,13 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             tiovx_modules_release_buf(inbuf);
             v4l2_capture_stop(input_blocks[i].v4l2_obj.v4l2_capture_handle);
             v4l2_capture_delete_handle(input_blocks[i].v4l2_obj.v4l2_capture_handle);
+        }
+        else if (H264_VID == input_blocks[i].input_info->source)
+        {
+            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+            tiovx_modules_release_buf(inbuf);
+            v4l2_decode_stop(input_blocks[i].v4l2_obj.v4l2_decode_handle);
+            v4l2_decode_delete_handle(input_blocks[i].v4l2_obj.v4l2_decode_handle);
         }
         else if (RAW_IMG == input_blocks[i].input_info->source)
         {

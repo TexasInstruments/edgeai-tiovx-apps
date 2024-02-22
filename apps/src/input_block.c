@@ -110,6 +110,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
     uint32_t v4l2_pix_format = 0;
     uint32_t output_width = 0;
     uint32_t output_height = 0;
+    uint32_t tee_bufq_depth = 0;
     
     if(0 == input_block->num_outputs)
     {
@@ -395,6 +396,34 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         }
     }
 
+    /* H264 VID */
+    if(H264_VID == input_info->source)
+    {
+        /* V4L2 Decode */
+        {
+            v4l2DecodeCfg v4l2_decode_cfg;
+            v4l2DecodeOutFmt v4l2_decode_fmt;
+            v4l2_decode_init_cfg(&v4l2_decode_cfg);
+
+            v4l2_decode_cfg.bufq_depth = 10;
+            tee_bufq_depth = v4l2_decode_cfg.bufq_depth;
+            sprintf(v4l2_decode_cfg.file, input_info->video_path);
+
+            input_block->v4l2_obj.v4l2_decode_handle = v4l2_decode_create_handle(&v4l2_decode_cfg,
+                                                                                 &v4l2_decode_fmt);
+
+            if (v4l2_decode_fmt.width != input_info->width ||
+                v4l2_decode_fmt.height != input_info->height)
+            {
+                TIOVX_APPS_ERROR("Invalid input video dim %dx%d specified."
+                                 "Actual video dim is %dx%d\n",
+                                 input_info->width, input_info->height,
+                                 v4l2_decode_fmt.width, v4l2_decode_fmt.height);
+                return -1;
+            }
+        }
+    }
+
     /* RAW_IMG */
     if(RAW_IMG == input_info->source)
     {
@@ -471,6 +500,12 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         tee_node = tiovx_modules_add_node(graph,
                                           TIOVX_TEE,
                                           (void *)&tee_cfg);
+
+        if (0 != tee_bufq_depth)
+        {
+            tee_node->sinks[0].bufq_depth = tee_bufq_depth;
+        }
+
         /* Link Output pads to TEE */
         for (; i < tee_cfg.num_outputs; i++)
         {
