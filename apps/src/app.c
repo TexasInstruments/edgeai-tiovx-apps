@@ -164,8 +164,6 @@ void *write_img_thread(void *arg)
 
         sprintf(output_filename, "%s/%04d.yuv", data->output_info->output_path, counter);
 
-        printf("%s\n",output_filename);
-
         pthread_mutex_lock(&w_thread_lock[data->id]);
         writeImage(output_filename, (vx_image)data->write_image_buf->handle);
         pthread_mutex_unlock(&w_thread_lock[data->id]);
@@ -722,18 +720,35 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         if(NULL != output_blocks[i].output_pad)
         {
             out_buf_pool = output_blocks[i].output_pad->buf_pool;
-            outbuf = tiovx_modules_acquire_buf(out_buf_pool);
-            tiovx_modules_enqueue_buf(outbuf);
             if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
             {
+                outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+                tiovx_modules_enqueue_buf(outbuf);
                 for (j = 0; j < out_buf_pool->bufq_depth; j++)
                 {
                     kms_display_register_buf(output_blocks[i].kms_obj.kms_display_handle,
                                              &out_buf_pool->bufs[j]);
                 }
             }
+            else if (H264_ENCODE == output_blocks[i].output_info->sink)
+            {
+                for (j = 0; j < out_buf_pool->bufq_depth; j++)
+                {
+                    outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+                    v4l2_encode_enqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle, outbuf);
+                }
+
+                /* Start v4l2 encode*/
+                v4l2_encode_start(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+
+                /* Get buffers from v4l2 handle and enqueue */
+                outbuf = v4l2_encode_dqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+                tiovx_modules_enqueue_buf(outbuf);
+            }
             else if(IMG_DIR == output_blocks[i].output_info->sink)
             {
+                outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+                tiovx_modules_enqueue_buf(outbuf);
                 /* Create a seperate thread for writing image */
                 w_thread_data[i].id = i;
                 w_thread_data[i].write_image_buf = outbuf;
@@ -828,6 +843,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                     kms_display_render_buf(output_blocks[i].kms_obj.kms_display_handle,
                                            outbuf);
                 }
+                else if (H264_ENCODE == output_blocks[i].output_info->sink)
+                {
+                    v4l2_encode_enqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle, outbuf);
+                    outbuf = v4l2_encode_dqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+                }
                 else if (IMG_DIR == output_blocks[i].output_info->sink)
                 {
                     /* Update write image thread buffer */
@@ -908,6 +928,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             out_buf_pool = output_blocks[i].output_pad->buf_pool;
             outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
             tiovx_modules_release_buf(outbuf);
+            if (H264_ENCODE == output_blocks[i].output_info->sink)
+            {
+                v4l2_encode_stop(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+                v4l2_encode_delete_handle(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+            }
         }
 
         if(NULL != output_blocks[i].perf_overlay_pad)

@@ -249,6 +249,19 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
         }
 
         output_block->kms_obj.kms_display_handle = kms_display_create_handle(&kms_display_cfg);
+    }
+
+    if(output_info->sink == H264_ENCODE)
+    {
+        v4l2EncodeCfg v4l2_encode_cfg;
+
+        v4l2_encode_init_cfg(&v4l2_encode_cfg);
+
+        v4l2_encode_cfg.width = output_info->width;
+        v4l2_encode_cfg.height = output_info->height;
+        sprintf(v4l2_encode_cfg.file, output_info->output_path);
+
+        output_block->v4l2_obj.v4l2_encode_handle = v4l2_encode_create_handle(&v4l2_encode_cfg);
 
     }
 

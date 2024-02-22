@@ -97,7 +97,7 @@ typedef struct {
     /* V4L2Decode handle in case input is video file */
     v4l2DecodeHandle    *v4l2_decode_handle;
 
-} V4l2Objects;
+} V4l2InputObject;
 
 /*
  * Input block information
@@ -116,7 +116,7 @@ typedef struct {
     InputInfo           *input_info;
 
     /* Handles and pads related to v4l2 */
-    V4l2Objects         v4l2_obj;
+    V4l2InputObject     v4l2_obj;
 
     /* TEE Node config */
     TIOVXTeeNodeCfg     tee_cfg;
