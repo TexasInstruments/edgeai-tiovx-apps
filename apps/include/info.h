@@ -68,6 +68,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+
 #ifdef TIOVX_APPS_DEBUG
 #define TIOVX_APPS_PRINTF(f_, ...) printf("[TIOVX_APPS][DEBUG] %d: %s: " f_, __LINE__, __func__, ##__VA_ARGS__)
 #else
@@ -101,6 +102,7 @@ typedef enum {
 typedef enum {
     RTOS_DISPLAY = 0,
     LINUX_DISPLAY,
+    H264_ENCODE,
     IMG_DIR,
     NUM_OUTPUT_SINKS
 } OutputSink;
@@ -269,7 +271,7 @@ typedef struct {
     /* Connector for kms display */
     uint32_t        connector;
 
-    /* Output directory for saving image */
+    /* Output directory for saving image/videos */
     char            output_path[MAX_CHAR_ARRAY_SIZE];
 
     /* Framerate for saving image */

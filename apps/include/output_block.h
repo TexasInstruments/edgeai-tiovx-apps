@@ -63,6 +63,7 @@
 #define _TIOVX_APPS_OUTPUT_BLOCK
 
 #include <tiovx_modules.h>
+#include <v4l2_encode_module.h>
 #include <kms_display_module.h>
 #include <TI/tivx_img_proc.h>
 
@@ -74,6 +75,16 @@ extern "C" {
 #endif
 
 /*
+ * V4L2 Information
+ */
+typedef struct {
+
+    /* V4L2Encode handle in case output is video file */
+    v4l2EncodeHandle    *v4l2_encode_handle;
+
+} V4l2OutputObject;
+
+/*
  * KMS Information
  */
 typedef struct {
@@ -81,7 +92,7 @@ typedef struct {
     /* KMS Display handle */
     kmsDisplayHandle        *kms_display_handle;
 
-} KMSObjects;
+} KMSObject;
 
 /*
  * Output block information
@@ -103,8 +114,11 @@ typedef struct {
     /* OutputInfo */
     OutputInfo              *output_info;
 
-    /* KMS Objects */
-    KMSObjects              kms_obj;
+    /* V4L2 Object */
+    V4l2OutputObject        v4l2_obj;
+
+    /* KMS Object */
+    KMSObject               kms_obj;
 
     /* Mosaic Node Config */
     TIOVXMosaicNodeCfg      mosaic_cfg;
