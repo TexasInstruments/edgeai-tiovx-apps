@@ -763,9 +763,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 tiovx_modules_enqueue_buf(inbuf);
 
                 /* AEWB processing for linux */
-                aewb_process(input_blocks[i].v4l2_obj.aewb_handle, linux_h3a_buf, linux_aewb_buf);
+                linux_h3a_buf_pool = input_blocks[i].v4l2_obj.h3a_pad->buf_pool;
+                linux_aewb_buf_pool = input_blocks[i].v4l2_obj.aewb_pad->buf_pool;
                 linux_h3a_buf = tiovx_modules_dequeue_buf(linux_h3a_buf_pool);
                 linux_aewb_buf = tiovx_modules_dequeue_buf(linux_aewb_buf_pool);
+                aewb_process(input_blocks[i].v4l2_obj.aewb_handle, linux_h3a_buf, linux_aewb_buf);
                 tiovx_modules_enqueue_buf(linux_h3a_buf);
                 tiovx_modules_enqueue_buf(linux_aewb_buf);
             }
@@ -845,10 +847,13 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         }
         else if (LINUX_CAM == input_blocks[i].input_info->source)
         {
+            linux_h3a_buf_pool = input_blocks[i].v4l2_obj.h3a_pad->buf_pool;
+            linux_aewb_buf_pool = input_blocks[i].v4l2_obj.aewb_pad->buf_pool;
             linux_h3a_buf = tiovx_modules_dequeue_buf(linux_h3a_buf_pool);
             tiovx_modules_release_buf(linux_h3a_buf);
             linux_aewb_buf = tiovx_modules_dequeue_buf(linux_aewb_buf_pool);
             tiovx_modules_release_buf(linux_aewb_buf);
+
             inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
             tiovx_modules_release_buf(inbuf);
             v4l2_capture_stop(input_blocks[i].v4l2_obj.v4l2_capture_handle);
