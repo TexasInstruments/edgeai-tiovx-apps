@@ -149,12 +149,13 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
         /* Add and configuration for perf overlay. */
         if(output_info->overlay_perf)
         {
+            uint32_t overlay_height = ((uint32_t)(0.18 * output_info->height) >> 1) << 1;
             mosaic_cfg.input_cfgs[mosaic_cfg.num_inputs].width = output_info->width;
-            mosaic_cfg.input_cfgs[mosaic_cfg.num_inputs].height = 0.18 * output_info->height;
+            mosaic_cfg.input_cfgs[mosaic_cfg.num_inputs].height = overlay_height;
             mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].startX  = 0;
-            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].startY  = output_info->height - (0.18 * output_info->height);
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].startY  = output_info->height - overlay_height;
             mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].width   = output_info->width;
-            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].height  = 0.18 * output_info->height;
+            mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].height  = overlay_height;
             mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].input_select   = mosaic_cfg.num_inputs;
             mosaic_cfg.params.windows[mosaic_cfg.params.num_windows].channel_select = 0;
             mosaic_cfg.params.num_windows += 1;

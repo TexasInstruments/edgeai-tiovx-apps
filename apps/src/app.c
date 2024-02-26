@@ -648,6 +648,14 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     /* Initialize perf stats */
     initialize_edgeai_perf_stats(&perf_stats_handle);
     perf_stats_handle.overlayType = OVERLAY_TYPE_GRAPH;
+    perf_stats_handle.numInstances = 0;
+    for(i = 0; i < num_output_blocks; i++)
+    {
+        if(true == output_blocks[i].output_info->overlay_perf)
+        {
+            perf_stats_handle.numInstances++;
+        }
+    }
 
     /* Enqueue buffers at start based on input sources in all input blocks */
     for(i = 0; i < num_input_blocks; i++)
