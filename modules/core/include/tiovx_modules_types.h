@@ -74,6 +74,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
 
 #ifdef TIOVX_MODULE_DEBUG
 #define TIOVX_MODULE_PRINTF(f_, ...) printf("[TIOVX_MODULES][DEBUG] %d: %s: "f_, __LINE__, __func__, ##__VA_ARGS__)
@@ -135,6 +136,7 @@ struct _BufPool {
     vx_int32            enqueue_head;
     vx_int32            enqueue_tail;
     vx_reference        ref_list[TIOVX_MODULES_MAX_BUFQ_DEPTH];
+    pthread_mutex_t     lock;
 };
 
 struct _Pad {
@@ -181,6 +183,7 @@ struct _GraphObj {
     vx_int32                            num_nodes;
     NodeObj                             node_list[TIOVX_MODULES_MAX_NODES];
     vx_enum                             schedule_mode;
+    pthread_mutex_t                     lock;
 };
 
 typedef struct {
