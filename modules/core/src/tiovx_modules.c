@@ -66,6 +66,9 @@
 #include <TI/video_io_kernels.h>
 #include <stdlib.h>
 
+#define LOCK(a) pthread_mutex_lock(&a->lock)
+#define UNLOCK(a) pthread_mutex_unlock(&a->lock)
+
 extern NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES];
 
 vx_status tiovx_modules_initialize_graph(GraphObj *graph)
@@ -87,6 +90,7 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
 
     graph->tiovx_graph = vxCreateGraph(graph->tiovx_context);
     graph->schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL;
+    pthread_mutex_init(&graph->lock, NULL);
 
     status = VX_SUCCESS;
 
@@ -96,6 +100,8 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
 NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg)
 {
     vx_status status = VX_FAILURE;
+
+    LOCK(graph);
     NodeObj *node = &(graph->node_list[graph->num_nodes]);
 
     node->graph = graph;
@@ -134,6 +140,8 @@ NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg
         graph->num_nodes += 1;
     }
 
+    UNLOCK(graph);
+
     return node;
 }
 
@@ -141,9 +149,13 @@ Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 {
     Buf *buf = NULL;
 
+    LOCK(buf_pool);
+
     buf_pool->free_count--;
     buf = buf_pool->freeQ[buf_pool->free_count];
     buf->acquired = vx_true_e;
+
+    UNLOCK(buf_pool);
 
     return buf;
 }
@@ -152,9 +164,13 @@ vx_status tiovx_modules_release_buf(Buf *buf)
 {
     vx_status status = VX_FAILURE;
 
+    LOCK(buf->pool);
+
     buf->acquired = vx_false_e;
     buf->pool->freeQ[buf->pool->free_count] = buf;
     buf->pool->free_count++;
+
+    UNLOCK(buf->pool);
 
     status = VX_SUCCESS;
 
@@ -201,6 +217,7 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
     buf_pool->free_count = 0;
     buf_pool->enqueue_head = 0;
     buf_pool->enqueue_tail = 0;
+    pthread_mutex_init(&buf_pool->lock, NULL);
 
     for(uint8_t i = 0; i < pad->bufq_depth ; i++)
     {
@@ -684,7 +701,7 @@ vx_status tiovx_modules_verify_graph(GraphObj *graph)
 vx_status tiovx_modules_export_graph(GraphObj *graph, char *path, char *prefix)
 {
     vx_status status = VX_FAILURE;
-    
+
     status = tivxExportGraphToDot(graph->tiovx_graph, path, prefix);
 
     return status;
@@ -697,9 +714,13 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
     Pad *pad = buf_pool->pad;
     GraphObj *graph = pad->node->graph;
 
+    LOCK(buf->pool);
+
     buf_pool->enqueuedQ[buf_pool->enqueue_head] = buf;
     buf_pool->enqueue_head++;
     buf->queued = vx_true_e;
+
+    UNLOCK(buf->pool);
 
     vxGraphParameterEnqueueReadyRef(graph->tiovx_graph,
                                     pad->graph_parameter_index,
@@ -712,14 +733,18 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
 
 Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
 {
-    Buf *buf = buf_pool->enqueuedQ[buf_pool->enqueue_tail];
     Pad *pad = buf_pool->pad;
     GraphObj *graph = pad->node->graph;
     vx_object_array ref = NULL;
     vx_uint32 num_refs = 0;
 
+    LOCK(buf_pool);
+
+    Buf *buf = buf_pool->enqueuedQ[buf_pool->enqueue_tail];
     buf_pool->enqueue_head--;
     buf->queued = vx_false_e;
+
+    UNLOCK(buf_pool);
 
     vxGraphParameterDequeueDoneRef(graph->tiovx_graph,
                                    pad->graph_parameter_index,
