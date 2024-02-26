@@ -582,6 +582,9 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     BufPool *perf_overlay_buf_pool = NULL;
     Buf *perf_overlay_buf = NULL;
 
+    Buf *v4l2_valid_bufs[num_flows];
+    Buf *v4l2_dq_bufs[num_flows];
+
     EdgeAIPerfStats perf_stats_handle;
 
     /* Capture SIGINT to stop loop */
@@ -592,6 +595,13 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     {
         pthread_mutex_init(&r_thread_lock[i], NULL);
         pthread_mutex_init(&w_thread_lock[i], NULL);
+    }
+
+    /* Initialize v4l2 buffers to NULL */
+    for (i = 0; i < num_flows; i++)
+    {
+        v4l2_valid_bufs[i] = NULL;
+        v4l2_dq_bufs[i] = NULL;
     }
 
     /* Initialize the graph */
@@ -673,10 +683,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
 
             /* Start v4l2 capture*/
             v4l2_capture_start(input_blocks[i].v4l2_obj.v4l2_capture_handle);
-
-            /* Get buffers from v4l2 handle and enqueue */
-            inbuf = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
-            tiovx_modules_enqueue_buf(inbuf);
         }
 
         else if (H264_VID == input_blocks[i].input_info->source)
@@ -761,7 +767,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             }
         }
 
-        /*Set perf overlay and enqueue*/
+        /* Set perf overlay and enqueue */
         if(NULL != output_blocks[i].perf_overlay_pad)
         {
             perf_overlay_buf_pool = output_blocks[i].perf_overlay_pad->buf_pool;
@@ -774,6 +780,85 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     /* Main loop that runs till interrupt */
     while(run_loop)
     {
+        bool skip = false;
+
+        /***********************************************************************
+        *                        V4L2 Sources                                  *
+        ***********************************************************************/
+
+        for(i = 0; i < num_input_blocks; i++)
+        {
+            if (LINUX_CAM == input_blocks[i].input_info->source)
+            {
+                /*
+                 * Dqueue v4l2 buffers and if not NULL store in valid buffers
+                 * which will be used later to enqueue and dqueue in openvx graph
+                 */
+                v4l2_dq_bufs[i] = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
+                if(NULL != v4l2_dq_bufs[i])
+                {
+                    v4l2_valid_bufs[i] = v4l2_dq_bufs[i];
+                }
+            }
+        }
+
+        for(i = 0; i < num_input_blocks; i++)
+        {
+            if (LINUX_CAM == input_blocks[i].input_info->source &&
+                NULL == v4l2_valid_bufs[i])
+            {
+                /*
+                 * Skip the loop if any v4l2 buffer is not there
+                 */
+                skip = true;
+                break;
+            }
+        }
+
+        for(i = 0; i < num_input_blocks; i++)
+        {
+            in_buf_pool = input_blocks[i].input_pad->buf_pool;
+            if (LINUX_CAM == input_blocks[i].input_info->source)
+            {
+                /*
+                 * If all v4l2 buffers are present, enqueue and dequeue to
+                 * openvx graph.
+                 */
+                if(!skip)
+                {
+                    tiovx_modules_enqueue_buf(v4l2_valid_bufs[i]);
+                    inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+                    v4l2_capture_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle, inbuf);
+                    v4l2_valid_bufs[i] = NULL;
+
+                    /* AEWB processing for linux */
+                    linux_h3a_buf_pool = input_blocks[i].v4l2_obj.h3a_pad->buf_pool;
+                    linux_aewb_buf_pool = input_blocks[i].v4l2_obj.aewb_pad->buf_pool;
+                    linux_h3a_buf = tiovx_modules_dequeue_buf(linux_h3a_buf_pool);
+                    linux_aewb_buf = tiovx_modules_dequeue_buf(linux_aewb_buf_pool);
+                    aewb_process(input_blocks[i].v4l2_obj.aewb_handle, linux_h3a_buf, linux_aewb_buf);
+                    tiovx_modules_enqueue_buf(linux_h3a_buf);
+                    tiovx_modules_enqueue_buf(linux_aewb_buf);
+                }
+
+                /*
+                 * Else, enqueue back the dequeue buffer from v4l2 capture
+                 */
+                else if(NULL != v4l2_dq_bufs[i])
+                {
+                    v4l2_capture_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle, v4l2_dq_bufs[i]);
+                }
+            }
+        }
+
+        if(skip)
+        {
+            continue;
+        }
+
+        /***********************************************************************
+        *                        Other Sources                                 *
+        ***********************************************************************/
         for(i = 0; i < num_input_blocks; i++)
         {
             in_buf_pool = input_blocks[i].input_pad->buf_pool;
@@ -782,26 +867,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 /* Dequeue and the enqueue buffers */
                 inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
                 tiovx_modules_enqueue_buf(inbuf);
-            }
-
-            else if (LINUX_CAM == input_blocks[i].input_info->source)
-            {
-                /* Dequeue from graph, enqueue to v4l2 for capturing,
-                 * then dequeue from v4l2 and enqueue to graph
-                 */
-                inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-                v4l2_capture_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle, inbuf);
-                inbuf = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
-                tiovx_modules_enqueue_buf(inbuf);
-
-                /* AEWB processing for linux */
-                linux_h3a_buf_pool = input_blocks[i].v4l2_obj.h3a_pad->buf_pool;
-                linux_aewb_buf_pool = input_blocks[i].v4l2_obj.aewb_pad->buf_pool;
-                linux_h3a_buf = tiovx_modules_dequeue_buf(linux_h3a_buf_pool);
-                linux_aewb_buf = tiovx_modules_dequeue_buf(linux_aewb_buf_pool);
-                aewb_process(input_blocks[i].v4l2_obj.aewb_handle, linux_h3a_buf, linux_aewb_buf);
-                tiovx_modules_enqueue_buf(linux_h3a_buf);
-                tiovx_modules_enqueue_buf(linux_aewb_buf);
             }
 
             else if (H264_VID == input_blocks[i].input_info->source)
@@ -880,8 +945,8 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     {
         pthread_join(write_img_thread_id[i], NULL);
     }
-    
-    /* Dequeue the remaining buffers in graph and release it */
+
+    /* Stop handles */
     for(i = 0; i < num_input_blocks; i++)
     {
         in_buf_pool = input_blocks[i].input_pad->buf_pool;
@@ -895,55 +960,28 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         }
         else if (LINUX_CAM == input_blocks[i].input_info->source)
         {
-            linux_h3a_buf_pool = input_blocks[i].v4l2_obj.h3a_pad->buf_pool;
-            linux_aewb_buf_pool = input_blocks[i].v4l2_obj.aewb_pad->buf_pool;
-            linux_h3a_buf = tiovx_modules_dequeue_buf(linux_h3a_buf_pool);
-            tiovx_modules_release_buf(linux_h3a_buf);
-            linux_aewb_buf = tiovx_modules_dequeue_buf(linux_aewb_buf_pool);
-            tiovx_modules_release_buf(linux_aewb_buf);
-
-            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-            tiovx_modules_release_buf(inbuf);
             v4l2_capture_stop(input_blocks[i].v4l2_obj.v4l2_capture_handle);
             v4l2_capture_delete_handle(input_blocks[i].v4l2_obj.v4l2_capture_handle);
         }
         else if (H264_VID == input_blocks[i].input_info->source)
         {
-            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-            tiovx_modules_release_buf(inbuf);
             v4l2_decode_stop(input_blocks[i].v4l2_obj.v4l2_decode_handle);
             v4l2_decode_delete_handle(input_blocks[i].v4l2_obj.v4l2_decode_handle);
-        }
-        else if (RAW_IMG == input_blocks[i].input_info->source)
-        {
-            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-            tiovx_modules_release_buf(inbuf);
         }
     }
 
     for(i = 0; i < num_output_blocks; i++)
     {
-        if(NULL != output_blocks[i].output_pad)
-        {
-            out_buf_pool = output_blocks[i].output_pad->buf_pool;
-            outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-            tiovx_modules_release_buf(outbuf);
-            if (H264_ENCODE == output_blocks[i].output_info->sink)
-            {
-                v4l2_encode_stop(output_blocks[i].v4l2_obj.v4l2_encode_handle);
-                v4l2_encode_delete_handle(output_blocks[i].v4l2_obj.v4l2_encode_handle);
-            }
-        }
 
-        if(NULL != output_blocks[i].perf_overlay_pad)
+        if (H264_ENCODE == output_blocks[i].output_info->sink)
         {
-            perf_overlay_buf_pool = output_blocks[i].perf_overlay_pad->buf_pool;
-            perf_overlay_buf = tiovx_modules_dequeue_buf(perf_overlay_buf_pool);
-            tiovx_modules_release_buf(perf_overlay_buf);
+            v4l2_encode_stop(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+            v4l2_encode_delete_handle(output_blocks[i].v4l2_obj.v4l2_encode_handle);
         }
     }
 
 clean_graph:
+
     tiovx_modules_clean_graph(&graph);
 
 exit:
