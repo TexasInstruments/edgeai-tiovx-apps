@@ -134,6 +134,10 @@ vx_status tiovx_dl_post_proc_set_cfg(NodeObj *node)
 
     node_cfg->params.num_input_tensors = node_cfg->num_input_tensors;
     node_cfg->params.oc_prms.ioBufDesc = &node_cfg->io_buf_desc;
+    node_cfg->params.od_prms.ioBufDesc = &node_cfg->io_buf_desc;
+    node_cfg->params.ss_prms.ioBufDesc = &node_cfg->io_buf_desc;
+    node_cfg->params.ss_prms.inDataWidth = node_cfg->io_buf_desc.outWidth[0];
+    node_cfg->params.ss_prms.inDataHeight = node_cfg->io_buf_desc.outHeight[0];
 
     for(i=0; i < node_cfg->num_input_tensors; i++)
     {
