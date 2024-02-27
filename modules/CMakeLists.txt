@@ -32,6 +32,7 @@ if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${
          SRC_FILES
          src/tiovx_capture_module.c
          src/tiovx_aewb_module.c
+         src/tiovx_sde_module.c
          src/tiovx_display_module.c)
 endif()
 
