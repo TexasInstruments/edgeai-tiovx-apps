@@ -77,8 +77,8 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
     GraphObj graph;
     NodeObj *node = NULL;
     TIOVXMosaicNodeCfg cfg;
-    BufPool *in_buf_pool = NULL, *out_buf_pool = NULL, *bg_buf_pool;
-    Buf *inbuf = NULL, *outbuf = NULL, *bgbuf = NULL;
+    BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
+    Buf *inbuf = NULL, *outbuf = NULL;
     v4l2DecodeCfg v4l2_decode_cfg;
     v4l2DecodeHandle *v4l2_decode_handle;
     v4l2DecodeOutFmt v4l2_decode_fmt;
@@ -115,7 +115,6 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     in_buf_pool = node->sinks[0].buf_pool;
     out_buf_pool = node->srcs[0].buf_pool;
-    bg_buf_pool = node->sinks[1].buf_pool;
 
     kms_display_init_cfg(&kms_display_cfg);
     kms_display_cfg.width = 1920;
@@ -142,21 +141,16 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
         outbuf = tiovx_modules_acquire_buf(out_buf_pool);
         tiovx_modules_enqueue_buf(outbuf);
 
-        bgbuf = tiovx_modules_acquire_buf(bg_buf_pool);
-        tiovx_modules_enqueue_buf(bgbuf);
-
         tiovx_modules_schedule_graph(&graph);
         tiovx_modules_wait_graph(&graph);
 
         inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
         outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-        bgbuf = tiovx_modules_dequeue_buf(bg_buf_pool);
 
         v4l2_decode_enqueue_buf(v4l2_decode_handle, inbuf);
 
         kms_display_render_buf(kms_display_handle, outbuf);
         tiovx_modules_release_buf(outbuf);
-        tiovx_modules_release_buf(bgbuf);
     }
 
     v4l2_decode_stop(v4l2_decode_handle);

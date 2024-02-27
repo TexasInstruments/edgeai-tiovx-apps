@@ -78,8 +78,8 @@ vx_status app_modules_mosaic_test(vx_int32 argc, vx_char* argv[])
     GraphObj graph;
     NodeObj *node = NULL;
     TIOVXMosaicNodeCfg cfg;
-    BufPool *in_buf_pool[APP_NUM_INPUTS], *out_buf_pool = NULL, *bg_buf_pool = NULL;
-    Buf *inbuf[APP_NUM_INPUTS], *outbuf = NULL, *bgbuf = NULL;
+    BufPool *in_buf_pool[APP_NUM_INPUTS], *out_buf_pool = NULL;
+    Buf *inbuf[APP_NUM_INPUTS], *outbuf = NULL;
     char input_filename[100];
     char output_filename[100];
     int i;
@@ -128,10 +128,6 @@ vx_status app_modules_mosaic_test(vx_int32 argc, vx_char* argv[])
     outbuf = tiovx_modules_acquire_buf(out_buf_pool);
     tiovx_modules_enqueue_buf(outbuf);
 
-    bg_buf_pool = node->sinks[APP_NUM_INPUTS].buf_pool;
-    bgbuf = tiovx_modules_acquire_buf(bg_buf_pool);
-    tiovx_modules_enqueue_buf(bgbuf);
-
     tiovx_modules_schedule_graph(&graph);
     tiovx_modules_wait_graph(&graph);
 
@@ -141,7 +137,6 @@ vx_status app_modules_mosaic_test(vx_int32 argc, vx_char* argv[])
     }
 
     outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-    bgbuf = tiovx_modules_dequeue_buf(bg_buf_pool);
 
     writeImage(output_filename, (vx_image)outbuf->handle);
 
@@ -151,7 +146,6 @@ vx_status app_modules_mosaic_test(vx_int32 argc, vx_char* argv[])
     }
 
     tiovx_modules_release_buf(outbuf);
-    tiovx_modules_release_buf(bgbuf);
 
     tiovx_modules_clean_graph(&graph);
 
