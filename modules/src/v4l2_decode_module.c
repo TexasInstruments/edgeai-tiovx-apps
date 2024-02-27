@@ -82,6 +82,7 @@
 #define V4L2_DECODE_DEFAULT_INPUT_FILE "/opt/edgeai-test-data/videos/video0_1280_768.h264"
 #define V4L2_DECODE_DEFAULT_BUFQ_DEPTH 4
 #define V4L2_DECODE_MAX_BUFQ_DEPTH 10
+#define V4L2_DECODE_MAX_BUFQ_DEPTH_OFFSET 3 //This is set in wave5 driver
 
 #define MAX_FRAMES 1000
 #define MAX_OUTBUFS 4
@@ -460,7 +461,7 @@ int v4l2_decode_request_capture_buffers(v4l2DecodeHandle *handle)
     int status = 0;
 
     CLR(&req);
-    req.count = handle->cfg.bufq_depth;
+    req.count = handle->cfg.bufq_depth + V4L2_DECODE_MAX_BUFQ_DEPTH_OFFSET;
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     req.memory = V4L2_MEMORY_DMABUF;
 
