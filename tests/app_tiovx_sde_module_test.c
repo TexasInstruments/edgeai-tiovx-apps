@@ -73,8 +73,9 @@ vx_status app_modules_sde_test(vx_int32 argc, vx_char* argv[])
 {
     vx_status status = VX_FAILURE;
     GraphObj graph;
-    NodeObj *node = NULL;
+    NodeObj *node = NULL, *viz_node = NULL;
     TIOVXSdeNodeCfg cfg;
+    TIOVXSdeVizNodeCfg viz_cfg;
     BufPool *in_buf_pool_left = NULL, *in_buf_pool_right = NULL, *out_buf_pool = NULL;
     Buf *inbuf_left = NULL, *inbuf_right = NULL, *outbuf = NULL;
     char input_filename_left[100], input_filename_right[100];
@@ -82,7 +83,9 @@ vx_status app_modules_sde_test(vx_int32 argc, vx_char* argv[])
 
     sprintf(input_filename_left, "%s/raw_images/modules_test/avp3_1280x720_0_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(input_filename_right, "%s/raw_images/modules_test/avp3_1280x720_1_nv12.yuv", EDGEAI_DATA_PATH);
-    sprintf(output_filename, "%s/output/output_sde_s16.raw", EDGEAI_DATA_PATH);
+    sprintf(output_filename, "%s/output/sde_output.rgb", EDGEAI_DATA_PATH);
+
+    status = tiovx_modules_initialize_graph(&graph);
 
     tiovx_sde_init_cfg(&cfg);
 
@@ -90,13 +93,22 @@ vx_status app_modules_sde_test(vx_int32 argc, vx_char* argv[])
     cfg.height = IMAGE_HEIGHT;
     cfg.input_cfg.color_format = VX_DF_IMAGE_NV12;
 
-    status = tiovx_modules_initialize_graph(&graph);
     node = tiovx_modules_add_node(&graph, TIOVX_SDE, (void *)&cfg);
+
+    tiovx_sde_viz_init_cfg(&viz_cfg);
+
+    viz_cfg.width = IMAGE_WIDTH;
+    viz_cfg.height = IMAGE_HEIGHT;
+
+    viz_node = tiovx_modules_add_node(&graph, TIOVX_SDE_VIZ, (void *)&viz_cfg);
+
+    tiovx_modules_link_pads(&node->srcs[0], &viz_node->sinks[0]);
+
     status = tiovx_modules_verify_graph(&graph);
 
     in_buf_pool_left = node->sinks[0].buf_pool;
     in_buf_pool_right = node->sinks[1].buf_pool;
-    out_buf_pool = node->srcs[0].buf_pool;
+    out_buf_pool = viz_node->srcs[0].buf_pool;
 
     inbuf_left = tiovx_modules_acquire_buf(in_buf_pool_left);
     inbuf_right = tiovx_modules_acquire_buf(in_buf_pool_right);
