@@ -79,14 +79,10 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
     graph->tiovx_context = vxCreateContext();
 
     tivxHwaLoadKernels(graph->tiovx_context);
-    tivxImgProcLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcLoadKernels(graph->tiovx_context);
     tivxTIDLLoadKernels(graph->tiovx_context);
     tivxVideoIOLoadKernels(graph->tiovx_context);
     tivxExtLoadKernels(graph->tiovx_context);
-#if !defined (SOC_AM62A)
-    tivxImagingLoadKernels(graph->tiovx_context);
-#endif
 
     graph->tiovx_graph = vxCreateGraph(graph->tiovx_context);
     graph->schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL;
@@ -846,14 +842,10 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
 
     vxReleaseGraph(&graph->tiovx_graph);
 
-#if !defined (SOC_AM62A)
-    tivxImagingUnLoadKernels(graph->tiovx_context);
-#endif
     tivxExtUnLoadKernels(graph->tiovx_context);
     tivxVideoIOUnLoadKernels(graph->tiovx_context);
     tivxTIDLUnLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcUnLoadKernels(graph->tiovx_context);
-    tivxImgProcUnLoadKernels(graph->tiovx_context);
     tivxHwaUnLoadKernels(graph->tiovx_context);
 
     vxReleaseContext(&graph->tiovx_context);
