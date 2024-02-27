@@ -356,6 +356,8 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
 
     vxReleaseReference(&exemplar);
 
+    tivxImagingLoadKernels(node->graph->tiovx_context);
+
     return status;
 }
 
@@ -422,6 +424,9 @@ vx_status tiovx_aewb_delete_node(NodeObj *node)
     {
         vxReleaseUserDataObject(&node_priv->dcc_config);
     }
+
+    tivxImagingUnLoadKernels(node->graph->tiovx_context);
+
     return status;
 }
 

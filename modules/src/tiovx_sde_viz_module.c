@@ -153,6 +153,8 @@ vx_status tiovx_sde_viz_init_node(NodeObj *node)
 
     tiovx_sde_viz_module_configure_params(node);
 
+    tivxStereoLoadKernels(node->graph->tiovx_context);
+
     return status;
 }
 
@@ -190,6 +192,8 @@ vx_status tiovx_sde_viz_delete_node(NodeObj *node)
     status = vxReleaseNode(&node->tiovx_node);
 
     status = vxReleaseUserDataObject(&node_priv->sde_viz_params_obj);
+
+    tivxStereoUnLoadKernels(node->graph->tiovx_context);
 
     return status;
 }
