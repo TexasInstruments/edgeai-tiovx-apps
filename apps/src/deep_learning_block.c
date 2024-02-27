@@ -61,6 +61,7 @@
  */
 
 #include <yaml_parser.h>
+#include <edgeai_nv12_drawing_utils.h>
 
 #include <apps/include/deep_learning_block.h>
 
@@ -68,6 +69,17 @@ static char *g_mpu_targets[] = {TIVX_TARGET_MPU_0, TIVX_TARGET_MPU_1,
                                 TIVX_TARGET_MPU_2, TIVX_TARGET_MPU_3};
 
 static uint8_t g_mpu_target_idx = 0;
+
+/* RGB Color Map for Semantic Segmentation */
+static uint8_t RGB_COLOR_MAP[26][3] = {{255,0,0},{0,255,0},{73,102,92},
+                                       {255,255,0},{0,255,255},{0,99,245},
+                                       {255,127,0},{0,255,100},{235,117,117},
+                                       {242,15,109},{118,194,167},{255,0,255},
+                                       {231,200,255},{255,186,239},{0,110,0},
+                                       {0,0,255},{110,0,0},{110,110,0},
+                                       {100,0,50},{90,60,0},{255,255,255} ,
+                                       {170,0,255},{204,255,0},{78,69,128},
+                                       {133,133,74},{0,0,110}};
 
 void initialize_deep_learning_block(DeepLearningBlock *dl_block)
 {
@@ -223,6 +235,24 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
                 TIOVX_APPS_ERROR("Unable to parse classnames\n");
                 return status;
             }
+        }
+        else if(0 == strcmp("segmentation", post_proc_info->task_type))
+        {
+            uint32_t max_color_class = sizeof(RGB_COLOR_MAP)/sizeof(RGB_COLOR_MAP[0]);
+            dl_post_proc_cfg.params.task_type = TIVX_DL_POST_PROC_SEGMENTATION_TASK_TYPE;
+            dl_post_proc_cfg.params.ss_prms.alpha = post_proc_info->alpha;
+            dl_post_proc_cfg.params.ss_prms.YUVColorMap = (uint8_t **) malloc(sizeof(uint8_t *) * max_color_class);
+            for (uint32_t i = 0; i < max_color_class; i++)
+            {
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i] = (uint8_t *) malloc(sizeof(uint8_t) * 3);
+                uint8_t R = RGB_COLOR_MAP[i][0];
+                uint8_t G = RGB_COLOR_MAP[i][1];
+                uint8_t B = RGB_COLOR_MAP[i][2];
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i][0] = RGB2Y(R,G,B);
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i][1] = RGB2U(R,G,B);
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i][2] = RGB2V(R,G,B);
+            }
+            dl_post_proc_cfg.params.ss_prms.MaxColorClass = max_color_class;
         }
         else
         {
