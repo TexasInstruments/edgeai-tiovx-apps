@@ -88,6 +88,7 @@
 #define APP_MODULES_TEST_CAPTURE_DL_DISPLAY (0)
 #define APP_MODULES_TEST_PYRAMID (1)
 #define APP_MODULES_TEST_SDE (1)
+#define APP_MODULES_TEST_DOF (1)
 
 char *EDGEAI_DATA_PATH;
 
@@ -289,6 +290,15 @@ int main(int argc, char *argv[])
         int app_modules_sde_test(int argc, char* argv[]);
 
         status = app_modules_sde_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_DOF)
+    if(status==0)
+    {
+        printf("Running dof module test\n");
+        int app_modules_dof_test(int argc, char* argv[]);
+
+        status = app_modules_dof_test(argc, argv);
     }
 #endif
 #if (APP_MODULES_TEST_CAPTURE_VISS_LDC_MSC_DISPLAY)
