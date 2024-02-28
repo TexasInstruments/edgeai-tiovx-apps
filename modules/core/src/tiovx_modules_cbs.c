@@ -207,6 +207,14 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .delete_node = tiovx_dof_delete_node,
         .get_cfg_size = tiovx_dof_get_cfg_size,
         .get_priv_size = tiovx_dof_get_priv_size
+    },
+    {
+        .init_node = tiovx_dof_viz_init_node,
+        .create_node = tiovx_dof_viz_create_node,
+        .post_verify_graph = NULL,
+        .delete_node = tiovx_dof_viz_delete_node,
+        .get_cfg_size = tiovx_dof_viz_get_cfg_size,
+        .get_priv_size = tiovx_dof_viz_get_priv_size
     }
 #else
     }
