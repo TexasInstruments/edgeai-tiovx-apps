@@ -78,6 +78,7 @@
 #define V4L2_CAPTURE_DEFAULT_BUFQ_DEPTH 4
 #define V4L2_CAPTURE_MAX_BUFQ_DEPTH 8
 #define V4L2_CAPTURE_MAX_RETRIES 10
+#define V4L2_CAPTURE_STREAMON_DELAY 2 // in sec
 
 void v4l2_capture_init_cfg(v4l2CaptureCfg *cfg)
 {
@@ -241,6 +242,8 @@ int v4l2_capture_start(v4l2CaptureHandle *handle)
         TIOVX_MODULE_ERROR("[V4L2_CAPTURE] VIDIOC_STREAMON failed\n");
         status = -1;
     }
+
+    sleep(V4L2_CAPTURE_STREAMON_DELAY);
 
     return status;
 }
