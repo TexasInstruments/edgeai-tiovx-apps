@@ -106,6 +106,7 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
     cfg.enable_h3a_pad = vx_true_e;
 
     status = tiovx_modules_initialize_graph(&graph);
+    graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
     node = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&cfg);
     node->sinks[0].bufq_depth = APP_BUFQ_DEPTH;
     status = tiovx_modules_verify_graph(&graph);
@@ -136,9 +137,7 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
     aewb_handle = aewb_create_handle(&aewb_cfg);
 
     h3a_buf_pool = node->srcs[node->num_outputs - 1].buf_pool;
-    h3a_buf = tiovx_modules_acquire_buf(h3a_buf_pool);
     aewb_buf_pool = node->sinks[1].buf_pool;
-    aewb_buf = tiovx_modules_acquire_buf(node->sinks[1].buf_pool);
 
     for (int i = 0; i < out_buf_pool->bufq_depth; i++) {
         kms_display_register_buf(kms_display_handle, &out_buf_pool->bufs[i]);
@@ -151,30 +150,38 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 
     v4l2_capture_start(v4l2_capture_handle);
 
-    for (int i = 0; i < APP_NUM_ITERATIONS; i++) {
-        inbuf = v4l2_capture_dqueue_buf(v4l2_capture_handle);
-        tiovx_modules_enqueue_buf(inbuf);
-
+    for (int i = 0; i < out_buf_pool->bufq_depth; i++)
+    {
         outbuf = tiovx_modules_acquire_buf(out_buf_pool);
         tiovx_modules_enqueue_buf(outbuf);
 
+        inbuf = v4l2_capture_dqueue_buf(v4l2_capture_handle);
+        tiovx_modules_enqueue_buf(inbuf);
+
+        h3a_buf = tiovx_modules_acquire_buf(h3a_buf_pool);
         tiovx_modules_enqueue_buf(h3a_buf);
+        aewb_buf = tiovx_modules_acquire_buf(aewb_buf_pool);
         tiovx_modules_enqueue_buf(aewb_buf);
+    }
 
-        tiovx_modules_schedule_graph(&graph);
-        tiovx_modules_wait_graph(&graph);
-
+    for (int i = 0; i < APP_NUM_ITERATIONS; i++) {
         inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
         outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-
-        v4l2_capture_enqueue_buf(v4l2_capture_handle, inbuf);
-
-        kms_display_render_buf(kms_display_handle, outbuf);
-        tiovx_modules_release_buf(outbuf);
-
-        aewb_process(aewb_handle, h3a_buf, aewb_buf);
         h3a_buf = tiovx_modules_dequeue_buf(h3a_buf_pool);
         aewb_buf = tiovx_modules_dequeue_buf(aewb_buf_pool);
+
+        kms_display_render_buf(kms_display_handle, outbuf);
+        aewb_process(aewb_handle, h3a_buf, aewb_buf);
+
+        v4l2_capture_enqueue_buf(v4l2_capture_handle, inbuf);
+        do {
+            inbuf = v4l2_capture_dqueue_buf(v4l2_capture_handle);
+        } while (inbuf == NULL);
+
+        tiovx_modules_enqueue_buf(outbuf);
+        tiovx_modules_enqueue_buf(inbuf);
+        tiovx_modules_enqueue_buf(h3a_buf);
+        tiovx_modules_enqueue_buf(aewb_buf);
     }
 
     v4l2_capture_stop(v4l2_capture_handle);
