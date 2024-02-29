@@ -367,7 +367,6 @@ vx_status tiovx_viss_init_node(NodeObj *node)
             vxReleaseReference((vx_reference *)&obj);
         }
         vxReleaseReference(&exemplar);
-        node->sinks[1].bufq_depth = 1;
         node->num_inputs++;
     }
 
@@ -388,7 +387,6 @@ vx_status tiovx_viss_init_node(NodeObj *node)
             return status;
         }
         vxReleaseReference(&exemplar);
-        node->srcs[node->num_outputs].bufq_depth = 1;
         node->num_outputs++;
     }
 
