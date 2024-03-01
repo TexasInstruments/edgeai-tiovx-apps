@@ -74,6 +74,7 @@ NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg
 BufPool* tiovx_modules_allocate_bufpool(Pad *pad);
 vx_status tiovx_modules_verify_graph(GraphObj *graph);
 vx_status tiovx_modules_export_graph(GraphObj *graph, char *path, char *prefix);
+NodeObj* tiovx_modules_get_node_by_name(GraphObj *graph, char *name);
 Buf* tiovx_modules_acquire_buf(BufPool *buf_pool);
 vx_status tiovx_modules_release_buf(Buf *buf);
 vx_status tiovx_modules_clean_graph(GraphObj *graph);

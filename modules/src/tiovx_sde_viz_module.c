@@ -151,6 +151,8 @@ vx_status tiovx_sde_viz_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "sde_viz_node");
+
     tiovx_sde_viz_module_configure_params(node);
 
     tivxStereoLoadKernels(node->graph->tiovx_context);

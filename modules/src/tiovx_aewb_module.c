@@ -358,6 +358,8 @@ vx_status tiovx_aewb_init_node(NodeObj *node)
 
     tivxImagingLoadKernels(node->graph->tiovx_context);
 
+    sprintf(node->name, "aewb_node");
+
     return status;
 }
 

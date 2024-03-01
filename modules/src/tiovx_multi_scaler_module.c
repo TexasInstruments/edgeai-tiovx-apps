@@ -314,6 +314,8 @@ vx_status tiovx_multi_scaler_init_node(NodeObj *node)
         vxReleaseReference(&exemplar);
     }
 
+    sprintf(node->name, "msc_node");
+
     status = tiovx_multi_scaler_configure_crop_params(node);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[MULTI_SCALER] Failed to set crop params\n");

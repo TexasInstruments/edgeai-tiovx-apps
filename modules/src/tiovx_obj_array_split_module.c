@@ -137,6 +137,8 @@ vx_status tiovx_obj_array_split_init_node(NodeObj *node)
         }
     }
 
+    sprintf(node->name, "obj_arr_split_node");
+
     status = tiovx_modules_link_pads(node_cfg->input_pad, &node->sinks[0]);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[OBJ_ARRAY_SPLIT] Failed to link sink pad\n");

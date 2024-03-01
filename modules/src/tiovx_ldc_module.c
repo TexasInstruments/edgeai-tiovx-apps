@@ -378,6 +378,8 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
         }
     }
 
+    sprintf(node->name, "ldc_node");
+
     if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_DCC_DATA) {
         tiovx_ldc_module_configure_dcc_params(node);
     } else if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE) {
