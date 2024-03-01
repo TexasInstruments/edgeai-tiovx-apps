@@ -115,6 +115,8 @@ vx_status tiovx_color_convert_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "color_convert_node");
+
     return status;
 }
 

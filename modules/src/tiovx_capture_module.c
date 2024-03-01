@@ -356,6 +356,8 @@ vx_status tiovx_capture_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "capture_node");
+
     return status;
 }
 

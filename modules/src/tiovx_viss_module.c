@@ -392,6 +392,8 @@ vx_status tiovx_viss_init_node(NodeObj *node)
         node->num_outputs++;
     }
 
+    sprintf(node->name, "viss_node");
+
     tiovx_viss_module_configure_params(node);
     tiovx_viss_module_configure_dcc_params(node);
 

@@ -277,6 +277,8 @@ vx_status tiovx_dl_post_proc_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "dl_post_proc_node");
+
     node_priv->kernel = tivxAddKernelDLPostProc(node->graph->tiovx_context,
                                                 node_cfg->num_input_tensors);
     status = vxGetStatus((vx_reference)node_priv->kernel);

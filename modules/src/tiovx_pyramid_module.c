@@ -122,6 +122,8 @@ vx_status tiovx_pyramid_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "pyramid_node");
+
     return status;
 }
 

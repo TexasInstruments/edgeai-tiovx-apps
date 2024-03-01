@@ -179,6 +179,8 @@ vx_status tiovx_sde_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "sde_node");
+
     tiovx_sde_module_configure_params(node);
 
     return status;

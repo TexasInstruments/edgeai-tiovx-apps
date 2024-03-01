@@ -256,6 +256,8 @@ vx_status tiovx_dl_pre_proc_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "dl_pre_proc_node");
+
     return status;
 }
 
