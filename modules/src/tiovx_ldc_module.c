@@ -423,6 +423,8 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "ldc_node");
+
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     vxReplicateNode(node->graph->tiovx_graph,

@@ -397,6 +397,8 @@ vx_status tiovx_multi_scaler_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "msc_node");
+
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     vxReplicateNode(node->graph->tiovx_graph,

@@ -277,6 +277,8 @@ vx_status tiovx_dl_pre_proc_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "dl_pre_proc_node");
+
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     vxReplicateNode(node->graph->tiovx_graph,

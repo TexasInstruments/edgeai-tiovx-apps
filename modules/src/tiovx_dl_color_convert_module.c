@@ -134,6 +134,8 @@ vx_status tiovx_dl_color_convert_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "dl_color_convert_node");
+
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     vxReplicateNode(node->graph->tiovx_graph,

@@ -317,6 +317,8 @@ vx_status tiovx_dl_post_proc_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "dl_post_proc_node");
+
     vxSetReferenceName((vx_reference)node->tiovx_node, "dl_post_proc_node");
     vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, node_cfg->target_string);
 

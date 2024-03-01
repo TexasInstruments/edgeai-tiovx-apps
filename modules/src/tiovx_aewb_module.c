@@ -386,6 +386,8 @@ vx_status tiovx_aewb_create_node(NodeObj *node)
                                 aewb_out,
                                 node_priv->dcc_config);
 
+    sprintf(node->name, "aewb_node");
+
     vxReleaseUserDataObject(&config);
     vxReleaseDistribution(&histogram);
     vxReleaseUserDataObject(&aewb_out);

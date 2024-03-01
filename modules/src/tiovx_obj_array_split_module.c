@@ -169,6 +169,8 @@ vx_status tiovx_obj_array_split_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "obj_arr_split_node");
+
     vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, TIVX_TARGET_MPU_0);
     vxSetReferenceName((vx_reference)node->tiovx_node, "obj_array_split_node");
     return status;

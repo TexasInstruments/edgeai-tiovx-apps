@@ -636,6 +636,46 @@ vx_status tiovx_modules_add_to_graph_params(Pad *pad)
     return status;
 }
 
+void tiovx_modules_modify_node_names(GraphObj *graph)
+{
+    vx_bool modified[graph->num_nodes];
+
+    for (uint8_t i = 0; i < graph->num_nodes; i++) {
+        modified[i] = vx_false_e;
+    }
+
+    for (uint8_t i = 0; i < graph->num_nodes; i++) {
+        uint8_t node_count = 0;
+        vx_char i_node_name[TIOVX_MODULES_MAX_NODE_NAME];
+
+        if(vx_true_e == modified[i]) {
+            continue;
+        }
+
+        sprintf(i_node_name, graph->node_list[i].name);
+
+        for(uint8_t j = i+1; j < graph->num_nodes; j++) {
+            vx_char j_node_name[TIOVX_MODULES_MAX_NODE_NAME];
+            sprintf(j_node_name, graph->node_list[j].name);
+            if(0 == strcmp(i_node_name, j_node_name)) {
+                sprintf(graph->node_list[j].name,
+                        "%s_%d",
+                        j_node_name,
+                        ++node_count);
+                modified[j] = vx_true_e;
+            }
+        }
+
+        if(node_count > 0) {
+            sprintf(graph->node_list[i].name, "%s_0", i_node_name);
+        }
+
+        modified[i] = vx_true_e;
+
+    }
+
+}
+
 vx_status tiovx_modules_verify_graph(GraphObj *graph)
 {
     vx_status status = VX_FAILURE;
@@ -691,6 +731,8 @@ vx_status tiovx_modules_verify_graph(GraphObj *graph)
         }
     }
 
+    tiovx_modules_modify_node_names(graph);
+
     return status;
 }
 
@@ -701,6 +743,20 @@ vx_status tiovx_modules_export_graph(GraphObj *graph, char *path, char *prefix)
     status = tivxExportGraphToDot(graph->tiovx_graph, path, prefix);
 
     return status;
+}
+
+NodeObj* tiovx_modules_get_node_by_name(GraphObj *graph, char *name)
+{
+    NodeObj *node = NULL;
+
+    for (uint8_t i = 0; i < graph->num_nodes; i++) {
+        if(0 == strcmp(graph->node_list[i].name, name)) {
+            node = &graph->node_list[i];
+            break;
+        }
+    }
+
+    return node;
 }
 
 vx_status tiovx_modules_enqueue_buf(Buf *buf)

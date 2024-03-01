@@ -140,6 +140,8 @@ vx_status tiovx_pyramid_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "pyramid_node");
+
     status = vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     if (VX_SUCCESS != status) {

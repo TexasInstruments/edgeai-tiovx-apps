@@ -89,7 +89,8 @@ extern "C" {
 #define TIOVX_MODULES_MAX_BUFQ_DEPTH      (16u)
 #define TIOVX_MODULES_MAX_NODE_INPUTS     (16u)
 #define TIOVX_MODULES_MAX_NODE_OUTPUTS    (8u)
-#define TIOVX_MODULES_MAX_NODES           (256u)
+#define TIOVX_MODULES_MAX_NODES           (128u)
+#define TIOVX_MODULES_MAX_NODE_NAME       (64u)
 #define TIOVX_MODULES_MAX_NUM_CHANNELS    (16u)
 #define TIOVX_MODULES_MAX_GRAPH_PARAMS    (16u)
 
@@ -173,6 +174,7 @@ struct _NodeObj {
     Pad                 srcs[TIOVX_MODULES_MAX_NODE_OUTPUTS];
     NodeCbs             *cbs;
     void                *node_priv;
+    vx_char             name[TIOVX_MODULES_MAX_NODE_NAME];
 };
 
 struct _GraphObj {

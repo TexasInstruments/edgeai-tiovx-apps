@@ -214,6 +214,8 @@ vx_status tiovx_mosaic_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "mosaic_node");
+
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
 

@@ -793,6 +793,8 @@ vx_status tiovx_tidl_create_node(NodeObj *node)
         return status;
     }
 
+    sprintf(node->name, "tidl_node");
+
     vxSetReferenceName((vx_reference)node->tiovx_node, "tidl_node");
     vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, TIVX_TARGET_DSP_C7_1);
 

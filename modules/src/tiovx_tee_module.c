@@ -121,6 +121,8 @@ vx_status tiovx_tee_create_node(NodeObj *node)
 
     node->tiovx_node = node_cfg->peer_pad->node->tiovx_node;
 
+    sprintf(node->name, "tee_node");
+
     return status;
 }
 
