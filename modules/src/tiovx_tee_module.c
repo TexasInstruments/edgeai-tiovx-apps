@@ -111,6 +111,8 @@ vx_status tiovx_tee_init_node(NodeObj *node)
         }
     }
 
+    sprintf(node->name, "tee_node");
+
     return status;
 }
 

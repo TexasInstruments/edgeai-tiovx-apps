@@ -736,6 +736,8 @@ vx_status tiovx_tidl_init_node(NodeObj *node)
         vxReleaseReference(&exemplar);
     }
 
+    sprintf(node->name, "tidl_node");
+
     node_priv->kernel = tivxAddKernelTIDL(node->graph->tiovx_context,
                                          node_cfg->num_input_tensors, 
                                          node_cfg->num_output_tensors);

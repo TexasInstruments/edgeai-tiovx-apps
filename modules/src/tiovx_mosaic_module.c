@@ -168,6 +168,8 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "mosaic_node");
+
     status = tiovx_mosaic_create_config(node);
     if(VX_SUCCESS != status)
     {

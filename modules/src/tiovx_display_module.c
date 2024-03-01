@@ -141,6 +141,8 @@ vx_status tiovx_display_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    sprintf(node->name, "display_node");
+
     return status;
 }
 
