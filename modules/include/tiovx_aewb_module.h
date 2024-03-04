@@ -71,14 +71,30 @@
 extern "C" {
 #endif
 
+/*!
+ * \brief Structure describing the configuration of aewb tiovx module.
+ */
 typedef struct {
+    /*! \brief Sensor name as defined in Imaging repo */
     vx_char         sensor_name[ISS_SENSORS_MAX_NAME];
+
+    /*! \brief AWB mode */
     uint8_t         awb_mode;
+
+    /*! \brief AWB skip frames */
     uint8_t         awb_num_skip_frames;
+
+    /*! \brief AE skip framed */
     uint8_t         ae_num_skip_frames;
+
+    /*! \brief Channel mask describing the cameras selected in case FPD Link fusion board */
     uint32_t        ch_mask;
 } TIOVXAewbNodeCfg;
 
+/*! \brief Function to initialize tiovx AEWB config.
+ * \param [in,out] cfg \ref TIOVXAewbNodeCfg.
+ * \ingroup tiovx_modules
+ */
 void tiovx_aewb_init_cfg(TIOVXAewbNodeCfg *cfg);
 vx_status tiovx_aewb_init_node(NodeObj *node);
 vx_status tiovx_aewb_create_node(NodeObj *node);
