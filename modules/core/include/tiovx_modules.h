@@ -69,19 +69,122 @@
 extern "C" {
 #endif
 
+/*! \brief Function to initialize a graph object.
+ * \param [in,out] graph Graph object \ref _GraphObj.
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_initialize_graph(GraphObj *graph);
+
+/*! \brief Function to add a new node to graph.
+ * \param [in,out] graph Graph object \ref _GraphObj.
+ * \param [in] node_type Enum associated with the module to add node for \ref NODE_TYPES.
+ * \parm [in] cfg Configuration needed for given module
+ *            This is module specific structure defined in module header.
+ *
+ * \return New node object \ref NodeObj
+ *
+ * \ingroup tiovx_modules
+ */
 NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg);
-BufPool* tiovx_modules_allocate_bufpool(Pad *pad);
+
+
+/*! \brief Function to be called after adding and connecting all the nodes.
+ *         This function will created actual OpenVX Nodes, creates graph parameters
+ *         for floating pads and created buffer pools for all graph params
+ *
+ * \param [in,out] graph Graph object \ref _GraphObj.
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_verify_graph(GraphObj *graph);
+
+
+/*! \brief Function to export graph as a dot file.
+ *
+ * \param [in] graph Graph object \ref _GraphObj.
+ * \param [in] path To dump the dot files.
+ * \param [in] prefix To be added to dot files.
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_export_graph(GraphObj *graph, char *path, char *prefix);
+
+/*! \brief Function to get access to node object by name.
+ *
+ * \param [in] graph Graph object \ref _GraphObj.
+ * \param [in] name of the node.
+ *
+ * \return Node object of given name \ref NodeObj
+ *
+ * \ingroup tiovx_modules
+ */
 NodeObj* tiovx_modules_get_node_by_name(GraphObj *graph, char *name);
+
+/*! \brief Acquire a free buffer from a buffer pool.
+ *
+ * \param [in] buf_pool Buffer pool \ref _BufPool.
+ *
+ * \return Free Buffer \ref _Buf
+ *
+ * \ingroup tiovx_modules
+ */
 Buf* tiovx_modules_acquire_buf(BufPool *buf_pool);
+
+/*! \brief Release a previously acquired buffer back to its pool.
+ *
+ * \param [in] buf Buffer to be released \ref _Buf.
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_release_buf(Buf *buf);
+
+/*! \brief Function to clean the graph at the end of the application.
+ *
+ * \param [in] buf Buffer to be released \ref _Buf.
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_clean_graph(GraphObj *graph);
+
+/*! \brief Function to enqueue a buffer to OpenVX graph.
+ *
+ * \param [in] buf Buffer to be enqueued \ref _Buf.
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_enqueue_buf(Buf *buf);
+
+/*! \brief dequeue a buffer from OpenVX graph.
+ *
+ * \param [in] buf_pool Buffer pool \ref _BufPool.
+ *
+ * \return Free Buffer \ref _Buf
+ *
+ * \ingroup tiovx_modules
+ */
 Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool);
+
+/*! \brief Function to schedule graph, if mode set to manual.
+ *
+ * \param [in] buf Buffer to be enqueued \ref _Buf.
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_schedule_graph(GraphObj *graph);
+
+/*! \brief Function to wait for graph exec, if mode set to manual.
+ *
+ * \param [in] buf Buffer to be enqueued \ref _Buf.
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_wait_graph(GraphObj *graph);
+
+
+/*! \brief Function to release a node, to be used only in modules.
+ *
+ * \param [in] Node object \ref NodeObj
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_release_node(NodeObj *node);
 
 #ifdef __cplusplus

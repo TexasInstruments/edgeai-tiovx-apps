@@ -105,6 +105,9 @@ extern "C" {
 #define TIOVX_MODULES_DEFAULT_NUM_CHANNELS    (1u)
 #define TIOVX_MODULES_MAX_REF_HANDLES     (16u)
 
+/*!
+ * \brief Enum for pad directions.
+ */
 typedef enum {
     SRC = 0,
     SINK,
@@ -116,43 +119,107 @@ typedef struct _GraphObj    GraphObj;
 typedef struct _Buf         Buf;
 typedef struct _BufPool     BufPool;
 
+/*!
+ * \brief Structure describing a Buffer object.
+ */
 struct _Buf {
+    /*! \brief Bufferpool to which the buffer belongs to \ref _BufPool */
     BufPool             *pool;
+
+    /*! \brief Index of the buffer with respect to all the buffers in the pool */
     vx_int32            buf_index;
+
+    /*! \brief Set to TRUE if buffer is aquired*/
     vx_bool             acquired;
+
+    /*! \brief Set to TRUE if buffer is queued to graph*/
     vx_bool             queued;
+
+    /*! \brief Object array for the buffer */
     vx_object_array     arr;
+
+    /*! \brief 0th handle of the object array */
     vx_reference        handle;
+
+    /*! \brief Number of channels */
     vx_int32            num_channels;
 };
 
+/*!
+ * \brief Structure describing a Buffer pool.
+ */
 struct _BufPool {
+    /*! \brief Pad with which the buffer pool is allocated for \ref _Pad */
     Pad                 *pad;
+
+    /*! \brief List of buffers in the pool \ref _Buf */
     Buf                 bufs[TIOVX_MODULES_MAX_BUFQ_DEPTH];
+
+    /*! \brief Number of buffers in the pool */
     vx_int32            bufq_depth;
+
+    /*! \brief Array that contains all free buffers \ref _Buf */
     Buf                 *freeQ[TIOVX_MODULES_MAX_BUFQ_DEPTH];
+
+    /*! \brief Number of buffers that are free */
     vx_int32            free_count;
+
+    /*! \brief List of buffers that are enqueued \ref _Buf */
     Buf                 *enqueuedQ[TIOVX_MODULES_MAX_BUFQ_DEPTH];
+
+    /*! \brief Head pointer for queue management */
     vx_int32            enqueue_head;
+
+    /*! \brief Tail pointer for queue management */
     vx_int32            enqueue_tail;
+
+    /*! \brief Ref list for graph param */
     vx_reference        ref_list[TIOVX_MODULES_MAX_BUFQ_DEPTH];
+
+    /*! \brief Mutex for queue management */
     pthread_mutex_t     lock;
 };
 
+/*!
+ * \brief Structure describing a Pad.
+ */
 struct _Pad {
+    /*! \brief Node to which the pad belongs to \ref _NodeObj */
     NodeObj             *node;
+
+    /*! \brief Peer pad to which the pad is connected to */
     Pad                 *peer_pad;
+
+    /*! \brief Pad direction \ref PAD_DIRECTION */
     PAD_DIRECTION       direction;
+
+    /*! \brief Index among all the pads in the node with same direction */
     vx_int32            pad_index;
+
+    /*! \brief Node parameter index */
     vx_int32            node_parameter_index;
+
+    /*! \brief Graph parameter index */
     vx_int32            graph_parameter_index;
+
+    /*! \brief Number of channels */
     vx_int32            num_channels;
+
+
+    /*! \brief Buffer queue depth */
     vx_int32            bufq_depth;
+
+    /*! \brief Buffer pool allocated for this pad */
     BufPool             *buf_pool;
+
+    /*! \brief vx_reference that defines the data that this pad handles */
     vx_reference        exemplar;
     vx_object_array     exemplar_arr;
 };
 
+/*!
+ * \brief Structure of function prototypes to be implemented by each module.
+ */
 typedef struct {
     vx_status (*init_node)(NodeObj *node);
     vx_status (*create_node)(NodeObj *node);
@@ -162,27 +229,64 @@ typedef struct {
     vx_uint32 (*get_priv_size)();
 } NodeCbs;
 
+/*!
+ * \brief Structure describing a Node.
+ */
 struct _NodeObj {
+    /*! \brief Name of the node */
     vx_char             name[VX_MAX_REFERENCE_NAME];
+
+    /*! \brief Pointer to the parent Graph \ref _GraphObj */
     GraphObj            *graph;
+
+    /*! \brief Copy of node cfg supplied during add node */
     void                *node_cfg;
+
+    /*! \brief Index among all nodes in the graph */
     vx_int32            node_index;
+
+    /*! \brief Actual OpenVx node */
     vx_node             tiovx_node;
+
+    /*! \brief Number of inputs to the Node */
     vx_int32            num_inputs;
+
+    /*! \brief Number of outputs to the Node */
     vx_int32            num_outputs;
+
+    /*! \brief List of input pads \ref _Pad */
     Pad                 sinks[TIOVX_MODULES_MAX_NODE_INPUTS];
+
+    /*! \brief List of output pads \ref _Pad */
     Pad                 srcs[TIOVX_MODULES_MAX_NODE_OUTPUTS];
+
+    /*! \brief Module call backs \ref NodeCbs */
     NodeCbs             *cbs;
+
+    /*! \brief Pointer to private data managed by modules */
     void                *node_priv;
 };
 
 struct _GraphObj {
+    /*! \brief OpenVX context used for creating all OpenVX references */
     vx_context                          tiovx_context;
+
+    /*! \brief Actual OpenVX graph */
     vx_graph                            tiovx_graph;
+
+    /*! \brief Graph params list */
     vx_graph_parameter_queue_params_t   graph_params_list[TIOVX_MODULES_MAX_GRAPH_PARAMS];
+
+    /*! \brief Number of graph params */
     vx_int32                            num_graph_params;
+
+    /*! \brief Number of nodes in the graph */
     vx_int32                            num_nodes;
+
+    /*! \brief List of nodes in the graph */
     NodeObj                             node_list[TIOVX_MODULES_MAX_NODES];
+
+    /* \brief Schedule mode (AUTO or MANUAL) */
     vx_enum                             schedule_mode;
     pthread_mutex_t                     lock;
 };
@@ -218,6 +322,14 @@ typedef struct {
 } DstCfg;
 
 vx_status tiovx_module_create_pad_exemplar(Pad *pad, vx_reference exemplar);
+
+/*! \brief Function to link two pads.
+ *
+ * \param [in] src_pad Source pad\ref _Pad.
+ * \param [in] sink_pad Sink pad \ref _Pad.
+ *
+ * \ingroup tiovx_modules
+ */
 vx_status tiovx_modules_link_pads(Pad *src_pad, Pad *sink_pad);
 
 #ifdef __cplusplus
