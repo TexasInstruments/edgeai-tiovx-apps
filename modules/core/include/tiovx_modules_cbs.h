@@ -90,6 +90,9 @@
 extern "C" {
 #endif
 
+/*!
+ * \brief Enum that lists all available modules.
+ */
 typedef enum {
     TIOVX_MULTI_SCALER = 0,
     TIOVX_DL_COLOR_CONVERT,
