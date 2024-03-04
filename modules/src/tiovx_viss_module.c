@@ -87,7 +87,7 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
 
     if(node_cfg->output_select[0] == TIOVX_VISS_MODULE_OUTPUT_EN)
     {
-#if defined(SOC_AM62A)
+#if defined(SOC_AM62A) || defined(SOC_J722S)
         if(node_cfg->viss_params.enable_ir_op)
         {
             if(node_cfg->output_cfgs[0].color_format == VX_DF_IMAGE_U8)
@@ -120,7 +120,7 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
         {
             node_cfg->viss_params.fcp[0].mux_output2  = TIVX_VPAC_VISS_MUX2_YUV422;
         }
-#if defined(SOC_AM62A)
+#if defined(SOC_AM62A) || defined(SOC_J722S)
         else if((node_cfg->output_cfgs[2].color_format == VX_DF_IMAGE_U16) &&
                 (node_cfg->viss_params.enable_ir_op))
         {
@@ -137,7 +137,7 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
         node_cfg->viss_params.fcp[0].mux_output4  = 0;
     }
 
-#if defined(SOC_AM62A)
+#if defined(SOC_AM62A) || defined(SOC_J722S)
     if(node_cfg->viss_params.bypass_pcid)
         node_cfg->viss_params.enable_ir_op = TIVX_VPAC_VISS_IR_DISABLE;
 
@@ -233,7 +233,7 @@ static vx_status tiovx_viss_module_configure_dcc_params(NodeObj *node)
 void tiovx_viss_init_cfg(TIOVXVissNodeCfg *node_cfg)
 {
     tivx_vpac_viss_params_init(&node_cfg->viss_params);
-    #if defined(SOC_AM62A)
+    #if defined(SOC_AM62A) || defined(SOC_J722S)
         node_cfg->viss_params.bypass_pcid = 1;
         node_cfg->viss_params.enable_ir_op = TIVX_VPAC_VISS_IR_DISABLE;
         node_cfg->viss_params.enable_bayer_op = TIVX_VPAC_VISS_BAYER_ENABLE;
@@ -296,7 +296,7 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
-    #if defined(SOC_AM62A)
+    #if defined(SOC_AM62A) || defined(SOC_J722S)
         if (node_cfg->viss_params.enable_ir_op == TIVX_VPAC_VISS_IR_ENABLE) {
             node_cfg->output_select[0] = TIOVX_VISS_MODULE_OUTPUT_EN;
         } else {

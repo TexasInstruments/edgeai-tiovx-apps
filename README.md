@@ -31,7 +31,7 @@
 
     ```console
     root@j7-evm:/opt# cd edgeai-tiovx-apps
-    root@j7-evm:/opt/edgeai-tiovx-apps# export SOC=(j721e or j721s2 or j784s4 or am62a)
+    root@j7-evm:/opt/edgeai-tiovx-apps# export SOC=(j721e or j721s2 or j784s4 or j722s or am62a)
     root@j7-evm:/opt/edgeai-tiovx-apps# mkdir build
     root@j7-evm:/opt/edgeai-tiovx-apps# cd build
     root@j7-evm:/opt/edgeai-tiovx-apps/build# cmake ..
