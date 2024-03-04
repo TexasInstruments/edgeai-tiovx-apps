@@ -961,10 +961,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         /* Why RTOS Cam needs two */
         if (RTOS_CAM == input_blocks[i].input_info->source)
         {
-            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-            tiovx_modules_release_buf(inbuf);
-            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-            tiovx_modules_release_buf(inbuf);
+            for(j = 0; j < in_buf_pool->bufq_depth - 2; j++)
+            {
+                inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+                tiovx_modules_release_buf(inbuf);
+            }
         }
         else if (LINUX_CAM == input_blocks[i].input_info->source)
         {

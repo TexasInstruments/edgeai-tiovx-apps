@@ -193,7 +193,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
                                               TIOVX_TEE,
                                               (void *)&tee_cfg);
 
-            tee_node->srcs[0].bufq_depth = 4; /* This must be greater than 3 */
+            tee_node->srcs[0].bufq_depth = 8; /* This must be greater than 3 */
 
             input_pad = &tee_node->srcs[0];
             output_pad = &tee_node->srcs[1];
