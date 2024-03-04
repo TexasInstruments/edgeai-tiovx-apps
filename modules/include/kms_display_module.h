@@ -70,21 +70,64 @@
 extern "C" {
 #endif
 
+/*!
+ * \brief Structure describing the configuration of kms display module.
+ */
 typedef struct {
+    /*! \brief Width of the Image to render */
     uint32_t    width;
+
+    /*! \brief Height of the Image to render */
     uint32_t    height;
+
+    /*! \brief Color format of the Image to render */
     uint32_t    pix_format;
+
+    /*! \brief Default crtc id of the drm connector to use */
     uint32_t    crtc;
+
+    /*! \brief connector id of the drm connector to use */
     uint32_t    connector;
+
+    /* \bried Number of buffers that will be registered */
     uint32_t    bufq_depth;
 } kmsDisplayCfg;
 
 typedef struct _kmsDisplayHandle kmsDisplayHandle;
 
+/*! \brief Function to initialize kms display config.
+ * \param [in,out] cfg \ref kmsDisplayCfg.
+ * \ingroup tiovx_modules
+ */
 void kms_display_init_cfg(kmsDisplayCfg *cfg);
+
+/*! \brief Function to create a kms display handle.
+ * \param [in] cfg \ref kmsDisplayCfg.
+ *
+ * \return Pointer to new kms display handle \ref kmsDisplayHandle *\
+ *
+ * \ingroup tiovx_modules
+ */
 kmsDisplayHandle *kms_display_create_handle(kmsDisplayCfg *cfg);
+
+/*! \brief Function to register a Buffer tobe.
+ * \param [in] handle kms display handle \ref kmsDisplayHandle *\
+ * \param [in] Buffer to register \ref _Buf *\
+ * \ingroup tiovx_modules
+ */
 int kms_display_register_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer);
+
+/*! \brief Function to render a Buffer.
+ * \param [in] handle kms display handle \ref kmsDisplayHandle *\
+ * \param [in] Buffer to render \ref _Buf *\
+ * \ingroup tiovx_modules
+ */
 int kms_display_render_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer);
+
+/*! \brief Function to free a kms display handle.
+ * \param [in] handle kms display handle \ref kmsDisplayHandle *\
+ * \ingroup tiovx_modules
+ */
 int kms_display_delete_handle(kmsDisplayHandle *handle);
 
 #ifdef __cplusplus
