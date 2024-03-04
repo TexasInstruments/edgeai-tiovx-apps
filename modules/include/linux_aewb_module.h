@@ -70,21 +70,61 @@
 extern "C" {
 #endif
 
+/*!
+ * \brief Structure describing the configuration of linux aewb module.
+ */
 typedef struct {
+    /*! \brief v4l2 subdev of the sensor to apply the gain and exposure result */
     vx_char     device[TIVX_FILEIO_FILE_PATH_LENGTH];
+
+    /*! \brief dcc file for 2a algo configuration */
     vx_char     dcc_2a_file[TIVX_FILEIO_FILE_PATH_LENGTH];
+
+    /*! \brief AE mode */
     vx_enum     ae_mode;
+
+    /*! \brief AWB mode */
     vx_enum     awb_mode;
+
+    /*! \brief AE skip frames */
     vx_uint32   ae_num_skip_frames;
+
+    /*! \brief AWB skip frames */
     vx_uint32   awb_num_skip_frames;
+
+    /*! \brief Sensor name as defined in Imaging repo */
     vx_char     sensor_name[ISS_SENSORS_MAX_NAME];
 } AewbCfg;
 
 typedef struct _AewbHandle AewbHandle;
 
+/*! \brief Function to initialize AEWB config.
+ * \param [in,out] cfg \ref AewbCfg.
+ * \ingroup tiovx_modules
+ */
 void aewb_init_cfg(AewbCfg *cfg);
+
+/*! \brief Function to create a aewb handle.
+ * \param [in] cfg \ref AewbCfg.
+ *
+ * \return Pointer to new aewb handle \ref AewbHandle *\
+ *
+ * \ingroup tiovx_modules
+ */
 AewbHandle *aewb_create_handle(AewbCfg *cfg);
+
+/*! \brief Process function to invoke the algorithm.
+ * \param [in] aewb handle \ref AewbHandle.
+ * \param [in] h3a_stats from viss out.
+ * \param [out] aewb_result for viss in.
+ * \ingroup tiovx_modules
+ */
 int aewb_process(AewbHandle *handle, Buf *h3a_stats, Buf *aewb_result);
+
+/*! \brief Function to free a aewb handle.
+ * \param [in] aewb handle \ref AewbHandle.
+ * \ingroup tiovx_modules
+ */
 int aewb_delete_handle(AewbHandle *handle);
 
 #ifdef __cplusplus
