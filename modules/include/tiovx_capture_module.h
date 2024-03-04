@@ -71,16 +71,30 @@
 extern "C" {
 #endif
 
+/*!
+ * \brief Structure describing the configuration of tiovx capture module.
+ */
 typedef struct {
+    /*! \brief Sensor name as defined in Imaging repo */
     char                    sensor_name[ISS_SENSORS_MAX_NAME];
+
+    /*! \brief Channel mask describing the cameras selected in case FPD Link fusion board */
     uint32_t                ch_mask;
+
+    /*! \brief Index of sensor to be selected as described in imaging repo */
     vx_int32                sensor_index;
     vx_int32                usecase_option;
     vx_uint8                enable_error_detection;
     char                    error_frame_filename[256];
+
+    /*! \brief OpenVX target on which to run the new node created using this config */
     char                    target_string[TIVX_TARGET_MAX_NAME];
 } TIOVXCaptureNodeCfg;
 
+/*! \brief Function to initialize tiovx capture module config.
+ * \param [in,out] cfg \ref TIOVXCaptureNodeCfg.
+ * \ingroup tiovx_modules
+ */
 void tiovx_capture_init_cfg(TIOVXCaptureNodeCfg *cfg);
 vx_status tiovx_capture_init_node(NodeObj *node);
 vx_status tiovx_capture_create_node(NodeObj *node);
