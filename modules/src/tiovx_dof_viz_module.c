@@ -171,6 +171,8 @@ vx_status tiovx_dof_viz_init_node(NodeObj *node)
         vxReleaseReference(&exemplar);
     }
 
+    sprintf(node->name, "dof_viz_node");
+
     return status;
 }
 
