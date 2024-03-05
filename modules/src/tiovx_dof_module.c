@@ -234,6 +234,8 @@ vx_status tiovx_dof_init_node(NodeObj *node)
         node->num_outputs += 1;
     }
 
+    sprintf(node->name, "dof_node");
+
     tiovx_dof_module_configure_params(node);
 
     return status;
