@@ -104,6 +104,7 @@ NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg
     node->node_index = graph->num_nodes;
     node->cbs = &gNodeCbs[node_type];
     node->node_cfg = malloc(node->cbs->get_cfg_size());
+    node->node_type = node_type;
 
     if (node->cbs->get_priv_size) {
         node->node_priv = malloc(node->cbs->get_priv_size());
@@ -766,7 +767,8 @@ void tiovx_modules_print_performance(GraphObj *graph)
     for (uint8_t i = 0; i < graph->num_nodes; i++) {
         vx_perf_t perf;
 
-        if(0 == strncmp("tee", graph->node_list[i].name, 3)) {
+        if((graph->node_list[i].node_type == TIOVX_TEE) ||
+           (graph->node_list[i].node_type == TIOVX_DELAY)) {
             continue;
         }
 

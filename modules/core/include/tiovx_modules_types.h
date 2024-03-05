@@ -236,6 +236,9 @@ struct _NodeObj {
     /*! \brief Name of the node */
     vx_char             name[VX_MAX_REFERENCE_NAME];
 
+    /*! \brief Name type \ref NODE_TYPES */
+    vx_int32            node_type;
+
     /*! \brief Pointer to the parent Graph \ref _GraphObj */
     GraphObj            *graph;
 
