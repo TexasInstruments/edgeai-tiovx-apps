@@ -757,6 +757,36 @@ NodeObj* tiovx_modules_get_node_by_name(GraphObj *graph, char *name)
     return node;
 }
 
+void tiovx_modules_print_performance(GraphObj *graph)
+{
+    vx_perf_t graph_perf;
+
+    printf("================================================\n\n");
+
+    for (uint8_t i = 0; i < graph->num_nodes; i++) {
+        vx_perf_t perf;
+
+        if(0 == strncmp("tee", graph->node_list[i].name, 3)) {
+            continue;
+        }
+
+        vxQueryNode(graph->node_list[i].tiovx_node,
+                    VX_NODE_PERFORMANCE,
+                    &perf,
+                    sizeof(perf));
+        printf("%s - %0.3f ms\n", graph->node_list[i].name, perf.avg/1000000.0);
+    }
+
+    printf("\n");
+
+    vxQueryGraph(graph->tiovx_graph,
+                 VX_GRAPH_PERFORMANCE,
+                 &graph_perf,
+                 sizeof(graph_perf));
+    printf("Graph - %0.3f ms\n", graph_perf.avg/1000000.0);
+    printf("================================================\n\n");
+}
+
 vx_status tiovx_modules_enqueue_buf(Buf *buf)
 {
     vx_status status = VX_FAILURE;

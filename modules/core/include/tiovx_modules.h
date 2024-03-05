@@ -118,6 +118,15 @@ vx_status tiovx_modules_export_graph(GraphObj *graph, char *path, char *prefix);
  */
 NodeObj* tiovx_modules_get_node_by_name(GraphObj *graph, char *name);
 
+/*! \brief Function to print performance of each node in graph.
+ *
+ * \param [in] graph Graph object \ref _GraphObj.
+ *
+ *
+ * \ingroup tiovx_modules
+ */
+void tiovx_modules_print_performance(GraphObj *graph);
+
 /*! \brief Acquire a free buffer from a buffer pool.
  *
  * \param [in] buf_pool Buffer pool \ref _BufPool.
