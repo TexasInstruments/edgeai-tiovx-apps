@@ -186,6 +186,7 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 
     v4l2_capture_stop(v4l2_capture_handle);
     v4l2_capture_delete_handle(v4l2_capture_handle);
+    kms_display_delete_handle(kms_display_handle);
 
     tiovx_modules_clean_graph(&graph);
 

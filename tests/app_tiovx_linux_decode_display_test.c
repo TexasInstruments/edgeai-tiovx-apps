@@ -154,6 +154,7 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     v4l2_decode_stop(v4l2_decode_handle);
     v4l2_decode_delete_handle(v4l2_decode_handle);
+    kms_display_delete_handle(kms_display_handle);
 
     tiovx_modules_clean_graph(&graph);
 
