@@ -93,8 +93,7 @@ struct _v4l2CaptureHandle {
     v4l2CaptureCfg cfg;
     int fd;
     Buf *bufq[V4L2_CAPTURE_MAX_BUFQ_DEPTH];
-    uint8_t head;
-    uint8_t tail;
+    bool queued[V4L2_CAPTURE_MAX_BUFQ_DEPTH];
 };
 
 static int xioctl(int fh, int request, void *arg)
@@ -221,8 +220,9 @@ v4l2CaptureHandle *v4l2_capture_create_handle(v4l2CaptureCfg *cfg)
         goto free_fd;
     }
 
-    handle->head = 0;
-    handle->tail = handle->cfg.bufq_depth - 1;
+    for (int i=0; i < handle->cfg.bufq_depth; i++) {
+        handle->queued[i] = false;
+    }
 
     return handle;
 
@@ -253,8 +253,8 @@ int v4l2_capture_enqueue_buf(v4l2CaptureHandle *handle, Buf *tiovx_buffer)
     struct v4l2_buffer buf;
     int status = 0;
 
-    if (handle->head == handle->tail) {
-        TIOVX_MODULE_ERROR("[V4L2_CAPTURE] Queue Full\n");
+    if (handle->queued[tiovx_buffer->buf_index] == true) {
+        TIOVX_MODULE_ERROR("[V4L2_CAPTURE] Buffer alread enqueued\n");
         status = -1;
         goto ret;
     }
@@ -262,15 +262,15 @@ int v4l2_capture_enqueue_buf(v4l2CaptureHandle *handle, Buf *tiovx_buffer)
     CLR(&buf);
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_DMABUF;
-    buf.index = handle->head;
+    buf.index = tiovx_buffer->buf_index;
     buf.m.fd = getDmaFd(tiovx_buffer->handle);
 
     if (-1 == xioctl(handle->fd, VIDIOC_QBUF, &buf)) {
         TIOVX_MODULE_ERROR("[V4L2_CAPTURE] VIDIOC_QBUF failed\n");
         status = -1;
     } else {
-        handle->bufq[handle->head] = tiovx_buffer;
-        handle->head = (handle->head + 1) % handle->cfg.bufq_depth;
+        handle->queued[tiovx_buffer->buf_index] = true;
+        handle->bufq[tiovx_buffer->buf_index] = tiovx_buffer;
     }
 
 ret:
@@ -282,11 +282,6 @@ Buf *v4l2_capture_dqueue_buf(v4l2CaptureHandle *handle)
     Buf *tiovx_buffer = NULL;
     struct v4l2_buffer buf;
     int i = 0;
-
-    if ((handle->tail + 1) % handle->cfg.bufq_depth == handle->head) {
-        TIOVX_MODULE_ERROR("[V4L2_CAPTURE] Queue Empty\n");
-        goto ret;
-    }
 
     CLR(&buf);
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -310,9 +305,8 @@ Buf *v4l2_capture_dqueue_buf(v4l2CaptureHandle *handle)
         goto ret;
     }
 
-    handle->tail = (handle->tail + 1) % handle->cfg.bufq_depth;
-    tiovx_buffer = handle->bufq[handle->tail];
-    handle->bufq[handle->tail] = NULL;
+    handle->queued[buf.index] = false;
+    tiovx_buffer = handle->bufq[buf.index];
 
 ret:
     return tiovx_buffer;
