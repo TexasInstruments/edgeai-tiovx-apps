@@ -150,7 +150,6 @@ Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 
     buf_pool->free_count--;
     buf = buf_pool->freeQ[buf_pool->free_count];
-    buf->acquired = vx_true_e;
 
     UNLOCK(buf_pool);
 
@@ -163,7 +162,6 @@ vx_status tiovx_modules_release_buf(Buf *buf)
 
     LOCK(buf->pool);
 
-    buf->acquired = vx_false_e;
     buf->pool->freeQ[buf->pool->free_count] = buf;
     buf->pool->free_count++;
 
@@ -234,8 +232,6 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
                                                         0);
         buf_pool->bufs[i].pool = buf_pool;
         buf_pool->bufs[i].buf_index = i;
-        buf_pool->bufs[i].acquired = vx_true_e;
-        buf_pool->bufs[i].queued = vx_false_e;
         buf_pool->bufs[i].num_channels = pad->num_channels;
         buf_pool->ref_list[i] = (vx_reference)buf_pool->bufs[i].arr;
 
@@ -800,7 +796,6 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
 
     buf_pool->enqueuedQ[buf_pool->enqueue_head] = buf;
     buf_pool->enqueue_head++;
-    buf->queued = vx_true_e;
 
     UNLOCK(buf->pool);
 
@@ -824,7 +819,6 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
 
     Buf *buf = buf_pool->enqueuedQ[buf_pool->enqueue_tail];
     buf_pool->enqueue_head--;
-    buf->queued = vx_false_e;
 
     UNLOCK(buf_pool);
 

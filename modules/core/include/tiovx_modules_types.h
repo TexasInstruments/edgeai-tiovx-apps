@@ -129,12 +129,6 @@ struct _Buf {
     /*! \brief Index of the buffer with respect to all the buffers in the pool */
     vx_int32            buf_index;
 
-    /*! \brief Set to TRUE if buffer is aquired*/
-    vx_bool             acquired;
-
-    /*! \brief Set to TRUE if buffer is queued to graph*/
-    vx_bool             queued;
-
     /*! \brief Object array for the buffer */
     vx_object_array     arr;
 
