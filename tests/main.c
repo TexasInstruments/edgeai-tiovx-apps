@@ -90,6 +90,7 @@
 #define APP_MODULES_TEST_SDE (1)
 #define APP_MODULES_TEST_DOF (1)
 #define APP_MODULES_TEST_LINUX_CAPTURE_DOF (0)
+#define APP_MODULES_TEST_LINUX_DECODE_SDE (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -327,6 +328,15 @@ int main(int argc, char *argv[])
         int app_modules_linux_capture_dof_test(int argc, char* argv[]);
 
         status = app_modules_linux_capture_dof_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_LINUX_DECODE_SDE)
+    if(status==0)
+    {
+        printf("Running linux decode sde module test\n");
+        int app_modules_linux_decode_sde_test(int argc, char* argv[]);
+
+        status = app_modules_linux_decode_sde_test(argc, argv);
     }
 #endif
 #endif
