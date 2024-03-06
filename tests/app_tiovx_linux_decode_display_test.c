@@ -109,6 +109,7 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
     cfg.params.clear_count  = 4;
 
     status = tiovx_modules_initialize_graph(&graph);
+    graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
     node = tiovx_modules_add_node(&graph, TIOVX_MOSAIC, (void *)&cfg);
     node->sinks[0].bufq_depth = APP_BUFQ_DEPTH;
     status = tiovx_modules_verify_graph(&graph);
@@ -123,10 +124,6 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     kms_display_handle = kms_display_create_handle(&kms_display_cfg);
 
-    for (int i = 0; i < out_buf_pool->bufq_depth; i++) {
-        kms_display_register_buf(kms_display_handle, &out_buf_pool->bufs[i]);
-    }
-
     for (int i = 0; i < APP_BUFQ_DEPTH; i++) {
         inbuf = tiovx_modules_acquire_buf(in_buf_pool);
         v4l2_decode_enqueue_buf(v4l2_decode_handle, inbuf);
@@ -134,23 +131,25 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     v4l2_decode_start(v4l2_decode_handle);
 
-    for (int i = 0; i < APP_NUM_ITERATIONS; i++) {
+    for (int i = 0; i < out_buf_pool->bufq_depth; i++) {
         inbuf = v4l2_decode_dqueue_buf(v4l2_decode_handle);
         tiovx_modules_enqueue_buf(inbuf);
 
         outbuf = tiovx_modules_acquire_buf(out_buf_pool);
         tiovx_modules_enqueue_buf(outbuf);
+        kms_display_register_buf(kms_display_handle, outbuf);
+    }
 
-        tiovx_modules_schedule_graph(&graph);
-        tiovx_modules_wait_graph(&graph);
-
+    for (int i = 0; i < APP_NUM_ITERATIONS; i++) {
         inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
         outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
 
         v4l2_decode_enqueue_buf(v4l2_decode_handle, inbuf);
-
         kms_display_render_buf(kms_display_handle, outbuf);
-        tiovx_modules_release_buf(outbuf);
+
+        inbuf = v4l2_decode_dqueue_buf(v4l2_decode_handle);
+        tiovx_modules_enqueue_buf(inbuf);
+        tiovx_modules_enqueue_buf(outbuf);
     }
 
     v4l2_decode_stop(v4l2_decode_handle);
