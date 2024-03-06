@@ -51,5 +51,5 @@
 2. Run the app
 
     ```console
-    root@j7-evm:/opt/edgeai-tiovx-apps# ./bin/Release/app_edgeai ./configs/h264_decode_linux.yaml
+    root@j7-evm:/opt/edgeai-tiovx-apps# ./bin/Release/edgeai-tiovx-apps-main configs/h264_decode_linux.yaml
     ```
