@@ -885,6 +885,12 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
                 v4l2_decode_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle, inbuf);
                 inbuf = v4l2_decode_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle);
+                if(NULL == inbuf)
+                {
+                    run_loop = false;
+                    skip = true;
+                    break;
+                }
                 tiovx_modules_enqueue_buf(inbuf);
             }
 
@@ -901,6 +907,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
 
                 tiovx_modules_enqueue_buf(inbuf);
             }
+        }
+
+        if(skip)
+        {
+            break;
         }
 
         for(i = 0; i < num_output_blocks; i++)
