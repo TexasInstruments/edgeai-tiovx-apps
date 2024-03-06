@@ -148,6 +148,11 @@ Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 
     LOCK(buf_pool);
 
+    if (!buf_pool->free_count) {
+        TIOVX_MODULE_ERROR("No free buffer\n");
+        return NULL;
+    }
+
     buf_pool->free_count--;
     buf = buf_pool->freeQ[buf_pool->free_count];
 
@@ -794,8 +799,15 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
 
     LOCK(buf->pool);
 
+    if (buf_pool->enqueue_tail ==
+                    (buf_pool->enqueue_head + 1) % (buf_pool->bufq_depth + 1)) {
+        TIOVX_MODULE_ERROR("Queue Full\n");
+        return status;
+    }
+
     buf_pool->enqueuedQ[buf_pool->enqueue_head] = buf;
-    buf_pool->enqueue_head++;
+    buf_pool->enqueue_head = (buf_pool->enqueue_head + 1) %
+                                                    (buf_pool->bufq_depth + 1);
 
     UNLOCK(buf->pool);
 
@@ -817,8 +829,14 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
 
     LOCK(buf_pool);
 
+    if (buf_pool->enqueue_tail == buf_pool->enqueue_head) {
+        TIOVX_MODULE_ERROR("Queue Empty\n");
+        return NULL;
+    }
+
     Buf *buf = buf_pool->enqueuedQ[buf_pool->enqueue_tail];
-    buf_pool->enqueue_head--;
+    buf_pool->enqueue_tail = (buf_pool->enqueue_tail + 1) %
+                                                    (buf_pool->bufq_depth + 1);
 
     UNLOCK(buf_pool);
 
