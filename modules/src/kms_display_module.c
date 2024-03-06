@@ -119,7 +119,7 @@ kmsDisplayHandle *kms_display_create_handle(kmsDisplayCfg *cfg)
 
     handle = malloc(sizeof(kmsDisplayHandle));
     handle->fd = -1;
-    memcpy(&handle->cfg, cfg, sizeof(kmsDisplayHandle));
+    memcpy(&handle->cfg, cfg, sizeof(kmsDisplayCfg));
 
     handle->fd = drmOpen("tidss", NULL);
     if (handle->fd <= 0) {

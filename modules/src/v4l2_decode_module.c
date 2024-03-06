@@ -653,7 +653,7 @@ v4l2DecodeHandle *v4l2_decode_create_handle(v4l2DecodeCfg *cfg,
     handle = malloc(sizeof(v4l2DecodeHandle));
     handle->fd = -1;
     handle->current_frame = 0;
-    memcpy(&handle->cfg, cfg, sizeof(v4l2DecodeHandle));
+    memcpy(&handle->cfg, cfg, sizeof(v4l2DecodeCfg));
 
     if (stream_framelevel_parsing(&handle->str, cfg->file, MAX_FRAMES) < 0) {
         TIOVX_MODULE_ERROR("[V4L2_DECODE] Stream parsing failed\n");
