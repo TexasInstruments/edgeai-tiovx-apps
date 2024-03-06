@@ -647,7 +647,7 @@ void tiovx_modules_modify_node_names(GraphObj *graph)
 
     for (uint8_t i = 0; i < graph->num_nodes; i++) {
         uint8_t node_count = 0;
-        vx_char i_node_name[VX_MAX_REFERENCE_NAME];
+        vx_char i_node_name[VX_MAX_REFERENCE_NAME - 3];
 
         if(vx_true_e == modified[i]) {
             continue;
@@ -656,11 +656,11 @@ void tiovx_modules_modify_node_names(GraphObj *graph)
         sprintf(i_node_name, graph->node_list[i].name);
 
         for(uint8_t j = i+1; j < graph->num_nodes; j++) {
-            vx_char j_node_name[VX_MAX_REFERENCE_NAME];
+            vx_char j_node_name[VX_MAX_REFERENCE_NAME - 3];
             sprintf(j_node_name, graph->node_list[j].name);
             if(0 == strcmp(i_node_name, j_node_name)) {
                 sprintf(graph->node_list[j].name,
-                        "%s_%d",
+                        "%s_%02d",
                         j_node_name,
                         ++node_count);
                 modified[j] = vx_true_e;
@@ -668,7 +668,7 @@ void tiovx_modules_modify_node_names(GraphObj *graph)
         }
 
         if(node_count > 0) {
-            sprintf(graph->node_list[i].name, "%s_0", i_node_name);
+            sprintf(graph->node_list[i].name, "%s_00", i_node_name);
         }
 
         modified[i] = vx_true_e;

@@ -118,6 +118,7 @@ set(SYSTEM_LINK_LIBS
     avformat
     avutil
     avcodec
+    m
     )
 
 set(COMMON_LINK_LIBS
