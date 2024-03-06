@@ -98,22 +98,22 @@ void tiovx_sde_init_cfg(TIOVXSdeNodeCfg *node_cfg)
     node_cfg->input_cfg.color_format = VX_DF_IMAGE_NV12;
     node_cfg->output_cfg.color_format = VX_DF_IMAGE_S16;
 
-    node_cfg->sde_params.median_filter_enable        = 0;
+    node_cfg->sde_params.median_filter_enable        = 1;
     node_cfg->sde_params.reduced_range_search_enable = 0;
     node_cfg->sde_params.disparity_min               = 0;
-    node_cfg->sde_params.disparity_max               = 1;
-    node_cfg->sde_params.threshold_left_right        = 0;
+    node_cfg->sde_params.disparity_max               = 0;
+    node_cfg->sde_params.threshold_left_right        = 3;
     node_cfg->sde_params.texture_filter_enable       = 0;
-    node_cfg->sde_params.threshold_texture           = 0;
-    node_cfg->sde_params.aggregation_penalty_p1      = 0;
-    node_cfg->sde_params.aggregation_penalty_p2      = 0;
+    node_cfg->sde_params.threshold_texture           = 100;
+    node_cfg->sde_params.aggregation_penalty_p1      = 32;
+    node_cfg->sde_params.aggregation_penalty_p2      = 192;
     node_cfg->sde_params.confidence_score_map[0]     = 0;
-    node_cfg->sde_params.confidence_score_map[1]     = 4;
-    node_cfg->sde_params.confidence_score_map[2]     = 9;
-    node_cfg->sde_params.confidence_score_map[3]     = 18;
-    node_cfg->sde_params.confidence_score_map[4]     = 28;
-    node_cfg->sde_params.confidence_score_map[5]     = 43;
-    node_cfg->sde_params.confidence_score_map[6]     = 109;
+    node_cfg->sde_params.confidence_score_map[1]     = 1;
+    node_cfg->sde_params.confidence_score_map[2]     = 2;
+    node_cfg->sde_params.confidence_score_map[3]     = 3;
+    node_cfg->sde_params.confidence_score_map[4]     = 5;
+    node_cfg->sde_params.confidence_score_map[5]     = 9;
+    node_cfg->sde_params.confidence_score_map[6]     = 14;
     node_cfg->sde_params.confidence_score_map[7]     = 127;
 }
 
