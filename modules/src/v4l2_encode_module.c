@@ -342,7 +342,7 @@ v4l2EncodeHandle *v4l2_encode_create_handle(v4l2EncodeCfg *cfg)
 
     handle = malloc(sizeof(v4l2EncodeHandle));
     handle->fd = -1;
-    memcpy(&handle->cfg, cfg, sizeof(v4l2EncodeHandle));
+    memcpy(&handle->cfg, cfg, sizeof(v4l2EncodeCfg));
 
     handle->wrfd = fopen(cfg->file, "w");
     if (handle->wrfd  == NULL) {

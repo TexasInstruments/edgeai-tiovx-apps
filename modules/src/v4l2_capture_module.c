@@ -197,7 +197,7 @@ v4l2CaptureHandle *v4l2_capture_create_handle(v4l2CaptureCfg *cfg)
 
     handle = malloc(sizeof(v4l2CaptureHandle));
     handle->fd = -1;
-    memcpy(&handle->cfg, cfg, sizeof(v4l2CaptureHandle));
+    memcpy(&handle->cfg, cfg, sizeof(v4l2CaptureCfg));
 
     handle->fd = open(cfg->device, O_RDWR | O_NONBLOCK, 0);
     if (-1 == handle->fd) {
