@@ -99,7 +99,7 @@ void tiovx_sde_viz_init_cfg(TIOVXSdeVizNodeCfg *node_cfg)
     node_cfg->output_cfg.color_format = VX_DF_IMAGE_RGB;
 
     node_cfg->sde_viz_params.disparity_min  = 0;
-    node_cfg->sde_viz_params.disparity_max  = 1;
+    node_cfg->sde_viz_params.disparity_max  = 0;
     node_cfg->sde_viz_params.disparity_only = 0;
     node_cfg->sde_viz_params.vis_confidence = 1;
 }
