@@ -69,6 +69,36 @@
 #define LDC_BLOCK_HEIGHT    (32)
 #define LDC_PIXEL_PAD       (1)
 
+#if defined(SOC_J84S4)
+static char *g_capture_targets[] = {TIVX_TARGET_CAPTURE1, TIVX_TARGET_CAPTURE2,
+                                    TIVX_TARGET_CAPTURE3, TIVX_TARGET_CAPTURE4,
+                                    TIVX_TARGET_CAPTURE5, TIVX_TARGET_CAPTURE6,
+                                    TIVX_TARGET_CAPTURE7, TIVX_TARGET_CAPTURE8,
+                                    TIVX_TARGET_CAPTURE9, TIVX_TARGET_CAPTURE10,
+                                    TIVX_TARGET_CAPTURE11, TIVX_TARGET_CAPTURE12};
+
+static char *g_viss_targets[] = {TIVX_TARGET_VPAC_VISS1, TIVX_TARGET_VPAC2_VISS1};
+
+static char *g_ldc_targets[] = {TIVX_TARGET_VPAC_LDC1, TIVX_TARGET_VPAC2_LDC1};
+#else
+#if defined(SOC_J721E) || defined(SOC_J721S2)
+static char *g_capture_targets[] = {TIVX_TARGET_CAPTURE1, TIVX_TARGET_CAPTURE2,
+                                    TIVX_TARGET_CAPTURE3, TIVX_TARGET_CAPTURE4,
+                                    TIVX_TARGET_CAPTURE5, TIVX_TARGET_CAPTURE6,
+                                    TIVX_TARGET_CAPTURE7, TIVX_TARGET_CAPTURE8};
+#else
+static char *g_capture_targets[] = {TIVX_TARGET_CAPTURE1, TIVX_TARGET_CAPTURE2,
+                                    TIVX_TARGET_CAPTURE3, TIVX_TARGET_CAPTURE4};
+#endif
+static char *g_viss_targets[] = {TIVX_TARGET_VPAC_VISS1};
+
+static char *g_ldc_targets[] = {TIVX_TARGET_VPAC_LDC1};
+#endif
+
+static uint8_t g_capture_target_idx = 0;
+static uint8_t g_viss_target_idx = 0;
+static uint8_t g_ldc_target_idx = 0;
+
 void initialize_input_block(InputBlock *input_block)
 {
     input_block->input_pad = NULL;
@@ -172,6 +202,17 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             sprintf(capture_cfg.sensor_name, sensor_name);
             capture_cfg.ch_mask = input_info->channel_mask;
 
+            sprintf(capture_cfg.target_string,
+                    g_capture_targets[g_capture_target_idx]);
+            printf("%s\n",g_capture_targets[g_capture_target_idx]);
+
+            g_capture_target_idx++;
+            if(g_capture_target_idx >=
+               sizeof(g_capture_targets)/sizeof(g_capture_targets[0]))
+            {
+                g_capture_target_idx = 0;
+            }
+
             capture_node = tiovx_modules_add_node(graph,
                                                   TIOVX_CAPTURE,
                                                   (void *)&capture_cfg);
@@ -211,7 +252,17 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
             sprintf(viss_cfg.sensor_name, sensor_name);
             snprintf(viss_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", viss_dcc_path);
-            sprintf(viss_cfg.target_string, TIVX_TARGET_VPAC_VISS1);
+
+            sprintf(viss_cfg.target_string,
+                    g_viss_targets[g_viss_target_idx]);
+
+            g_viss_target_idx++;
+            if(g_viss_target_idx >=
+               sizeof(g_viss_targets)/sizeof(g_viss_targets[0]))
+            {
+                g_viss_target_idx = 0;
+            }
+
             viss_cfg.input_cfg.params.format[0].pixel_container = format_pixel_container;
             viss_cfg.input_cfg.params.format[0].msb = format_msb;
             viss_cfg.enable_h3a_pad = vx_true_e;
@@ -263,6 +314,16 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         
             ldc_cfg.input_cfg.width = output_width;
             ldc_cfg.input_cfg.height = output_height;
+
+            sprintf(ldc_cfg.target_string,
+                    g_ldc_targets[g_ldc_target_idx]);
+
+            g_ldc_target_idx++;
+            if(g_ldc_target_idx >=
+               sizeof(g_ldc_targets)/sizeof(g_ldc_targets[0]))
+            {
+                g_ldc_target_idx = 0;
+            }
 
             sprintf(ldc_cfg.sensor_name, sensor_name);
             snprintf(ldc_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", ldc_dcc_path);
@@ -319,7 +380,17 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
             sprintf(viss_cfg.sensor_name, sensor_name);
             snprintf(viss_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", viss_dcc_path);
-            sprintf(viss_cfg.target_string, TIVX_TARGET_VPAC_VISS1);
+
+            sprintf(viss_cfg.target_string,
+                    g_viss_targets[g_viss_target_idx]);
+
+            g_viss_target_idx++;
+            if(g_viss_target_idx >=
+               sizeof(g_viss_targets)/sizeof(g_viss_targets[0]))
+            {
+                g_viss_target_idx = 0;
+            }
+
             viss_cfg.input_cfg.params.format[0].pixel_container = format_pixel_container;
             viss_cfg.input_cfg.params.format[0].msb = format_msb;
             viss_cfg.enable_aewb_pad = vx_true_e;
@@ -368,6 +439,16 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         
             ldc_cfg.input_cfg.width = output_width;
             ldc_cfg.input_cfg.height = output_height;
+
+            sprintf(ldc_cfg.target_string,
+                    g_ldc_targets[g_ldc_target_idx]);
+
+            g_ldc_target_idx++;
+            if(g_ldc_target_idx >=
+               sizeof(g_ldc_targets)/sizeof(g_ldc_targets[0]))
+            {
+                g_ldc_target_idx = 0;
+            }
 
             sprintf(ldc_cfg.sensor_name, sensor_name);
             snprintf(ldc_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", ldc_dcc_path);
