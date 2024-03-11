@@ -62,9 +62,12 @@
 
 #include <tiovx_modules.h>
 #include <tiovx_utils.h>
+#include <sys/time.h>
+#include <edgeai_overlay_perf_stats_utils.h>
+
 
 #define APP_BUFQ_DEPTH   (1)
-#define NUM_ITERATIONS   (4)
+#define NUM_ITERATIONS   (400)
 
 #define APP_NUM_CH       (1)
 #define APP_NUM_OUTPUTS  (1)
@@ -73,49 +76,83 @@ vx_status app_modules_capture_test(vx_int32 argc, vx_char* argv[])
 {
     vx_status status = VX_FAILURE;
     GraphObj graph;
-    NodeObj *capture_node = NULL;
+    NodeObj *capture_node1 = NULL;
+    NodeObj *capture_node2 = NULL;
+    NodeObj *capture_node3 = NULL;
+    NodeObj *capture_node4 = NULL;
     TIOVXCaptureNodeCfg capture_cfg;
-    BufPool *out_buf_pool = NULL;
-    Buf *outbuf = NULL;
-    char output_filename[100];
+    BufPool *out_buf_pool[4];
+    Buf *outbuf[4];
     int32_t i, frame_count;
 
-    sprintf(output_filename, "%s/output/imx390_1936x1096_capture_nv12.yuv", EDGEAI_DATA_PATH);
 
     status = tiovx_modules_initialize_graph(&graph);
     graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
 
     /* Capture */
     tiovx_capture_init_cfg(&capture_cfg);
-
+    sprintf(capture_cfg.sensor_name, "SENSOR_SONY_IMX390_UB953_D3");
     capture_cfg.ch_mask = 1;
-    capture_cfg.sensor_index = 0; /* 0 for IMX390 2MP cameras */
-    capture_cfg.enable_error_detection = 0;
+    sprintf(capture_cfg.target_string,TIVX_TARGET_CAPTURE1);
+    capture_node1 = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+    capture_node1->srcs[0].bufq_depth = 8;
 
-    capture_node = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+    tiovx_capture_init_cfg(&capture_cfg);
+    sprintf(capture_cfg.sensor_name, "SENSOR_SONY_IMX390_UB953_D3");
+    capture_cfg.ch_mask = 2;
+    sprintf(capture_cfg.target_string,TIVX_TARGET_CAPTURE2);
+    capture_node2 = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+    capture_node2->srcs[0].bufq_depth = 8;
 
-    capture_node->srcs[0].bufq_depth = 4; /* This must be greater than 3 */
+    tiovx_capture_init_cfg(&capture_cfg);
+    sprintf(capture_cfg.sensor_name, "SENSOR_SONY_IMX390_UB953_D3");
+    capture_cfg.ch_mask = 4;
+    sprintf(capture_cfg.target_string,TIVX_TARGET_CAPTURE3);
+    capture_node3 = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+    capture_node3->srcs[0].bufq_depth = 8;
+
+    tiovx_capture_init_cfg(&capture_cfg);
+    sprintf(capture_cfg.sensor_name, "SENSOR_SONY_IMX390_UB953_D3");
+    capture_cfg.ch_mask = 8;
+    sprintf(capture_cfg.target_string,TIVX_TARGET_CAPTURE4);
+    capture_node4 = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+    capture_node4->srcs[0].bufq_depth = 8;
 
     status = tiovx_modules_verify_graph(&graph);
 
-    out_buf_pool = capture_node->srcs[0].buf_pool;
-
-    for (i = 0; i < out_buf_pool->bufq_depth; i++)
+    out_buf_pool[0] = capture_node1->srcs[0].buf_pool;
+    out_buf_pool[1] = capture_node2->srcs[0].buf_pool;
+    out_buf_pool[2] = capture_node3->srcs[0].buf_pool;
+    out_buf_pool[3] = capture_node4->srcs[0].buf_pool;
+    
+    for (i = 0; i < 4; i++)
     {
-        outbuf = tiovx_modules_acquire_buf(out_buf_pool);
-        tiovx_modules_enqueue_buf(outbuf);
+        for (int j = 0; j < out_buf_pool[i]->bufq_depth; j++)
+        {
+            outbuf[i] = tiovx_modules_acquire_buf(out_buf_pool[i]);
+            tiovx_modules_enqueue_buf(outbuf[i]);
+        }
     }
 
     frame_count = 0;
-    while (frame_count < NUM_ITERATIONS)
+    EdgeAIPerfStats perf_stats_handle;
+    initialize_edgeai_perf_stats(&perf_stats_handle);
+    perf_stats_handle.overlayType = OVERLAY_TYPE_NONE;
+    while (frame_count++ < NUM_ITERATIONS)
     {
-        outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-        writeRawImage(output_filename, (tivx_raw_image)outbuf->handle);
-        tiovx_modules_enqueue_buf(outbuf);
-        frame_count++;
+        for (i = 0; i < 4; i++)
+        {
+            outbuf[i] = tiovx_modules_dequeue_buf(out_buf_pool[i]);
+            tiovx_modules_enqueue_buf(outbuf[i]);
+        }
+        update_edgeai_perf_stats(&perf_stats_handle);
+        printf("%d\n",perf_stats_handle.stats.fps);
     }
 
-    tiovx_modules_release_buf(outbuf);
+    tiovx_modules_release_buf(outbuf[0]);
+    tiovx_modules_release_buf(outbuf[1]);
+    tiovx_modules_release_buf(outbuf[2]);
+    tiovx_modules_release_buf(outbuf[3]);
 
     tiovx_modules_clean_graph(&graph);
 
