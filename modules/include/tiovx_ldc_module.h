@@ -64,7 +64,7 @@
 
 #include "tiovx_modules_types.h"
 #include <tiovx_sensor_module.h>
-#include <TI/hwa_vpac_ldc.h>
+#include <TI/j7_vpac_ldc.h>
 
 #define TIOVX_LDC_MODULE_MAX_OUTPUTS (2)
 

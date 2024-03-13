@@ -63,7 +63,7 @@
 #define _TIOVX_SDE_MODULE
 
 #include "tiovx_modules_types.h"
-#include <TI/hwa_dmpac_sde.h>
+#include <TI/j7_dmpac_sde.h>
 
 #ifdef __cplusplus
 extern "C" {

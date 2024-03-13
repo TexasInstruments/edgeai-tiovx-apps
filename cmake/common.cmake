@@ -101,23 +101,21 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/img_proc/include
                     ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include
                     ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/stereo/include
+                    ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/ti_dl/inc
                     ${TARGET_FS}/usr/include/edgeai-tiovx-kernels
                     ${TARGET_FS}/usr/include/processor_sdk/app_utils/
                     ${TARGET_FS}/usr/include/processor_sdk/video_io/kernels/include/
                     ${TARGET_FS}/usr/include/processor_sdk/app_utils/utils/mem/include
                     ${TARGET_FS}/usr/include/drm
                     ${TARGET_FS}/usr/include/edgeai-apps-utils/
+                    ${TARGET_FS}/usr/include/processor_sdk/vision_apps/utils/mem/include
                    )
 
 set(SYSTEM_LINK_LIBS
     tivision_apps
     edgeai-tiovx-kernels
-    edgeai-apps-utils
     drm
     yaml-cpp
-    avformat
-    avutil
-    avcodec
     m
     )
 

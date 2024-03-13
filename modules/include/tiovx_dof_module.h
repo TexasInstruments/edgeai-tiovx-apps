@@ -63,7 +63,7 @@
 #define _TIOVX_DOF_MODULE
 
 #include "tiovx_modules_types.h"
-#include <TI/hwa_dmpac_dof.h>
+#include <TI/j7_dmpac_dof.h>
 
 #ifdef __cplusplus
 extern "C" {

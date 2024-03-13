@@ -106,8 +106,8 @@
 #define LDC_PIXEL_PAD       (1)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX390_UB953_D3"
-#define DCC_VISS "/opt/imaging/imx390/linear/dcc_viss.bin"
-#define DCC_LDC "/opt/imaging/imx390/linear/dcc_ldc.bin"
+#define DCC_VISS "/opt/imaging/imx390/dcc_viss.bin"
+#define DCC_LDC "/opt/imaging/imx390/dcc_ldc.bin"
 
 #define POST_PROC_OUT_WIDTH (1280)
 #define POST_PROC_OUT_HEIGHT (720)

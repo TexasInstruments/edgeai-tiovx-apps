@@ -69,7 +69,7 @@ void tiovx_dl_color_convert_init_cfg(TIOVXDLColorConvertNodeCfg *node_cfg)
     node_cfg->input_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->output_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->num_channels = 1;
-    sprintf(node_cfg->target_string, TIVX_TARGET_MPU_0);
+    sprintf(node_cfg->target_string, TIVX_TARGET_A72_0);
 }
 
 vx_status tiovx_dl_color_convert_init_node(NodeObj *node)

@@ -79,7 +79,7 @@ vx_status app_modules_display_test(vx_int32 argc, vx_char* argv[])
     Buf *inbuf = NULL;
     char input_filename[100];
 
-    sprintf(input_filename, "%s/raw_images/modules_test/baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
 
     tiovx_display_init_cfg(&cfg);
 

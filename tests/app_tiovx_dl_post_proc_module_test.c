@@ -1089,7 +1089,7 @@ vx_status app_modules_dl_post_proc_test(int argc, char* argv[])
     char output_image_filename[100];
     uint32_t i;
 
-    sprintf(input_image_filename, "%s/raw_images/modules_test/baboon_224x224_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_image_filename, "%s/raw_images//baboon_224x224_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(input_tensor_filename, "/home/root/tidl-output");
     sprintf(output_image_filename, "%s/output/dl-post-proc-output", EDGEAI_DATA_PATH);
 
@@ -1099,7 +1099,7 @@ vx_status app_modules_dl_post_proc_test(int argc, char* argv[])
 
     cfg.width = IMAGE_WIDTH;
     cfg.height = IMAGE_HEIGHT;
-    sprintf(cfg.target_string, TIVX_TARGET_MPU_0);
+    sprintf(cfg.target_string, TIVX_TARGET_A72_0);
     cfg.num_channels = APP_NUM_CH;
 
     cfg.input_image_cfg.color_format = VX_DF_IMAGE_NV12;

@@ -128,7 +128,7 @@ vx_status app_modules_linux_decode_sde_test(vx_int32 argc, vx_char* argv[])
     cc_cfg.height = v4l2_decode_fmt.height;
     cc_cfg.input_cfg.color_format = VX_DF_IMAGE_RGB;
     cc_cfg.output_cfg.color_format = VX_DF_IMAGE_NV12;
-    sprintf(cc_cfg.target_string, TIVX_TARGET_MPU_0);
+    sprintf(cc_cfg.target_string, TIVX_TARGET_A72_0);
 
     cc_node = tiovx_modules_add_node(&graph, TIOVX_DL_COLOR_CONVERT, (void *)&cc_cfg);
     tiovx_modules_link_pads(&sde_viz_node->srcs[0], &cc_node->sinks[0]);

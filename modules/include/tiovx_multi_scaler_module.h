@@ -63,7 +63,7 @@
 #define _TIOVX_MULTI_SCALER_MODULE
 
 #include "tiovx_modules_types.h"
-#include <TI/hwa_vpac_msc.h>
+#include <TI/j7_vpac_msc.h>
 
 #ifdef __cplusplus
 extern "C" {

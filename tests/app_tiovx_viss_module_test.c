@@ -70,7 +70,7 @@
 #define INPUT_HEIGHT (1080)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
-#define DCC_VISS "/opt/imaging/imx219/linear/dcc_viss.bin"
+#define DCC_VISS "/opt/imaging/imx219/dcc_viss.bin"
 
 vx_status app_modules_viss_test(vx_int32 argc, vx_char* argv[])
 {
@@ -84,7 +84,7 @@ vx_status app_modules_viss_test(vx_int32 argc, vx_char* argv[])
     char output_filename[100];
     vx_uint32 bytes_read;
 
-    sprintf(input_filename, "%s/raw_images/modules_test/imx219_1920x1080_capture.raw", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//imx219_1920x1080_capture.raw", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/imx219_1920x1080_capture_nv12.yuv", EDGEAI_DATA_PATH);
 
     tiovx_viss_init_cfg(&cfg);

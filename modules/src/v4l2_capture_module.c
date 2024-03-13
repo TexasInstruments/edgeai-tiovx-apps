@@ -70,6 +70,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #define V4L2_CAPTURE_DEFAULT_WIDTH 1920
 #define V4L2_CAPTURE_DEFAULT_HEIGHT 1080

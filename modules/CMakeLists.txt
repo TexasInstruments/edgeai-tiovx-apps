@@ -6,7 +6,6 @@ set(SRC_FILES
     core/src/tiovx_modules.c
     core/src/tiovx_modules_cbs.c
     ../utils/src/tiovx_utils.c
-    ../utils/src/yaml_parser.cpp
     src/tiovx_multi_scaler_module.c
     src/tiovx_dl_color_convert_module.c
     src/tiovx_color_convert_module.c
@@ -14,12 +13,8 @@ set(SRC_FILES
     src/tiovx_sensor_module.c
     src/tiovx_ldc_module.c
     src/tiovx_tee_module.c
-    src/tiovx_tidl_module.c
-    src/tiovx_dl_pre_proc_module.c
-    src/tiovx_dl_post_proc_module.c
     src/tiovx_mosaic_module.c
     src/v4l2_capture_module.c
-    src/v4l2_decode_module.c
     src/v4l2_encode_module.c
     src/kms_display_module.c
     src/linux_aewb_module.c

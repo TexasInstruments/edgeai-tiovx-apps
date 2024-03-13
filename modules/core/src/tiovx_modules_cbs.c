@@ -112,30 +112,6 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_priv_size = NULL
     },
     {
-        .init_node = tiovx_tidl_init_node,
-        .create_node = tiovx_tidl_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_tidl_delete_node,
-        .get_cfg_size = tiovx_tidl_get_cfg_size,
-        .get_priv_size = tiovx_tidl_get_priv_size
-    },
-    {
-        .init_node = tiovx_dl_pre_proc_init_node,
-        .create_node = tiovx_dl_pre_proc_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_dl_pre_proc_delete_node,
-        .get_cfg_size = tiovx_dl_pre_proc_get_cfg_size,
-        .get_priv_size = tiovx_dl_pre_proc_get_priv_size
-    },
-    {
-        .init_node = tiovx_dl_post_proc_init_node,
-        .create_node = tiovx_dl_post_proc_create_node,
-        .post_verify_graph = NULL,
-        .delete_node = tiovx_dl_post_proc_delete_node,
-        .get_cfg_size = tiovx_dl_post_proc_get_cfg_size,
-        .get_priv_size = tiovx_dl_post_proc_get_priv_size
-    },
-    {
         .init_node = tiovx_mosaic_init_node,
         .create_node = tiovx_mosaic_create_node,
         .post_verify_graph = NULL,

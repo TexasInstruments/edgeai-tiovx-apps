@@ -98,8 +98,8 @@
 #define LDC_PIXEL_PAD       (1)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX390_UB953_D3"
-#define DCC_VISS "/opt/imaging/imx390/linear/dcc_viss.bin"
-#define DCC_LDC "/opt/imaging/imx390/linear/dcc_ldc.bin"
+#define DCC_VISS "/opt/imaging/imx390/dcc_viss.bin"
+#define DCC_LDC "/opt/imaging/imx390/dcc_ldc.bin"
 
 vx_status app_modules_tee_test(vx_int32 argc, vx_char* argv[])
 {
@@ -111,7 +111,7 @@ vx_status app_modules_tee_test(vx_int32 argc, vx_char* argv[])
     char output_filename[4][100];
     vx_uint32 bytes_read;
 
-    sprintf(input_filename, "%s/raw_images/modules_test/imx390_raw_image_1936x1096_16bpp_exp0.raw", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//imx390_raw_image_1936x1096_16bpp_exp0.raw", EDGEAI_DATA_PATH);
     sprintf(output_filename[0], "%s/output/tee_test_out_nv12_640x480.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename[1], "%s/output/tee_test_out_rgb_640x480.rgb", EDGEAI_DATA_PATH);
     sprintf(output_filename[2], "%s/output/tee_test_out_nv12_960x540.yuv", EDGEAI_DATA_PATH);
@@ -252,7 +252,7 @@ vx_status app_modules_tee_test(vx_int32 argc, vx_char* argv[])
         cc_cfg.height = 480;
         cc_cfg.input_cfg.color_format = VX_DF_IMAGE_NV12;
         cc_cfg.output_cfg.color_format = VX_DF_IMAGE_RGB;
-        sprintf(cc_cfg.target_string, TIVX_TARGET_MPU_0);
+        sprintf(cc_cfg.target_string, TIVX_TARGET_A72_0);
 
         cc_node = tiovx_modules_add_node(&graph, TIOVX_DL_COLOR_CONVERT, (void *)&cc_cfg);
 
@@ -313,7 +313,7 @@ vx_status app_modules_tee_test(vx_int32 argc, vx_char* argv[])
         cc_cfg.height = VISS_OUTPUT_HEIGHT;
         cc_cfg.input_cfg.color_format = VX_DF_IMAGE_NV12;
         cc_cfg.output_cfg.color_format = VX_DF_IMAGE_IYUV;
-        sprintf(cc_cfg.target_string, TIVX_TARGET_MPU_0);
+        sprintf(cc_cfg.target_string, TIVX_TARGET_A72_0);
 
         cc_node = tiovx_modules_add_node(&graph, TIOVX_DL_COLOR_CONVERT, (void *)&cc_cfg);
 

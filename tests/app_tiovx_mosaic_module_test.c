@@ -84,7 +84,7 @@ vx_status app_modules_mosaic_test(vx_int32 argc, vx_char* argv[])
     char output_filename[100];
     int i;
 
-    sprintf(input_filename, "%s/raw_images/modules_test/avp3_1280x720_1_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//avp3_1280x720_1_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/avp3_1280x720_1_output_mosaic_edgeai_modules_nv12.yuv", EDGEAI_DATA_PATH);
 
     status = tiovx_modules_initialize_graph(&graph);

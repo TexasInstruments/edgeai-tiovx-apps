@@ -75,7 +75,7 @@
 #define PYRAMID_LEVELS (3)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
-#define DCC_VISS "/opt/imaging/imx219/linear/dcc_viss.bin"
+#define DCC_VISS "/opt/imaging/imx219/dcc_viss.bin"
 
 vx_status app_modules_linux_capture_dof_test(vx_int32 argc, vx_char* argv[])
 {
@@ -200,7 +200,7 @@ vx_status app_modules_linux_capture_dof_test(vx_int32 argc, vx_char* argv[])
     cc_cfg.height = 720;
     cc_cfg.input_cfg.color_format = VX_DF_IMAGE_RGB;
     cc_cfg.output_cfg.color_format = VX_DF_IMAGE_NV12;
-    sprintf(cc_cfg.target_string, TIVX_TARGET_MPU_0);
+    sprintf(cc_cfg.target_string, TIVX_TARGET_A72_0);
 
     cc_node = tiovx_modules_add_node(&graph, TIOVX_DL_COLOR_CONVERT, (void *)&cc_cfg);
 
@@ -253,7 +253,7 @@ vx_status app_modules_linux_capture_dof_test(vx_int32 argc, vx_char* argv[])
 
     aewb_init_cfg(&aewb_cfg);
     sprintf(aewb_cfg.device, "/dev/v4l-rpi-subdev0");
-    sprintf(aewb_cfg.dcc_2a_file, "/opt/imaging/imx219/linear/dcc_2a.bin");
+    sprintf(aewb_cfg.dcc_2a_file, "/opt/imaging/imx219/dcc_2a.bin");
 
     aewb_handle = aewb_create_handle(&aewb_cfg);
 

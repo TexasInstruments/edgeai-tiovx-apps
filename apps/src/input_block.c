@@ -157,9 +157,9 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
     if(RTOS_CAM == input_info->source || LINUX_CAM == input_info->source)
     {
-        sprintf(viss_dcc_path, "/opt/imaging/%s/linear/dcc_viss.bin", input_info->sensor_name);
-        sprintf(ldc_dcc_path, "/opt/imaging/%s/linear/dcc_ldc.bin", input_info->sensor_name);
-        sprintf(aewb_dcc_path, "/opt/imaging/%s/linear/dcc_2a.bin", input_info->sensor_name);
+        sprintf(viss_dcc_path, "/opt/imaging/%s/dcc_viss.bin", input_info->sensor_name);
+        sprintf(ldc_dcc_path, "/opt/imaging/%s/dcc_ldc.bin", input_info->sensor_name);
+        sprintf(aewb_dcc_path, "/opt/imaging/%s/dcc_2a.bin", input_info->sensor_name);
 
         if (0 == strcmp("imx390",input_info->sensor_name))
         {

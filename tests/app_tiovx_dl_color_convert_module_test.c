@@ -80,7 +80,7 @@ vx_status app_modules_dl_color_convert_test(vx_int32 argc, vx_char* argv[])
     char input_filename[100];
     char output_filename[100];
 
-    sprintf(input_filename, "%s/raw_images/modules_test/baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/baboon_640x480_i420.yuv", EDGEAI_DATA_PATH);
 
     tiovx_dl_color_convert_init_cfg(&cfg);
@@ -89,7 +89,7 @@ vx_status app_modules_dl_color_convert_test(vx_int32 argc, vx_char* argv[])
     cfg.height = IMAGE_HEIGHT;
     cfg.input_cfg.color_format = VX_DF_IMAGE_NV12;
     cfg.output_cfg.color_format = VX_DF_IMAGE_IYUV;
-    sprintf(cfg.target_string, TIVX_TARGET_MPU_0);
+    sprintf(cfg.target_string, TIVX_TARGET_A72_0);
 
     status = tiovx_modules_initialize_graph(&graph);
     node = tiovx_modules_add_node(&graph, TIOVX_DL_COLOR_CONVERT, (void *)&cfg);

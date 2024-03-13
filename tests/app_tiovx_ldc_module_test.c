@@ -80,7 +80,7 @@
 #define LDC_PIXEL_PAD       (1)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX390_UB953_D3"
-#define DCC_LDC "/opt/imaging/imx390/wdr/dcc_ldc_wdr.bin"
+#define DCC_LDC "/opt/imaging/imx390/dcc_ldc.bin"
 
 vx_status app_modules_ldc_test(vx_int32 argc, vx_char* argv[])
 {
@@ -93,7 +93,7 @@ vx_status app_modules_ldc_test(vx_int32 argc, vx_char* argv[])
     char input_filename[100];
     char output_filename[100];
 
-    sprintf(input_filename, "%s/raw_images/modules_test/imx390_fisheye_1936x1096_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//imx390_fisheye_1936x1096_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/imx390_rectified_1920x1080_nv12.yuv", EDGEAI_DATA_PATH);
 
     tiovx_ldc_init_cfg(&cfg);
@@ -101,7 +101,7 @@ vx_status app_modules_ldc_test(vx_int32 argc, vx_char* argv[])
     sprintf(cfg.sensor_name, SENSOR_NAME);
     snprintf(cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", DCC_LDC);
     snprintf(cfg.lut_file, TIVX_FILEIO_FILE_PATH_LENGTH,
-            "%s/raw_images/modules_test/imx390_ldc_lut_1920x1080.bin",
+            "%s/raw_images//imx390_ldc_lut_1920x1080.bin",
             EDGEAI_DATA_PATH);
 
     cfg.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA; //TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE

@@ -72,6 +72,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <poll.h>
+#include <stdbool.h>
 
 #define V4L2_CAPTURE_DEFAULT_WIDTH 1920
 #define V4L2_CAPTURE_DEFAULT_HEIGHT 1080

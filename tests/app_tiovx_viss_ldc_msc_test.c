@@ -92,8 +92,8 @@
 #define LDC_PIXEL_PAD       (1)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX390_UB953_D3"
-#define DCC_VISS "/opt/imaging/imx390/linear/dcc_viss.bin"
-#define DCC_LDC "/opt/imaging/imx390/linear/dcc_ldc.bin"
+#define DCC_VISS "/opt/imaging/imx390/dcc_viss.bin"
+#define DCC_LDC "/opt/imaging/imx390/dcc_ldc.bin"
 
 vx_status app_modules_viss_ldc_msc_test(vx_int32 argc, vx_char* argv[])
 {
@@ -109,7 +109,7 @@ vx_status app_modules_viss_ldc_msc_test(vx_int32 argc, vx_char* argv[])
     char output_filename[100];
     vx_uint32 bytes_read;
 
-    sprintf(input_filename, "%s/raw_images/modules_test/imx390_raw_image_1936x1096_16bpp_exp0.raw", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//imx390_raw_image_1936x1096_16bpp_exp0.raw", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/imx390_960x540_capture_nv12.yuv", EDGEAI_DATA_PATH);
 
     status = tiovx_modules_initialize_graph(&graph);

@@ -84,7 +84,7 @@ vx_status app_modules_pyramid_test(vx_int32 argc, vx_char* argv[])
     char output_filename[100];
     vx_image output_image;
 
-    sprintf(input_filename, "%s/raw_images/modules_test/avp3_1280x720_0_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//avp3_1280x720_0_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename_template, "%s/output/output_pyramid_level_%%d_u8.gray", EDGEAI_DATA_PATH);
 
     tiovx_pyramid_init_cfg(&cfg);

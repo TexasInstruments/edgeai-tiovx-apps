@@ -81,8 +81,8 @@ vx_status app_modules_sde_test(vx_int32 argc, vx_char* argv[])
     char input_filename_left[100], input_filename_right[100];
     char output_filename[100];
 
-    sprintf(input_filename_left, "%s/raw_images/modules_test/avp3_1280x720_0_nv12.yuv", EDGEAI_DATA_PATH);
-    sprintf(input_filename_right, "%s/raw_images/modules_test/avp3_1280x720_1_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename_left, "%s/raw_images//avp3_1280x720_0_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename_right, "%s/raw_images//avp3_1280x720_1_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/sde_output.rgb", EDGEAI_DATA_PATH);
 
     status = tiovx_modules_initialize_graph(&graph);

@@ -61,7 +61,7 @@
  */
 #include "tiovx_multi_scaler_module.h"
 
-#include <TI/hwa_vpac_msc.h>
+#include <TI/j7_vpac_msc.h>
 
 typedef struct {
     vx_user_data_object         coeff_obj;

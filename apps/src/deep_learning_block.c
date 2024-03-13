@@ -65,8 +65,8 @@
 
 #include <apps/include/deep_learning_block.h>
 
-static char *g_mpu_targets[] = {TIVX_TARGET_MPU_0, TIVX_TARGET_MPU_1,
-                                TIVX_TARGET_MPU_2, TIVX_TARGET_MPU_3};
+static char *g_mpu_targets[] = {TIVX_TARGET_A72_0, TIVX_TARGET_MPU_1,
+                                TIVX_TARGET_A72_2, TIVX_TARGET_MPU_3};
 
 static uint8_t g_mpu_target_idx = 0;
 

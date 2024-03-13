@@ -68,9 +68,6 @@
 #include "tiovx_viss_module.h"
 #include "tiovx_ldc_module.h"
 #include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
 #include "tiovx_mosaic_module.h"
 #include "tiovx_obj_array_split_module.h"
 #include "tiovx_pyramid_module.h"
@@ -100,9 +97,6 @@ typedef enum {
     TIOVX_VISS,
     TIOVX_LDC,
     TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
     TIOVX_MOSAIC,
     TIOVX_OBJ_ARRAY_SPLIT,
     TIOVX_PYRAMID,

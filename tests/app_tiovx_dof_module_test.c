@@ -84,8 +84,8 @@ vx_status app_modules_dof_test(vx_int32 argc, vx_char* argv[])
     char input_filename[100];
     vx_image in_image;
 
-    sprintf(input_filename_template, "%s/raw_images/modules_test/avp3_1280x720_0_pyramid_level_%%d_u8.gray", EDGEAI_DATA_PATH);
-    sprintf(input_ref_filename_template, "%s/raw_images/modules_test/avp3_1280x720_1_pyramid_level_%%d_u8.gray", EDGEAI_DATA_PATH);
+    sprintf(input_filename_template, "%s/raw_images//avp3_1280x720_0_pyramid_level_%%d_u8.gray", EDGEAI_DATA_PATH);
+    sprintf(input_ref_filename_template, "%s/raw_images//avp3_1280x720_1_pyramid_level_%%d_u8.gray", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/dof_output.rgb", EDGEAI_DATA_PATH);
 
     status = tiovx_modules_initialize_graph(&graph);

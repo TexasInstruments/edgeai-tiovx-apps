@@ -63,7 +63,7 @@
 #define _TIOVX_PYRAMID_MODULE
 
 #include "tiovx_modules_types.h"
-#include <TI/hwa_vpac_msc.h>
+#include <TI/j7_vpac_msc.h>
 
 #ifdef __cplusplus
 extern "C" {

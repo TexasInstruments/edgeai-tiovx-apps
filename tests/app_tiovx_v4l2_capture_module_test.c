@@ -72,7 +72,7 @@
 #define INPUT_HEIGHT (1080)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
-#define DCC_VISS "/opt/imaging/imx219/linear/dcc_viss.bin"
+#define DCC_VISS "/opt/imaging/imx219/dcc_viss.bin"
 
 vx_status app_modules_v4l2_capture_test(vx_int32 argc, vx_char* argv[])
 {

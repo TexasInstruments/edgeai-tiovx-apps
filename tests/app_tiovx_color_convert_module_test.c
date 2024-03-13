@@ -80,7 +80,7 @@ vx_status app_modules_color_convert_test(vx_int32 argc, vx_char* argv[])
     char input_filename[100];
     char output_filename[100];
 
-    sprintf(input_filename, "%s/raw_images/modules_test/baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(input_filename, "%s/raw_images//baboon_640x480_nv12.yuv", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/baboon_640x480_rgb.yuv", EDGEAI_DATA_PATH);
 
     tiovx_color_convert_init_cfg(&cfg);

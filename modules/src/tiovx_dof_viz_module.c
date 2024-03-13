@@ -60,7 +60,7 @@
  *
  */
 #include "tiovx_dof_viz_module.h"
-#include <TI/hwa_dmpac_dof.h>
+#include <TI/j7_dmpac_dof.h>
 
 #define TIOVX_MODULES_DEFAULT_DOF_VIZ_WIDTH 1280
 #define TIOVX_MODULES_DEFAULT_DOF_VIZ_HEIGHT 720

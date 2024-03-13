@@ -178,7 +178,7 @@ void tiovx_dl_pre_proc_init_cfg(TIOVXDLPreProcNodeCfg *node_cfg)
     node_cfg->height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->input_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->num_channels = 1;
-    sprintf(node_cfg->target_string, TIVX_TARGET_MPU_0);
+    sprintf(node_cfg->target_string, TIVX_TARGET_A72_0);
     node_cfg->params.channel_order = 0;
     node_cfg->params.tensor_format = 1;
     node_cfg->params.scale[0] = 1.0;

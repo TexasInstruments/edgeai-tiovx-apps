@@ -61,9 +61,7 @@
  */
 #include "tiovx_modules.h"
 #include <edgeai_tiovx_img_proc.h>
-#include <TI/hwa_kernels.h>
-#include <TI/dl_kernels.h>
-#include <TI/video_io_kernels.h>
+#include <TI/j7_kernels.h>
 #include <stdlib.h>
 
 #define LOCK(a) pthread_mutex_lock(&a->lock)
@@ -81,8 +79,6 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
     tivxHwaLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcLoadKernels(graph->tiovx_context);
     tivxTIDLLoadKernels(graph->tiovx_context);
-    tivxVideoIOLoadKernels(graph->tiovx_context);
-    tivxExtLoadKernels(graph->tiovx_context);
 
     graph->tiovx_graph = vxCreateGraph(graph->tiovx_context);
     graph->schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL;
@@ -484,6 +480,7 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exe
     vx_status status = VX_FAILURE;
     vx_bool ret = vx_false_e;
     vx_enum type1, type2;
+    vx_size size1, size2;
 
     status = vxQueryReference(exemplar1, VX_REFERENCE_TYPE,
                               (void *)&type1, sizeof(type1));
@@ -518,7 +515,6 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exe
                                                    (tivx_raw_image)exemplar2);
             break;
         case VX_TYPE_USER_DATA_OBJECT:
-            vx_size size1, size2;
 
             status = vxQueryUserDataObject ((vx_user_data_object)exemplar1,
                                             VX_USER_DATA_OBJECT_SIZE,
@@ -940,8 +936,6 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
 
     vxReleaseGraph(&graph->tiovx_graph);
 
-    tivxExtUnLoadKernels(graph->tiovx_context);
-    tivxVideoIOUnLoadKernels(graph->tiovx_context);
     tivxTIDLUnLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcUnLoadKernels(graph->tiovx_context);
     tivxHwaUnLoadKernels(graph->tiovx_context);

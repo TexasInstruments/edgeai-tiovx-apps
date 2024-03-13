@@ -400,7 +400,7 @@ vx_status tiovx_aewb_create_node(NodeObj *node)
     }
 
 #if defined(SOC_AM62A)
-    vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, TIVX_TARGET_MPU_0);
+    vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, TIVX_TARGET_A72_0);
 #else
     vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, TIVX_TARGET_MCU2_0);
 #endif
