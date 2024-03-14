@@ -1,0 +1,40 @@
+title: IMX390 Camera
+inputs:
+    input0:
+        source: LINUX_CAM
+        width: 1920
+        height: 1080
+        sensor-name: imx390
+        device: /dev/video-imx390-cam0
+        subdev: /dev/v4l-imx390-subdev0
+        ldc: True
+models:
+    model0:
+        model_path: /opt/model_zoo/TFL-CL-0000-mobileNetV1-mlperf
+        topN: 5
+    model1:
+        model_path: /opt/model_zoo/ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416
+        viz-threshold: 0.6
+    model2:
+        model_path: /opt/model_zoo/ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512
+        alpha: 0.6
+outputs:
+    output0:
+        sink: LINUX_DISPLAY
+        width: 1920
+        height: 1080
+    output1:
+        sink: H264_ENCODE
+        width: 1920
+        height: 1080
+        output_path: /opt/edgeai-test-data/output/output_video0.h264
+    output2:
+        sink: IMG_DIR
+        width: 1920
+        height: 1080
+        output_path: /opt/edgeai-test-data/output/
+flows:
+    flow0:
+        pipeline: [input0,model1,output0]
+        mosaic:
+            - [320,150,1280,720]

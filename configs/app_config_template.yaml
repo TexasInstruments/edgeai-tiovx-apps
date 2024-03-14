@@ -1,0 +1,203 @@
+---
+
+# Demo title
+title: "Title"
+
+# Application input configuration. This is a list of inputs.
+inputs:
+    # Allowed sources of the input data. Allowed values
+    # - RTOS_CAM                [RTOS Camera]
+    # - LINUX_CAM               [Linux Camera]
+    # - H264_VID                [RAW H264 Video]
+    # - RAW_IMG                 [Raw Image]
+    input0:
+        # RTOS Camera source
+        source: RTOS_CAM
+
+        # Input data width
+        width: 1920
+
+        # Input data height
+        height: 1080
+
+        # Name of the camera sensor [Currently supports: imx390]
+        sensor-name: imx390
+
+        # Channel mask to specify port
+        # Example: If the camera is connected to Cam0 on fusion1 board, the
+        #          channel mask will be 00000001. Lets say you want to enable
+        #          cameras on Cam0,Cam3 and Cam6, the channel mask will be
+        #          01001001. This will create a capture node and consecutive 
+        #          nodes with 3 Channel I/O.
+        channel-mask: 00000001
+
+        # Requires LDC? [Default: False]
+        ldc: True
+
+    input1:
+        # V4L2 Camera source
+        source: LINUX_CAM
+
+        # Input data width
+        width: 1920
+
+        # Input data height
+        height: 1080
+
+        # Name of the camera sensor [Currently supports: imx219, imx390]
+        sensor-name: imx219
+
+        # v4l2 device id of the sensor
+        device: /dev/video-rpi-cam0
+
+        # v4l2 subdev id of the sensor, need for controlling sensor parameters
+        subdev-id: /dev/v4l-rpi-subdev0
+
+        # Requires LDC? [Default: False]
+        ldc: False
+
+    input2:
+        # H264 Video Source
+        source: H264_VID
+
+        # Input data width
+        width: 1280
+
+        # Input data height
+        height: 768
+
+        # Path to the input video
+        video_path: /opt/edgeai-test-data/videos/video0_1280_768.h264
+
+    input3:
+        # RAW Image Source
+        source: RAW_IMG
+
+        # Input data width
+        width: 1280
+
+        # Input data height
+        height: 720
+
+        # Color format of the image file
+        format: NV12
+
+        # Path to input image directory or single image path
+        image_path: /opt/edgeai-test-data/raw_images/tiovx_apps/
+
+        # Frame rate [Default: 1]
+        framerate: 1
+
+        # If file input need to be looped [Default: True]
+        loop: True
+
+# Application model configuration. This is a list of models.
+models:
+    model0:
+        # Path to the model
+        model_path: /opt/model_zoo/ONR-CL-6360-regNetx-200mf
+        # Number of classification results to display [Default: 5]
+        topN: 5
+
+    model1:
+        # Path to the model
+        model_path: /opt/model_zoo/ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416
+        # Threshold for visualizing the output [Default: 0.5]
+        viz_threshold: 0.5
+
+    model2:
+        # Path to the model
+        model_path: /opt/model_zoo/ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512
+        # Alpha value used for blending the sementic segmentation [Default: 0.5]
+        alpha: 0.5
+
+# Application output configuration. This is a list of outputs
+outputs:
+    # Allowed sink for the output. Allowed values
+    # - RTOS_DISPLAY            [RTOS Display]
+    # - LINUX_DISPLAY           [Linux Display]
+    # - H264_ENCODE             [Encode H264]
+    # - IMG_DIR                 [Raw Image]
+    #
+    output0:
+        # RTOS Display
+        sink: RTOS_DISPLAY
+
+        # Output display width
+        width: 1920
+
+        # Output display height
+        height: 1080
+
+        # Overlay performance stat graph [Default: True]
+        overlay-perf: True
+
+    output1:
+        # Linux Display
+        sink: LINUX_DISPLAY
+
+        # Output display width
+        width: 1920
+
+        # Output display height
+        height: 1080
+        
+        # Connector ID for display [Set by default unless overwritten here.]
+        connector: 38
+
+        # CRTC ID for display [Set by default unless overwritten here.]
+        crtc: 40
+
+        # Overlay performance stat graph [Default: True]
+        overlay-perf: True
+
+    output2:
+        # Save as H264 Video
+        sink: H264_ENCODE
+
+        # Output display width
+        width: 1920
+
+        # Output display height
+        height: 1080
+
+        # Path of the output
+        output_path: /opt/edgeai-test-data/output/output_video0.h264
+
+        # Overlay performance stat graph [Default: True]
+        overlay-perf: True
+
+    output3:
+        # Save as RAW NV12 Image
+        sink: IMG_DIR
+
+        # Output display width
+        width: 1920
+
+        # Output display height
+        height: 1080
+
+        # Path of the output directory
+        output_path: /opt/edgeai-test-data/output/
+
+        # Overlay performance stat graph [Default: True]
+        overlay-perf: True
+
+flows:
+     flow0:
+        # Define input->model->output
+        pipeline: [input0,model0,output0]
+        # Define mosaic [x,y,window_width,widow_height].
+        # If mosaic not defined. Output is assumed to be full screen.
+        # 
+        # NOTE: Number of mosaic config should match the nuber of input channel.
+        #       Lets say input has 3 channels, like for RTOS_CAM, we need to
+        #       define 3 mosaic configurations. Refer to
+        #       configs/rtos/imx390_cam_multi_channel_example.yaml for this.
+        mosaic:
+            - [320,150,640,360]
+    flow1:
+        # Model=null will bypass the AI and just do input->output
+        pipeline: [input1,null,output0]
+        mosaic:
+            - [960,150,640,360]
