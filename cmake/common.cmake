@@ -31,31 +31,31 @@ if (NOT DEFINED ENV{SOC})
 endif()
 
 set(TARGET_SOC_LOWER $ENV{SOC})
+set(TARGET_OS        $ENV{TARGET_OS})
+
+if ("${TARGET_OS}" STREQUAL "")
+    set(TARGET_OS           LINUX)
+endif()
 
 if ("${TARGET_SOC_LOWER}" STREQUAL "j721e")
     set(TARGET_PLATFORM     J7)
     set(TARGET_CPU          A72)
-    set(TARGET_OS           LINUX)
     set(TARGET_SOC          J721E)
 elseif ("${TARGET_SOC_LOWER}" STREQUAL "j721s2")
     set(TARGET_PLATFORM     J7)
     set(TARGET_CPU          A72)
-    set(TARGET_OS           LINUX)
     set(TARGET_SOC          J721S2)
 elseif ("${TARGET_SOC_LOWER}" STREQUAL "j784s4")
     set(TARGET_PLATFORM     J7)
     set(TARGET_CPU          A72)
-    set(TARGET_OS           LINUX)
     set(TARGET_SOC          J784S4)
 elseif ("${TARGET_SOC_LOWER}" STREQUAL "j722s")
     set(TARGET_PLATFORM     J7)
     set(TARGET_CPU          A53)
-    set(TARGET_OS           LINUX)
     set(TARGET_SOC          J722S)
 elseif ("${TARGET_SOC_LOWER}" STREQUAL "am62a")
     set(TARGET_PLATFORM     SITARA)
     set(TARGET_CPU          A53)
-    set(TARGET_OS           LINUX)
     set(TARGET_SOC          AM62A)
 else()
     message(FATAL_ERROR "SOC ${TARGET_SOC_LOWER} is not supported.")
@@ -69,57 +69,84 @@ add_definitions(
     -DSOC_${TARGET_SOC}
 )
 
+set(VISION_APPS_LIBS_PATH $ENV{VISION_APPS_LIBS_PATH})
+set(EDGEAI_LIBS_PATH $ENV{EDGEAI_LIBS_PATH})
 link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${TARGET_FS}/usr/lib
+                 ${CMAKE_LIBRARY_PATH}/usr/lib
+                 ${CMAKE_LIBRARY_PATH}/lib
+                 ${VISION_APPS_LIBS_PATH}
+                 ${EDGEAI_LIBS_PATH}
                  )
 
 #message("PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
 #message("CMAKE_SOURCE_DIR   = ${CMAKE_SOURCE_DIR}")
 
+set(PSDK_INCLUDE_PATH $ENV{PSDK_INCLUDE_PATH})
+if ("${PSDK_INCLUDE_PATH}" STREQUAL "")
+    set(PSDK_INCLUDE_PATH ${TARGET_FS}/usr/include/)
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR}
                     ${PROJECT_SOURCE_DIR}/modules/include
                     ${PROJECT_SOURCE_DIR}/modules/core/include
                     ${PROJECT_SOURCE_DIR}/utils/include
-                    ${TARGET_FS}/usr/include/processor_sdk/ivision
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging
-                    ${TARGET_FS}/usr/include/processor_sdk/ti-perception-toolkit/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/algos/ae/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/algos/awb/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/algos/dcc/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/sensor_drv/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/ti_2a_wrapper/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/kernels/include
-                    ${TARGET_FS}/usr/include/processor_sdk/imaging/utils/itt_server/include/
-                    ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/arm-tidl/rt/inc/
-                    ${TARGET_FS}/usr/include/processor_sdk/tidl_j7/arm-tidl/tiovx_kernels/include
-                    ${TARGET_FS}/usr/include/processor_sdk/tiovx/include
-                    ${TARGET_FS}/usr/include/processor_sdk/tiovx/kernels/include
-                    ${TARGET_FS}/usr/include/processor_sdk/tiovx/kernels_j7/include
-                    ${TARGET_FS}/usr/include/processor_sdk/tiovx/utils/include
-                    ${TARGET_FS}/usr/include/processor_sdk/vision_apps
-                    ${TARGET_FS}/usr/include/processor_sdk/vision_apps/utils/app_init/include
-                    ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/img_proc/include
-                    ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/fileio/include
-                    ${TARGET_FS}/usr/include/processor_sdk/vision_apps/kernels/stereo/include
-                    ${TARGET_FS}/usr/include/edgeai-tiovx-kernels
-                    ${TARGET_FS}/usr/include/processor_sdk/app_utils/
-                    ${TARGET_FS}/usr/include/processor_sdk/video_io/kernels/include/
-                    ${TARGET_FS}/usr/include/processor_sdk/app_utils/utils/mem/include
-                    ${TARGET_FS}/usr/include/drm
-                    ${TARGET_FS}/usr/include/edgeai-apps-utils/
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/ivision
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/ti-perception-toolkit/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/algos/ae/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/algos/awb/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/algos/dcc/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/sensor_drv/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/ti_2a_wrapper/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/kernels/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/utils/itt_server/include/
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/tidl_j7/arm-tidl/rt/inc/
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/tidl_j7/arm-tidl/tiovx_kernels/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/tiovx/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/tiovx/kernels/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/tiovx/kernels_j7/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/tiovx/utils/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/utils/app_init/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/kernels/img_proc/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/kernels/fileio/include
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/kernels/stereo/include
+                    ${PSDK_INCLUDE_PATH}/edgeai-tiovx-kernels
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/app_utils/
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/video_io/kernels/include/
+                    ${PSDK_INCLUDE_PATH}/processor_sdk/app_utils/utils/mem/include
+                    ${PSDK_INCLUDE_PATH}/drm
+                    ${PSDK_INCLUDE_PATH}/edgeai-apps-utils/
                    )
 
 set(SYSTEM_LINK_LIBS
     tivision_apps
     edgeai-tiovx-kernels
     edgeai-apps-utils
-    drm
-    yaml-cpp
-    avformat
-    avutil
-    avcodec
     m
     )
+
+if ("${TARGET_OS}" STREQUAL "LINUX")
+    list(APPEND
+         SYSTEM_LINK_LIBS
+         drm
+         yaml-cpp
+         avformat
+         avutil
+         avcodec)
+endif()
+
+if ("${TARGET_OS}" STREQUAL "QNX")
+    list(APPEND
+         SYSTEM_LINK_LIBS
+         sharedmemallocator
+         tiudma-usr
+         tiipc-usr
+         ti-udmalld
+         ti-pdk
+         ti-sciclient)
+endif()
 
 set(COMMON_LINK_LIBS
     edgeai-tiovx-apps
