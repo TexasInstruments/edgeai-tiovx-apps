@@ -18,15 +18,20 @@ set(SRC_FILES
     src/tiovx_dl_pre_proc_module.c
     src/tiovx_dl_post_proc_module.c
     src/tiovx_mosaic_module.c
-    src/v4l2_capture_module.c
-    src/v4l2_decode_module.c
-    src/v4l2_encode_module.c
-    src/kms_display_module.c
-    src/linux_aewb_module.c
     src/tiovx_obj_array_split_module.c
     src/tiovx_pyramid_module.c
     src/tiovx_delay_module.c
     )
+
+if ("${TARGET_OS}" STREQUAL "LINUX")
+    list(APPEND
+         SRC_FILES
+         src/v4l2_capture_module.c
+         src/v4l2_decode_module.c
+         src/v4l2_encode_module.c
+         src/kms_display_module.c
+         src/linux_aewb_module.c)
+endif()
 
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4")
     list(APPEND
