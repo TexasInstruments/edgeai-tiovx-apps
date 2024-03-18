@@ -484,6 +484,7 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exe
     vx_status status = VX_FAILURE;
     vx_bool ret = vx_false_e;
     vx_enum type1, type2;
+    vx_size size1, size2;
 
     status = vxQueryReference(exemplar1, VX_REFERENCE_TYPE,
                               (void *)&type1, sizeof(type1));
@@ -518,8 +519,6 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exe
                                                    (tivx_raw_image)exemplar2);
             break;
         case VX_TYPE_USER_DATA_OBJECT:
-            vx_size size1, size2;
-
             status = vxQueryUserDataObject ((vx_user_data_object)exemplar1,
                                             VX_USER_DATA_OBJECT_SIZE,
                                             (void *)&size1, sizeof(size1));
