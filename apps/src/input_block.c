@@ -186,7 +186,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         }
     }
 
-#if !defined(SOC_AM62A)
+#if !defined(SOC_AM62A) && !defined(SOC_J722S)
     /* RTOS CAM */
     if(RTOS_CAM == input_info->source)
     {
