@@ -1,6 +1,7 @@
 include(GNUInstallDirs)
 
 add_compile_options(-Wall)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 # Specific compile optios across all targets
 #add_compile_definitions(MINIMAL_LOGGING)
