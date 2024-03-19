@@ -1,6 +1,10 @@
 # Usage: Please refer to README.md file in the home directory
 
-set(CMAKE_SYSTEM_NAME      Linux)
+if ("${TARGET_OS}" STREQUAL "QNX")
+    set(CMAKE_SYSTEM_NAME      QNX)
+else()
+    set(CMAKE_SYSTEM_NAME      Linux)
+endif()
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
 if (DEFINED ENV{CROSS_COMPILER_PREFIX})

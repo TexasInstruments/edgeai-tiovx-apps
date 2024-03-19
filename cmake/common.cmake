@@ -87,6 +87,12 @@ if ("${PSDK_INCLUDE_PATH}" STREQUAL "")
     set(PSDK_INCLUDE_PATH ${TARGET_FS}/usr/include/)
 endif()
 
+set(EDGEAI_INCLUDE_PATH $ENV{EDGEAI_INCLUDE_PATH})
+if ("${EDGEAI_INCLUDE_PATH}" STREQUAL "")
+    set(EDGEAI_INCLUDE_PATH ${TARGET_FS}/usr/include/)
+endif()
+
+
 include_directories(${PROJECT_SOURCE_DIR}
                     ${PROJECT_SOURCE_DIR}/modules/include
                     ${PROJECT_SOURCE_DIR}/modules/core/include
@@ -112,12 +118,13 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/kernels/img_proc/include
                     ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/kernels/fileio/include
                     ${PSDK_INCLUDE_PATH}/processor_sdk/vision_apps/kernels/stereo/include
-                    ${PSDK_INCLUDE_PATH}/edgeai-tiovx-kernels
                     ${PSDK_INCLUDE_PATH}/processor_sdk/app_utils/
                     ${PSDK_INCLUDE_PATH}/processor_sdk/video_io/kernels/include/
                     ${PSDK_INCLUDE_PATH}/processor_sdk/app_utils/utils/mem/include
                     ${PSDK_INCLUDE_PATH}/drm
-                    ${PSDK_INCLUDE_PATH}/edgeai-apps-utils/
+                    ${EDGEAI_INCLUDE_PATH}/edgeai-tiovx-kernels
+                    ${EDGEAI_INCLUDE_PATH}/edgeai-apps-utils/
+                    ${EDGEAI_INCLUDE_PATH}/
                    )
 
 set(SYSTEM_LINK_LIBS
@@ -125,13 +132,13 @@ set(SYSTEM_LINK_LIBS
     edgeai-tiovx-kernels
     edgeai-apps-utils
     m
+    yaml-cpp
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
     list(APPEND
          SYSTEM_LINK_LIBS
          drm
-         yaml-cpp
          avformat
          avutil
          avcodec)
@@ -145,7 +152,11 @@ if ("${TARGET_OS}" STREQUAL "QNX")
          tiipc-usr
          ti-udmalld
          ti-pdk
-         ti-sciclient)
+         ti-sciclient
+         c++fs)
+    add_definitions(
+         -D_QNX_SOURCE
+    )
 endif()
 
 set(COMMON_LINK_LIBS
