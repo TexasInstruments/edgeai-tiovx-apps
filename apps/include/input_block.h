@@ -67,9 +67,12 @@
 #define _TIOVX_APPS_INPUT_BLOCK
 
 #include <tiovx_modules.h>
+
+#if defined(TARGET_OS_LINUX)
 #include <v4l2_capture_module.h>
 #include <linux_aewb_module.h>
 #include <v4l2_decode_module.h>
+#endif
 
 #include <apps/include/info.h>
 #include <apps/include/resize_block.h>
@@ -78,6 +81,7 @@
 extern "C" {
 #endif
 
+#if defined(TARGET_OS_LINUX)
 /*
  * V4L2 Information
  */
@@ -98,6 +102,7 @@ typedef struct {
     v4l2DecodeHandle    *v4l2_decode_handle;
 
 } V4l2InputObject;
+#endif
 
 /*
  * Input block information
@@ -115,8 +120,10 @@ typedef struct {
     /* InputInfo */
     InputInfo           *input_info;
 
+#if defined(TARGET_OS_LINUX)
     /* Handles and pads related to v4l2 */
     V4l2InputObject     v4l2_obj;
+#endif
 
     /* TEE Node config */
     TIOVXTeeNodeCfg     tee_cfg;
