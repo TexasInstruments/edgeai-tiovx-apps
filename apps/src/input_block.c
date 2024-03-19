@@ -137,7 +137,9 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
     char aewb_dcc_path[512];
     uint32_t format_pixel_container = 0;
     uint32_t format_msb = 0;
+#if defined(TARGET_OS_LINUX)
     uint32_t v4l2_pix_format = 0;
+#endif
     uint32_t output_width = 0;
     uint32_t output_height = 0;
     uint32_t tee_bufq_depth = 0;
@@ -166,7 +168,9 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             sprintf(sensor_name, "SENSOR_SONY_IMX390_UB953_D3");
             format_pixel_container = TIVX_RAW_IMAGE_16_BIT;
             format_msb = 11;
+#if defined(TARGET_OS_LINUX)
             v4l2_pix_format = V4L2_PIX_FMT_SRGGB12;
+#endif
             output_width = 1936;
             output_height = 1096;
         }
@@ -175,7 +179,9 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             sprintf(sensor_name, "SENSOR_SONY_IMX219_RPI");
             format_pixel_container = TIVX_RAW_IMAGE_8_BIT;
             format_msb = 7;
+#if defined(TARGET_OS_LINUX)
             v4l2_pix_format = V4L2_PIX_FMT_SRGGB8;
+#endif
             output_width = 1920;
             output_height = 1080;
         }
@@ -353,6 +359,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
     }
 #endif
 
+#if defined(TARGET_OS_LINUX)
     /* LINUX CAM */
     if(LINUX_CAM == input_info->source)
     {
@@ -504,6 +511,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             }
         }
     }
+#endif
 
     /* RAW_IMG */
     if(RAW_IMG == input_info->source)

@@ -570,20 +570,22 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     BufPool *in_buf_pool = NULL;
     Buf *inbuf = NULL;
 
+#if defined(TARGET_OS_LINUX)
     BufPool *linux_h3a_buf_pool = NULL;
     Buf *linux_h3a_buf = NULL;
 
     BufPool *linux_aewb_buf_pool = NULL;
     Buf *linux_aewb_buf = NULL;
 
+    Buf *v4l2_valid_bufs[num_flows];
+    Buf *v4l2_dq_bufs[num_flows];
+#endif
+
     BufPool *out_buf_pool = NULL;
     Buf *outbuf = NULL;
 
     BufPool *perf_overlay_buf_pool = NULL;
     Buf *perf_overlay_buf = NULL;
-
-    Buf *v4l2_valid_bufs[num_flows];
-    Buf *v4l2_dq_bufs[num_flows];
 
     EdgeAIPerfStats perf_stats_handle;
 
@@ -597,12 +599,14 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         pthread_mutex_init(&w_thread_lock[i], NULL);
     }
 
+#if defined(TARGET_OS_LINUX)
     /* Initialize v4l2 buffers to NULL */
     for (i = 0; i < num_flows; i++)
     {
         v4l2_valid_bufs[i] = NULL;
         v4l2_dq_bufs[i] = NULL;
     }
+#endif
 
     /* Initialize the graph */
     status = tiovx_modules_initialize_graph(&graph);
@@ -672,6 +676,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             }
         }
 
+#if defined(TARGET_OS_LINUX)
         else if (LINUX_CAM == input_blocks[i].input_info->source)
         {
             /* Enqueue h3a and aewb buffers for linux capture */
@@ -709,6 +714,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             inbuf = v4l2_decode_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_decode_handle);
             tiovx_modules_enqueue_buf(inbuf);
         }
+#endif
 
         else if (RAW_IMG == input_blocks[i].input_info->source)
         {
@@ -734,7 +740,23 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         if(NULL != output_blocks[i].output_pad)
         {
             out_buf_pool = output_blocks[i].output_pad->buf_pool;
-            if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
+
+            if(IMG_DIR == output_blocks[i].output_info->sink)
+            {
+                outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+                tiovx_modules_enqueue_buf(outbuf);
+                /* Create a seperate thread for writing image */
+                w_thread_data[i].id = i;
+                w_thread_data[i].write_image_buf = outbuf;
+                w_thread_data[i].output_info = output_blocks[i].output_info;
+                pthread_create(&write_img_thread_id[num_w_threads],
+                                NULL,
+                                write_img_thread,
+                                (void *)&w_thread_data[i]);
+                num_w_threads++;
+            }
+#if defined(TARGET_OS_LINUX)
+            else if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
             {
                 outbuf = tiovx_modules_acquire_buf(out_buf_pool);
                 tiovx_modules_enqueue_buf(outbuf);
@@ -759,20 +781,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 outbuf = v4l2_encode_dqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle);
                 tiovx_modules_enqueue_buf(outbuf);
             }
-            else if(IMG_DIR == output_blocks[i].output_info->sink)
-            {
-                outbuf = tiovx_modules_acquire_buf(out_buf_pool);
-                tiovx_modules_enqueue_buf(outbuf);
-                /* Create a seperate thread for writing image */
-                w_thread_data[i].id = i;
-                w_thread_data[i].write_image_buf = outbuf;
-                w_thread_data[i].output_info = output_blocks[i].output_info;
-                pthread_create(&write_img_thread_id[num_w_threads],
-                                NULL,
-                                write_img_thread,
-                                (void *)&w_thread_data[i]);
-                num_w_threads++;
-            }
+#endif
         }
 
         /* Set perf overlay and enqueue */
@@ -790,6 +799,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
     {
         bool skip = false;
 
+#if defined(TARGET_OS_LINUX)
         /***********************************************************************
         *                        V4L2 Sources                                  *
         ***********************************************************************/
@@ -863,6 +873,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
         {
             continue;
         }
+#endif
 
         /***********************************************************************
         *                        Other Sources                                 *
@@ -877,6 +888,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 tiovx_modules_enqueue_buf(inbuf);
             }
 
+#if defined(TARGET_OS_LINUX)
             else if (H264_VID == input_blocks[i].input_info->source)
             {
                 /* Dequeue from graph, enqueue to v4l2 for decode,
@@ -893,6 +905,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 }
                 tiovx_modules_enqueue_buf(inbuf);
             }
+#endif
 
             else if (RAW_IMG == input_blocks[i].input_info->source)
             {
@@ -921,7 +934,15 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 /* Dequeue and enqueue output buffer if pad is present */
                 out_buf_pool = output_blocks[i].output_pad->buf_pool;
                 outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-                if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
+                if (IMG_DIR == output_blocks[i].output_info->sink)
+                {
+                    /* Update write image thread buffer */
+                    pthread_mutex_lock(&w_thread_lock[i]);
+                    w_thread_data[i].write_image_buf = outbuf;
+                    pthread_mutex_unlock(&w_thread_lock[i]);
+                }
+#if defined(TARGET_OS_LINUX)
+                else if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
                 {
                     /* Render the dequeued buffer on kms display */
                     kms_display_render_buf(output_blocks[i].kms_obj.kms_display_handle,
@@ -932,13 +953,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                     v4l2_encode_enqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle, outbuf);
                     outbuf = v4l2_encode_dqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle);
                 }
-                else if (IMG_DIR == output_blocks[i].output_info->sink)
-                {
-                    /* Update write image thread buffer */
-                    pthread_mutex_lock(&w_thread_lock[i]);
-                    w_thread_data[i].write_image_buf = outbuf;
-                    pthread_mutex_unlock(&w_thread_lock[i]);
-                }
+#endif
                 tiovx_modules_enqueue_buf(outbuf);
             }
 
@@ -978,6 +993,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 tiovx_modules_release_buf(inbuf);
             }
         }
+#if defined(TARGET_OS_LINUX)
         else if (LINUX_CAM == input_blocks[i].input_info->source)
         {
             v4l2_capture_stop(input_blocks[i].v4l2_obj.v4l2_capture_handle);
@@ -988,17 +1004,19 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
             v4l2_decode_stop(input_blocks[i].v4l2_obj.v4l2_decode_handle);
             v4l2_decode_delete_handle(input_blocks[i].v4l2_obj.v4l2_decode_handle);
         }
+#endif
     }
 
+#if defined(TARGET_OS_LINUX)
     for(i = 0; i < num_output_blocks; i++)
     {
-
         if (H264_ENCODE == output_blocks[i].output_info->sink)
         {
             v4l2_encode_stop(output_blocks[i].v4l2_obj.v4l2_encode_handle);
             v4l2_encode_delete_handle(output_blocks[i].v4l2_obj.v4l2_encode_handle);
         }
     }
+#endif
 
 clean_graph:
 
