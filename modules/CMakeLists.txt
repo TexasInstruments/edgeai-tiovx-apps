@@ -21,6 +21,7 @@ set(SRC_FILES
     src/tiovx_obj_array_split_module.c
     src/tiovx_pyramid_module.c
     src/tiovx_delay_module.c
+    src/tiovx_fakesink_module.c
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
