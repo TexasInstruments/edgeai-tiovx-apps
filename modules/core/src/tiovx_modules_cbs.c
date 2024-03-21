@@ -166,6 +166,14 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .delete_node = tiovx_delay_delete_node,
         .get_cfg_size = tiovx_delay_get_cfg_size,
         .get_priv_size = tiovx_delay_get_priv_size
+    },
+    {
+        .init_node = tiovx_fakesink_init_node,
+        .create_node = tiovx_fakesink_create_node,
+        .post_verify_graph = NULL,
+        .delete_node = tiovx_fakesink_delete_node,
+        .get_cfg_size = tiovx_fakesink_get_cfg_size,
+        .get_priv_size = NULL
 #if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
     },
     {

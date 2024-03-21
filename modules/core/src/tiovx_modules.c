@@ -768,7 +768,8 @@ void tiovx_modules_print_performance(GraphObj *graph)
         vx_perf_t perf;
 
         if((graph->node_list[i].node_type == TIOVX_TEE) ||
-           (graph->node_list[i].node_type == TIOVX_DELAY)) {
+           (graph->node_list[i].node_type == TIOVX_DELAY) ||
+           (graph->node_list[i].node_type == TIOVX_FAKESINK)) {
             continue;
         }
 
