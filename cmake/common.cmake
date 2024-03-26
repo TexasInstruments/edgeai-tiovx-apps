@@ -65,8 +65,8 @@ endif()
 message("SOC=${TARGET_SOC_LOWER}")
 
 add_definitions(
-    -DTARGET_CPU=${TARGET_CPU}
-    -DTARGET_OS=${TARGET_OS}
+    -DTARGET_CPU_${TARGET_CPU}
+    -DTARGET_OS_${TARGET_OS}
     -DSOC_${TARGET_SOC}
 )
 
