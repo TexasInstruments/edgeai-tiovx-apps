@@ -62,11 +62,10 @@
 
 #include <apps/include/misc.h>
 
-void *map_image(vx_image image, uint8_t plane)
+void *map_image(vx_image image, uint8_t plane, vx_map_id *map_id)
 {
     vx_rectangle_t rect;
     vx_imagepatch_addressing_t image_addr;
-    vx_map_id map_id;
     vx_uint32 img_width;
     vx_uint32 img_height;
     void *ptr;
@@ -82,15 +81,19 @@ void *map_image(vx_image image, uint8_t plane)
     vxMapImagePatch(image,
                     &rect,
                     plane,
-                    &map_id,
+                    map_id,
                     &image_addr,
                     &ptr,
                     VX_WRITE_ONLY,
                     VX_MEMORY_TYPE_HOST,
                     VX_NOGAP_X);
-    vxUnmapImagePatch(image, map_id);
 
     return ptr;
+}
+
+void unmap_image(vx_image image, vx_map_id map_id)
+{
+    vxUnmapImagePatch(image, map_id);
 }
 
 void set_mosaic_background(vx_image image, char *title)
@@ -99,6 +102,8 @@ void set_mosaic_background(vx_image image, char *title)
     vx_uint32 img_height;
     void *y_ptr;
     void *uv_ptr;
+    vx_map_id y_ptr_map_id;
+    vx_map_id uv_ptr_map_id;
     Image image_holder;
     YUVColor color_black;
     YUVColor color_white;
@@ -110,8 +115,8 @@ void set_mosaic_background(vx_image image, char *title)
     vxQueryImage(image, VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
     vxQueryImage(image, VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
 
-    y_ptr = map_image(image, 0);
-    uv_ptr = map_image(image, 1);
+    y_ptr = map_image(image, 0, &y_ptr_map_id);
+    uv_ptr = map_image(image, 1, &uv_ptr_map_id);
 
     image_holder.width = img_width;
     image_holder.height = img_height;
@@ -143,6 +148,9 @@ void set_mosaic_background(vx_image image, char *title)
              big_font.height + 2,
              &medium_font,
              &color_green);
+
+    unmap_image(image, y_ptr_map_id);
+    unmap_image(image, uv_ptr_map_id);
 }
 
 void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle)
@@ -151,12 +159,14 @@ void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle)
     vx_uint32 img_height;
     void *y_ptr;
     void *uv_ptr;
+    vx_map_id y_ptr_map_id;
+    vx_map_id uv_ptr_map_id;
 
     vxQueryImage(image, VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
     vxQueryImage(image, VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
 
-    y_ptr = map_image(image, 0);
-    uv_ptr = map_image(image, 1);
+    y_ptr = map_image(image, 0, &y_ptr_map_id);
+    uv_ptr = map_image(image, 1, &uv_ptr_map_id);
 
     perf_stats_handle->overlay.imgYPtr = (uint8_t *)y_ptr;
     perf_stats_handle->overlay.imgUVPtr = (uint8_t *)uv_ptr;
@@ -168,4 +178,7 @@ void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle)
     perf_stats_handle->overlay.height = img_height;
 
     update_edgeai_perf_stats(perf_stats_handle);
+
+    unmap_image(image, y_ptr_map_id);
+    unmap_image(image, uv_ptr_map_id);
 }
