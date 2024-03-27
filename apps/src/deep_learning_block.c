@@ -70,6 +70,17 @@ static char *g_mpu_targets[] = {TIVX_TARGET_MPU_0, TIVX_TARGET_MPU_1,
 
 static uint8_t g_mpu_target_idx = 0;
 
+#if defined(SOC_J84S4)
+static char *g_c7x_targets[] = {TIVX_TARGET_DSP_C7_1,TIVX_TARGET_DSP_C7_2,
+                                TIVX_TARGET_DSP_C7_3,TIVX_TARGET_DSP_C7_4};
+#elif defined(SOC_J722S)
+static char *g_c7x_targets[] = {TIVX_TARGET_DSP_C7_1,TIVX_TARGET_DSP_C7_2};
+#else
+static char *g_c7x_targets[] = {TIVX_TARGET_DSP_C7_1};
+#endif
+
+static uint8_t g_c7x_target_idx = 0;
+
 /* RGB Color Map for Semantic Segmentation */
 static uint8_t RGB_COLOR_MAP[26][3] = {{255,0,0},{0,255,0},{73,102,92},
                                        {255,255,0},{0,255,255},{0,99,245},
@@ -161,6 +172,8 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
 
         tidl_cfg.io_config_path = model_info->io_config_path;
         tidl_cfg.network_path = model_info->network_path;
+
+        sprintf(tidl_cfg.target_string, g_c7x_targets[g_c7x_target_idx]);
 
         tidl_node = tiovx_modules_add_node(graph,
                                            TIOVX_TIDL,
@@ -279,6 +292,12 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
     if(g_mpu_target_idx >= sizeof(g_mpu_targets)/sizeof(g_mpu_targets[0]))
     {
         g_mpu_target_idx = 0;
+    }
+
+    g_c7x_target_idx++;
+    if(g_c7x_target_idx >= sizeof(g_c7x_targets)/sizeof(g_c7x_targets[0]))
+    {
+        g_c7x_target_idx = 0;
     }
 
     return status;
