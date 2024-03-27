@@ -70,7 +70,7 @@ static char *g_mpu_targets[] = {TIVX_TARGET_MPU_0, TIVX_TARGET_MPU_1,
 
 static uint8_t g_mpu_target_idx = 0;
 
-#if defined(SOC_J84S4)
+#if defined(SOC_J784S4)
 static char *g_c7x_targets[] = {TIVX_TARGET_DSP_C7_1,TIVX_TARGET_DSP_C7_2,
                                 TIVX_TARGET_DSP_C7_3,TIVX_TARGET_DSP_C7_4};
 #elif defined(SOC_J722S)
