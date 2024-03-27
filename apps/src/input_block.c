@@ -69,7 +69,7 @@
 #define LDC_BLOCK_HEIGHT    (32)
 #define LDC_PIXEL_PAD       (1)
 
-#if defined(SOC_J84S4)
+#if defined(SOC_J784S4)
 static char *g_capture_targets[] = {TIVX_TARGET_CAPTURE1, TIVX_TARGET_CAPTURE2,
                                     TIVX_TARGET_CAPTURE3, TIVX_TARGET_CAPTURE4,
                                     TIVX_TARGET_CAPTURE5, TIVX_TARGET_CAPTURE6,
