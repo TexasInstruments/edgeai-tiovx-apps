@@ -110,7 +110,7 @@ vx_status app_modules_v4l2_capture_test(vx_int32 argc, vx_char* argv[])
     v4l2_capture_cfg.height = INPUT_HEIGHT;
     v4l2_capture_cfg.pix_format = V4L2_PIX_FMT_SRGGB8;
     v4l2_capture_cfg.bufq_depth = APP_BUFQ_DEPTH + 1;
-    sprintf(v4l2_capture_cfg.device, "/dev/video-rpi-cam0");
+    sprintf(v4l2_capture_cfg.device, "/dev/video-imx219-cam0");
 
     v4l2_capture_handle = v4l2_capture_create_handle(&v4l2_capture_cfg);
 

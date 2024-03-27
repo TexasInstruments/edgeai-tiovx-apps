@@ -1,12 +1,12 @@
-title: RPI Camera
+title: IMX219 Camera
 inputs:
     input0:
         source: LINUX_CAM
         width: 1920
         height: 1080
         sensor-name: imx219
-        device: /dev/video-rpi-cam0
-        subdev: /dev/v4l-rpi-subdev0
+        device: /dev/video-imx219-cam0
+        subdev: /dev/v4l-imx219-subdev0
 models:
     model0:
         model_path: /opt/model_zoo/TFL-CL-0000-mobileNetV1-mlperf
