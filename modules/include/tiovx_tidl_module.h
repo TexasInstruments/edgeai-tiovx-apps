@@ -81,6 +81,7 @@ typedef struct {
     vx_char*                    network_path;
     vx_uint8                    network_checksum[TIVX_TIDL_J7_CHECKSUM_SIZE];
     sTIDL_IOBufDesc_t           io_buf_desc;
+    char                        target_string[TIVX_TARGET_MAX_NAME];
 } TIOVXTIDLNodeCfg;
 
 void tiovx_tidl_init_cfg(TIOVXTIDLNodeCfg *cfg);

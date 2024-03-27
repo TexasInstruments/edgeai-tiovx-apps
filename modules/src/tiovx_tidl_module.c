@@ -627,6 +627,7 @@ void tiovx_tidl_init_cfg(TIOVXTIDLNodeCfg *node_cfg)
     node_cfg->num_input_tensors = 1;
     node_cfg->num_output_tensors = 1;
     node_cfg->num_channels = 1;
+    sprintf(node_cfg->target_string, TIVX_TARGET_DSP_C7_1);
     return;
 }
 
@@ -796,7 +797,7 @@ vx_status tiovx_tidl_create_node(NodeObj *node)
     }
 
     vxSetReferenceName((vx_reference)node->tiovx_node, "tidl_node");
-    vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, TIVX_TARGET_DSP_C7_1);
+    vxSetNodeTarget(node->tiovx_node, VX_TARGET_STRING, node_cfg->target_string);
 
     replicate[TIVX_KERNEL_TIDL_IN_CONFIG_IDX] = vx_false_e;
     replicate[TIVX_KERNEL_TIDL_IN_NETWORK_IDX] = vx_false_e;
