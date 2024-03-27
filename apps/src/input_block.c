@@ -189,6 +189,17 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             output_width = 1920;
             output_height = 1080;
         }
+#if defined(SOC_AM62A) || defined(SOC_J722S)
+        else if (0 == strcmp("ov2312",input_info->sensor_name))
+        {
+            sprintf(sensor_name, "SENSOR_OV2312_UB953_LI");
+            format_pixel_container = TIVX_RAW_IMAGE_16_BIT;
+            format_msb = 9;
+            v4l2_pix_format = v4l2_fourcc('B','G','I','0');
+            output_width = 1600;
+            output_height = 1300;
+        }
+#endif
         else
         {
             TIOVX_APPS_ERROR("Invalid sensor name %s\n", input_info->sensor_name);
@@ -403,6 +414,13 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
             viss_cfg.input_cfg.params.format[0].pixel_container = format_pixel_container;
             viss_cfg.input_cfg.params.format[0].msb = format_msb;
+
+#if defined(SOC_AM62A) || defined(SOC_J722S)
+            if (0 == strcmp("SENSOR_OV2312_UB953_LI",viss_cfg.sensor_name))
+            {
+                viss_cfg.viss_params.bypass_pcid = 0;
+            }
+#endif
             viss_cfg.enable_aewb_pad = vx_true_e;
             viss_cfg.enable_h3a_pad = vx_true_e;
 
