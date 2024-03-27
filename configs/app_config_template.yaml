@@ -48,10 +48,10 @@ inputs:
         sensor-name: imx219
 
         # v4l2 device id of the sensor
-        device: /dev/video-rpi-cam0
+        device: /dev/video-imx219-cam0
 
         # v4l2 subdev id of the sensor, need for controlling sensor parameters
-        subdev-id: /dev/v4l-rpi-subdev0
+        subdev-id: /dev/v4l-imx219-subdev0
 
         # Requires LDC? [Default: False]
         ldc: False
