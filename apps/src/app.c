@@ -546,7 +546,7 @@ int32_t connect_blocks(GraphObj *graph,
     return 0;
 }
 
-int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
+int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, bool verbose)
 {
     int32_t status;
     int32_t i, j;
@@ -963,6 +963,10 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows)
                 perf_overlay_buf_pool = output_blocks[i].perf_overlay_pad->buf_pool;
                 perf_overlay_buf = tiovx_modules_dequeue_buf(perf_overlay_buf_pool);
                 update_perf_overlay((vx_image)perf_overlay_buf->handle, &perf_stats_handle);
+                if(verbose)
+                {
+                    print_perf(&graph, &perf_stats_handle);
+                }
                 tiovx_modules_enqueue_buf(perf_overlay_buf);
             }
         }

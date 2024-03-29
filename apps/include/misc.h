@@ -73,7 +73,8 @@ extern "C" {
 void *map_image(vx_image image, uint8_t plane, vx_map_id *map_id);
 void unmap_image(vx_image image, vx_map_id map_id);
 void set_mosaic_background(vx_image image, char *title);
-void update_perf_overlay(vx_image image,EdgeAIPerfStats *perf_stats_handle);
+void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle);
+void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle);
 
 #ifdef __cplusplus
 }
