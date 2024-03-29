@@ -61,6 +61,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <yaml_parser.h>
 
 #include <TI/tivx.h>
@@ -73,17 +75,48 @@ int main(int argc, char *argv[])
 {
     int32_t     status = 0;
     char        config_file[64];
+    bool        verbose = false;
     FlowInfo    flow_infos[MAX_FLOWS];
-    uint32_t    num_flows = 0; 
+    uint32_t    num_flows = 0;
 
-    /* Parse user args */
-    if (argc <= 1)
+    int32_t long_index;
+    int32_t opt;
+    static struct option long_options[] =
     {
-        TIOVX_APPS_ERROR("Please provide config file path.\n");
-        return -1;
-    }
+        {"help",      no_argument,       0, 'h' },
+        {"verbose",   no_argument,       0, 'v' },
+        {0,           0,                 0,  0  }
+    };
 
-    sprintf(config_file, argv[1]);
+    while ((opt = getopt_long(argc, argv,"-hvl:",
+                   long_options, &long_index )) != -1)
+    {
+        switch (opt)
+        {
+            case 1 :
+                sprintf(config_file, optarg);
+                break;
+            case 'v' :
+                verbose = true;
+                break;
+            case 'h' :
+            default:
+                printf("# \n");
+                printf("# %s PARAMETERS [OPTIONAL PARAMETERS]\n", argv[0]);
+                printf("# POSITIONAL PARAMETERS:\n");
+                printf("#  config_file - Path to the configuration file.\n");
+                printf("# OPTIONAL PARAMETERS:\n");
+                printf("#  [--verbose    |-v]\n");
+                printf("#  [--help       |-h]\n");
+                printf("# \n");
+                printf("# (C) Texas Instruments 2024\n");
+                printf("# \n");
+                printf("# EXAMPLE:\n");
+                printf("#    %s configs/linux/object_detection.yaml\n", argv[0]);
+                printf("# \n");
+                exit(0);
+        }
+    }
 
     status = parse_yaml_file(config_file,
                              flow_infos,
@@ -97,7 +130,7 @@ int main(int argc, char *argv[])
 
     status = appInit();
 
-    status = run_app(flow_infos, num_flows);
+    status = run_app(flow_infos, num_flows, verbose);
 
     appDeInit();
 

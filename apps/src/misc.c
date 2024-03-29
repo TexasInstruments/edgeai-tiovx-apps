@@ -182,3 +182,94 @@ void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle)
     unmap_image(image, y_ptr_map_id);
     unmap_image(image, uv_ptr_map_id);
 }
+
+void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
+{
+
+    if(0 == perf_stats_handle->frameCount)
+    {
+        Stats *stats = &perf_stats_handle->stats;
+
+        printf("================================================\n\n");
+        printf ("CPU: mpu: TOTAL LOAD = %.2f\n",
+                (float)stats->cpu_load.cpu_load/100);
+
+#if defined(SOC_AM62A) || defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
+        for (uint32_t i = 0; i < APP_IPC_CPU_MAX; i++)
+        {
+            char *cpu_name = appIpcGetCpuName(i);
+            if (appIpcIsCpuEnabled (i) &&
+                (NULL != strstr (cpu_name, "c7x") ||
+                NULL != strstr (cpu_name, "mcu")))
+            {
+                printf ("CPU: %6s: TOTAL LOAD = %.2f\n",
+                        appIpcGetCpuName (i),
+                        (float)stats->cpu_loads[i].cpu_load/100);
+            }
+        }
+
+        for (uint32_t i = 0; i < stats->hwa_count ; i++)
+        {
+            app_perf_stats_hwa_load_t *hwaLoad;
+            uint64_t load;
+            for (uint32_t j = 0; j < APP_PERF_HWA_MAX; j++)
+            {
+                app_perf_hwa_id_t id = (app_perf_hwa_id_t) j;
+                hwaLoad = &stats->hwa_loads[i].hwa_stats[id];
+
+                if (hwaLoad->active_time > 0 &&
+                    hwaLoad->pixels_processed > 0 &&
+                    hwaLoad->total_time > 0)
+                {
+                    load = (hwaLoad->active_time * 10000) / hwaLoad->total_time;
+                    printf ("HWA: %6s: LOAD = %.2f %% ( %lu MP/s )\n",
+                            appPerfStatsGetHwaName (id),
+                            (float)load/100,
+                            (hwaLoad->pixels_processed / hwaLoad->total_time));
+                }
+            }
+        }
+#endif
+        printf ("DDR: READ  BW: AVG = %6d MB/s, PEAK = %6d MB/s\n",
+                stats->ddr_load.read_bw_avg, stats->ddr_load.read_bw_peak);
+
+        printf ("DDR: WRITE BW: AVG = %6d MB/s, PEAK = %6d MB/s\n",
+                stats->ddr_load.write_bw_avg, stats->ddr_load.write_bw_peak);
+
+        printf ("DDR: TOTAL BW: AVG = %6d MB/s, PEAK = %6d MB/s\n",
+                stats->ddr_load.read_bw_avg + stats->ddr_load.write_bw_avg,
+                stats->ddr_load.write_bw_peak + stats->ddr_load.read_bw_peak);
+
+        for (uint32_t i = 0; i < NUM_THERMAL_ZONE; i++)
+        {
+            printf ("TEMP: %s = %.2f C\n",
+                    stats->soc_temp.thermal_zone_name[i],
+                    stats->soc_temp.thermal_zone_temp[i]);
+        }
+
+        printf ("FPS: %d\n\n",stats->fps);
+
+        for(uint32_t i = 0; i < graph->num_nodes; i++)
+        {
+            if(TIOVX_TIDL == graph->node_list[i].node_type)
+            {
+                vx_perf_t perf;
+                vxQueryNode(graph->node_list[i].tiovx_node,
+                            VX_NODE_PERFORMANCE,
+                            &perf,
+                            sizeof(perf));
+                printf("%s - %0.3f ms\n", graph->node_list[i].name, perf.avg/1000000.0);
+            }
+        }
+
+        printf("\n");
+
+        vx_perf_t graph_perf;
+        vxQueryGraph(graph->tiovx_graph,
+                    VX_GRAPH_PERFORMANCE,
+                    &graph_perf,
+                    sizeof(graph_perf));
+        printf("Graph - %0.3f ms\n", graph_perf.avg/1000000.0);
+        printf("================================================\n\n");
+    }
+}
