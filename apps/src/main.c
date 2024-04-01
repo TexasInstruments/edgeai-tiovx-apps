@@ -74,10 +74,13 @@
 int main(int argc, char *argv[])
 {
     int32_t     status = 0;
-    char        config_file[64];
-    bool        verbose = false;
     FlowInfo    flow_infos[MAX_FLOWS];
     uint32_t    num_flows = 0;
+    CmdArgs     cmd_args;
+
+    /* Initialize cmd_args */
+    cmd_args.verbose = false;
+    cmd_args.dump_dot = false;
 
     int32_t long_index;
     int32_t opt;
@@ -85,19 +88,23 @@ int main(int argc, char *argv[])
     {
         {"help",      no_argument,       0, 'h' },
         {"verbose",   no_argument,       0, 'v' },
+        {"dump",      no_argument,       0, 'd' },
         {0,           0,                 0,  0  }
     };
 
-    while ((opt = getopt_long(argc, argv,"-hvl:",
+    while ((opt = getopt_long(argc, argv,"-hvdl:",
                    long_options, &long_index )) != -1)
     {
         switch (opt)
         {
             case 1 :
-                sprintf(config_file, optarg);
+                sprintf(cmd_args.config_file, optarg);
                 break;
             case 'v' :
-                verbose = true;
+                cmd_args.verbose = true;
+                break;
+            case 'd' :
+                cmd_args.dump_dot = true;
                 break;
             case 'h' :
             default:
@@ -118,19 +125,19 @@ int main(int argc, char *argv[])
         }
     }
 
-    status = parse_yaml_file(config_file,
+    status = parse_yaml_file(cmd_args.config_file,
                              flow_infos,
                              MAX_FLOWS,
                              &num_flows);
     if (0 != status)
     {
-        TIOVX_APPS_ERROR("Could not parse %s.\n", config_file);
+        TIOVX_APPS_ERROR("Could not parse %s.\n", cmd_args.config_file);
         return status;
     }
 
     status = appInit();
 
-    status = run_app(flow_infos, num_flows, verbose);
+    status = run_app(flow_infos, num_flows, &cmd_args);
 
     appDeInit();
 
