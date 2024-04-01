@@ -342,6 +342,20 @@ typedef struct {
     uint32_t    num_subflows;
 } FlowInfo;
 
+/*
+ * Command Line Arguments
+ */
+typedef struct {
+    /* Path to config file. */
+    char        config_file[64];
+
+    /* Verbose. */
+    bool        verbose;
+
+    /* Dump graph as dot */
+    bool        dump_dot;
+} CmdArgs;
+
 #ifdef __cplusplus
 }
 #endif
