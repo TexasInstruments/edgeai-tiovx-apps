@@ -437,7 +437,9 @@ vx_status tiovx_tidl_update_checksums(NodeObj *node)
 vx_status tiovx_tidl_set_createParams(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
+#if defined(SOC_J784S4) || defined(SOC_J722S)
     TIOVXTIDLNodeCfg *node_cfg = (TIOVXTIDLNodeCfg *)node->node_cfg;
+#endif
     TIOVXTIDLNodePriv *node_priv = (TIOVXTIDLNodePriv *)node->node_priv;
 
     vx_map_id  map_id;

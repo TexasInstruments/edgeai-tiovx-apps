@@ -957,6 +957,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                 {
                     v4l2_encode_enqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle, outbuf);
                     outbuf = v4l2_encode_dqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+                    if(NULL == outbuf)
+                    {
+                        run_loop = false;
+                        break;
+                    }
                 }
 #endif
                 tiovx_modules_enqueue_buf(outbuf);
