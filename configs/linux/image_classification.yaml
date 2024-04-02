@@ -21,7 +21,7 @@ outputs:
     output1:
         sink: H264_ENCODE
         width: 1920
-        height: 1080
+        height: 1088
         output_path: /opt/edgeai-test-data/output/output_video0.h264
     output2:
         sink: IMG_DIR
