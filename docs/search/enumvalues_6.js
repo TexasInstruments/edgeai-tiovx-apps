@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['tiovx_5fcolor_5fconvert',['TIOVX_COLOR_CONVERT',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a526f949e8810683f65527ad25c811b8c',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fdelay',['TIOVX_DELAY',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a81d5cf259b648f0f27a84d36f408d804',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fdl_5fcolor_5fconvert',['TIOVX_DL_COLOR_CONVERT',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a55364579381a4b006f745717a724aab8',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fdl_5fpost_5fproc',['TIOVX_DL_POST_PROC',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a8139932d99bb9e1390bf9cbd430205d7',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fdl_5fpre_5fproc',['TIOVX_DL_PRE_PROC',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a12c076c0ced708c593d2d9de3bdeaa17',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5ffakesink',['TIOVX_FAKESINK',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2af92000c8e14560f01552c7d3a9c35fcd',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fldc',['TIOVX_LDC',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a020f17540d99b9bf528bb62cec206385',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fmodule_5fldc_5fop_5fmode_5fdcc_5fdata',['TIOVX_MODULE_LDC_OP_MODE_DCC_DATA',['../tiovx__ldc__module_8h.html#a15712dd85d9ea41a436d773cbfb96055a23b5332e6ed6e5236919a7db84b8c24a',1,'tiovx_ldc_module.h']]],
+  ['tiovx_5fmodule_5fldc_5fop_5fmode_5fdefault',['TIOVX_MODULE_LDC_OP_MODE_DEFAULT',['../tiovx__ldc__module_8h.html#a15712dd85d9ea41a436d773cbfb96055a28f0103f522427670539415221895c15',1,'tiovx_ldc_module.h']]],
+  ['tiovx_5fmodule_5fldc_5fop_5fmode_5fmax',['TIOVX_MODULE_LDC_OP_MODE_MAX',['../tiovx__ldc__module_8h.html#a15712dd85d9ea41a436d773cbfb96055a8a5ade9d30cae685292bf6340b68a42c',1,'tiovx_ldc_module.h']]],
+  ['tiovx_5fmodule_5fldc_5fop_5fmode_5fmesh_5fimage',['TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE',['../tiovx__ldc__module_8h.html#a15712dd85d9ea41a436d773cbfb96055a7e243b874c2fcaf303f2bbc5ab10084f',1,'tiovx_ldc_module.h']]],
+  ['tiovx_5fmodules_5fnum_5fmodules',['TIOVX_MODULES_NUM_MODULES',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a6c31efa1741798f63408598627d5fc52',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fmosaic',['TIOVX_MOSAIC',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a9d41359ccf7b5b7b25af4c3915953f2a',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fmulti_5fscaler',['TIOVX_MULTI_SCALER',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a0ddd596c7af6fd24b43f007aeb527d00',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fobj_5farray_5fsplit',['TIOVX_OBJ_ARRAY_SPLIT',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2ac0eec07e62cd3e4081b32b6db9e8d314',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fpyramid',['TIOVX_PYRAMID',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2ac2f4a4de0d7388f2293a079731aa0399',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5ftee',['TIOVX_TEE',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a3dab1e54c40cf8da229079c238d256cc',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5ftidl',['TIOVX_TIDL',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a4716bc5952e0bd338f30141ec61e430a',1,'tiovx_modules_cbs.h']]],
+  ['tiovx_5fviss',['TIOVX_VISS',['../tiovx__modules__cbs_8h.html#a79a8ad33635cbff5f56912d1512140f2a717c8f66bc450f26d3da909e76cf59e7',1,'tiovx_modules_cbs.h']]]
+];

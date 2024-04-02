@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['max',['MAX',['../resize__block_8c.html#afa99ec4acc4ecb2dc3c2d05da15d0e3f',1,'resize_block.c']]],
+  ['max_5fcapbufs',['MAX_CAPBUFS',['../v4l2__encode__module_8c.html#a7a3624b8b381822436242930305ec5c1',1,'v4l2_encode_module.c']]],
+  ['max_5fchar_5farray_5fsize',['MAX_CHAR_ARRAY_SIZE',['../info_8h.html#a22d2ff7a9e6a831e8180d6c82f5a7f45',1,'info.h']]],
+  ['max_5fflows',['MAX_FLOWS',['../info_8h.html#a83bb9b191106d3b490a77b4fbe74c974',1,'info.h']]],
+  ['max_5fframes',['MAX_FRAMES',['../v4l2__decode__module_8c.html#a5b4055201d2d8170e179b1ceaa438b9c',1,'v4l2_decode_module.c']]],
+  ['max_5fmosaic_5finput',['MAX_MOSAIC_INPUT',['../info_8h.html#a79e35b64656e90b0de9184551c7e17a1',1,'info.h']]],
+  ['max_5fnum_5fof_5ftidl_5finput_5ftensors',['MAX_NUM_OF_TIDL_INPUT_TENSORS',['../app__tiovx__tidl__module__test_8c.html#af7cd196796e6f04aa251014948b95ddf',1,'app_tiovx_tidl_module_test.c']]],
+  ['max_5fnum_5fof_5ftidl_5foutput_5ftensors',['MAX_NUM_OF_TIDL_OUTPUT_TENSORS',['../app__tiovx__tidl__module__test_8c.html#a3cc11dd0d7923ce76858211249d474e4',1,'app_tiovx_tidl_module_test.c']]],
+  ['max_5foutbufs',['MAX_OUTBUFS',['../v4l2__decode__module_8c.html#a22d335c7779ffbac090cff355024e801',1,'v4l2_decode_module.c']]],
+  ['max_5fraw_5fimg',['MAX_RAW_IMG',['../info_8h.html#a681590f36b1e3b5fee1a0cbca42526c7',1,'info.h']]],
+  ['max_5fsubflow',['MAX_SUBFLOW',['../info_8h.html#a7a32055b7c9ed10eaadf2daf5fbc5a12',1,'info.h']]],
+  ['min',['MIN',['../app__tiovx__linux__decode__display__test_8c.html#a3acffbd305ee72dcd4593c0d8af64a4f',1,'MIN():&#160;app_tiovx_linux_decode_display_test.c'],['../app__tiovx__linux__decode__sde__test_8c.html#a3acffbd305ee72dcd4593c0d8af64a4f',1,'MIN():&#160;app_tiovx_linux_decode_sde_test.c']]],
+  ['msc_5finput_5fheight',['MSC_INPUT_HEIGHT',['../app__tiovx__capture__dl__display__pipeline_8c.html#a0c75b88fb17b9f69d018c5fdddec1519',1,'MSC_INPUT_HEIGHT():&#160;app_tiovx_capture_dl_display_pipeline.c'],['../app__tiovx__capture__viss__ldc__msc__display__test_8c.html#a0c75b88fb17b9f69d018c5fdddec1519',1,'MSC_INPUT_HEIGHT():&#160;app_tiovx_capture_viss_ldc_msc_display_test.c'],['../app__tiovx__viss__ldc__msc__test_8c.html#a0c75b88fb17b9f69d018c5fdddec1519',1,'MSC_INPUT_HEIGHT():&#160;app_tiovx_viss_ldc_msc_test.c']]],
+  ['msc_5finput_5fwidth',['MSC_INPUT_WIDTH',['../app__tiovx__capture__dl__display__pipeline_8c.html#a33ace32ec68a1204c31eff25321e043d',1,'MSC_INPUT_WIDTH():&#160;app_tiovx_capture_dl_display_pipeline.c'],['../app__tiovx__capture__viss__ldc__msc__display__test_8c.html#a33ace32ec68a1204c31eff25321e043d',1,'MSC_INPUT_WIDTH():&#160;app_tiovx_capture_viss_ldc_msc_display_test.c'],['../app__tiovx__viss__ldc__msc__test_8c.html#a33ace32ec68a1204c31eff25321e043d',1,'MSC_INPUT_WIDTH():&#160;app_tiovx_viss_ldc_msc_test.c']]],
+  ['msc_5foutput_5fheight',['MSC_OUTPUT_HEIGHT',['../app__tiovx__capture__dl__display__pipeline_8c.html#acff4fe1c7022aa5760da2735e07151c9',1,'MSC_OUTPUT_HEIGHT():&#160;app_tiovx_capture_dl_display_pipeline.c'],['../app__tiovx__capture__viss__ldc__msc__display__test_8c.html#acff4fe1c7022aa5760da2735e07151c9',1,'MSC_OUTPUT_HEIGHT():&#160;app_tiovx_capture_viss_ldc_msc_display_test.c'],['../app__tiovx__viss__ldc__msc__test_8c.html#acff4fe1c7022aa5760da2735e07151c9',1,'MSC_OUTPUT_HEIGHT():&#160;app_tiovx_viss_ldc_msc_test.c']]],
+  ['msc_5foutput_5fwidth',['MSC_OUTPUT_WIDTH',['../app__tiovx__capture__dl__display__pipeline_8c.html#ad19bf384546878bc727c5eb31a6f9fd3',1,'MSC_OUTPUT_WIDTH():&#160;app_tiovx_capture_dl_display_pipeline.c'],['../app__tiovx__capture__viss__ldc__msc__display__test_8c.html#ad19bf384546878bc727c5eb31a6f9fd3',1,'MSC_OUTPUT_WIDTH():&#160;app_tiovx_capture_viss_ldc_msc_display_test.c'],['../app__tiovx__viss__ldc__msc__test_8c.html#ad19bf384546878bc727c5eb31a6f9fd3',1,'MSC_OUTPUT_WIDTH():&#160;app_tiovx_viss_ldc_msc_test.c']]]
+];

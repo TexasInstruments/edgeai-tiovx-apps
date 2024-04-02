@@ -1,0 +1,9 @@
+<map id="ResizeBlock" name="ResizeBlock">
+<area shape="rect" id="node3" href="$structResizeBlockOutputGroup.html" title="{ResizeBlockOutputGroup\n||}" alt="" coords="277,756,461,833"/>
+<area shape="rect" id="node4" href="$structSubflowInfo.html" title="{SubflowInfo\n||}" alt="" coords="425,601,524,679"/>
+<area shape="rect" id="node6" href="$structPreProcInfo.html" title="{PreProcInfo\n||}" alt="" coords="719,189,815,267"/>
+<area shape="rect" id="node10" href="$structPostProcInfo.html" title="{PostProcInfo\n||}" alt="" coords="1235,189,1338,267"/>
+<area shape="rect" id="node13" href="$structMosaicInfo.html" title="{MosaicInfo\n||}" alt="" coords="5,291,99,368"/>
+<area shape="rect" id="node14" href="$structOutputInfo.html" title="{OutputInfo\n||}" alt="" coords="1023,189,1113,267"/>
+<area shape="rect" id="node5" href="$structModelInfo.html" title="{ModelInfo\n||}" alt="" coords="1169,405,1255,482"/>
+</map>

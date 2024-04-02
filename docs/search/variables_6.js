@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['g_5fc7x_5ftarget_5fidx',['g_c7x_target_idx',['../deep__learning__block_8c.html#ab2e9c0d2b019546a93d976862ed808ba',1,'deep_learning_block.c']]],
+  ['g_5fc7x_5ftargets',['g_c7x_targets',['../deep__learning__block_8c.html#aabe56fe7915bc1e7fff0d5152d3111e3',1,'deep_learning_block.c']]],
+  ['g_5fldc_5ftarget_5fidx',['g_ldc_target_idx',['../input__block_8c.html#af8e319f9d201585ca1fd63610f3c1a25',1,'input_block.c']]],
+  ['g_5fldc_5ftargets',['g_ldc_targets',['../input__block_8c.html#ac0d0ea615cc6857a39372132c44be931',1,'input_block.c']]],
+  ['g_5flock',['g_lock',['../tiovx__sensor__module_8c.html#a93c93ded778696437f0d2ffd8b73d7db',1,'tiovx_sensor_module.c']]],
+  ['g_5fmpu_5ftarget_5fidx',['g_mpu_target_idx',['../deep__learning__block_8c.html#ac265b33bf35556e831d4544279a859ea',1,'deep_learning_block.c']]],
+  ['g_5fmpu_5ftargets',['g_mpu_targets',['../deep__learning__block_8c.html#a0a6c942e8f7a18e305ff64693acc4bf3',1,'deep_learning_block.c']]],
+  ['g_5fmsc_5ftarget_5fidx',['g_msc_target_idx',['../resize__block_8c.html#aff39971995e75d3b7132d36a643255f6',1,'resize_block.c']]],
+  ['g_5fmsc_5ftargets',['g_msc_targets',['../resize__block_8c.html#ae840eb59a383f48569699a995c30e6f7',1,'resize_block.c']]],
+  ['g_5fnum_5fsensors_5ffound',['g_num_sensors_found',['../tiovx__sensor__module_8c.html#a750a844035e8e10d6c694e2e29519a4f',1,'tiovx_sensor_module.c']]],
+  ['g_5fviss_5ftarget_5fidx',['g_viss_target_idx',['../input__block_8c.html#adb1808c41d9a6ca9e1710f5daed6c6fb',1,'input_block.c']]],
+  ['g_5fviss_5ftargets',['g_viss_targets',['../input__block_8c.html#abe4fa2157e5407a67ecc62d3b4ef44ff',1,'input_block.c']]],
+  ['get_5fcfg_5fsize',['get_cfg_size',['../structNodeCbs.html#a1c5c50474e5aed1d3ea157fb7130ef73',1,'NodeCbs']]],
+  ['get_5fpriv_5fsize',['get_priv_size',['../structNodeCbs.html#af06eab939f58f114dfe6db6fe1024af5',1,'NodeCbs']]],
+  ['gimx390gainstable',['gIMX390GainsTable',['../linux__aewb__module_8c.html#a2dff1c4d2be902293c3c62e77b03a165',1,'linux_aewb_module.c']]],
+  ['gnodecbs',['gNodeCbs',['../tiovx__modules_8c.html#a3a6d213d364d3cbe84f9c379f5aed06f',1,'gNodeCbs():&#160;tiovx_modules_cbs.c'],['../tiovx__modules__cbs_8c.html#a3a6d213d364d3cbe84f9c379f5aed06f',1,'gNodeCbs():&#160;tiovx_modules_cbs.c']]],
+  ['graph',['graph',['../struct__NodeObj.html#a1899e857981ab3b38babd6f5d85a99ee',1,'_NodeObj']]],
+  ['graph_5fparameter_5findex',['graph_parameter_index',['../struct__Pad.html#a5f2646ef33726073ae28c67ae796cba1',1,'_Pad']]],
+  ['graph_5fparams_5flist',['graph_params_list',['../struct__GraphObj.html#ade8eb980c162e925748fb6101e26ec80',1,'_GraphObj']]]
+];
