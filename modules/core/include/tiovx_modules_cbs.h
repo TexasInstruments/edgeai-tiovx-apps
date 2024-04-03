@@ -77,7 +77,7 @@
 #include "tiovx_delay_module.h"
 #include "tiovx_fakesink_module.h"
 
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
 #include "tiovx_display_module.h"
 #include "tiovx_capture_module.h"
 #include "tiovx_aewb_module.h"
@@ -109,7 +109,7 @@ typedef enum {
     TIOVX_PYRAMID,
     TIOVX_DELAY,
     TIOVX_FAKESINK,
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
     TIOVX_DISPLAY,
     TIOVX_CAPTURE,
     TIOVX_AEWB,

@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4)
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
 #if (APP_MODULES_TEST_DL_PIPELINE)
     if(status==0)
     {
