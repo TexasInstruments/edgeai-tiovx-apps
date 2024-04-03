@@ -28,7 +28,7 @@ if ("${TARGET_OS}" STREQUAL "LINUX")
          app_tiovx_linux_capture_encode_test.c)
 endif()
 
-if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4")
+if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")
     list(APPEND
          SRC_FILES
          app_tiovx_capture_module_test.c
