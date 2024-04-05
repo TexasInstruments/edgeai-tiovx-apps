@@ -1,6 +1,8 @@
 # Edge AI TIOVX Apps
 > Repository to host TIOVX based Edge AI applications for TI devices
 
+Detailed documentation can be found on [WIKI](https://github.com/TexasInstruments/edgeai-tiovx-apps/wiki/Edge-AI-TIOVX-Apps-reference-guide)
+
 # Directory Structure
 
 ```

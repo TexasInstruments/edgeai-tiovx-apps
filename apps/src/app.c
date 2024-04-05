@@ -701,6 +701,12 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
 
             /* Start v4l2 capture*/
             v4l2_capture_start(input_blocks[i].v4l2_obj.v4l2_capture_handle);
+
+            for (j = 0; j < 2; j++)
+            {
+                inbuf = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
+                tiovx_modules_enqueue_buf(inbuf);
+            }
         }
 
         else if (H264_VID == input_blocks[i].input_info->source)
