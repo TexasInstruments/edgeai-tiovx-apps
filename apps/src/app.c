@@ -646,7 +646,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
     {
         status = tiovx_modules_export_graph(&graph,
                                             ".",
-                                            "edgeai-tiovx-apps-graph");
+                                            "edgeai_tiovx_apps");
         if (VX_SUCCESS != status)
         {
             TIOVX_APPS_ERROR("Error exporting graph as dot\n");
