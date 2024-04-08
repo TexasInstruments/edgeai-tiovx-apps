@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
                 printf("#  config_file - Path to the configuration file.\n");
                 printf("# OPTIONAL PARAMETERS:\n");
                 printf("#  [--verbose    |-v]\n");
+                printf("#  [--dump       |-d]\n");
                 printf("#  [--help       |-h]\n");
                 printf("# \n");
                 printf("# (C) Texas Instruments 2024\n");
