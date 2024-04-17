@@ -210,15 +210,6 @@ typedef struct {
     /* Formatter */
     int32_t         formatter[6];
 
-    /* Label Offset */
-    int32_t         label_offset[1000];
-
-    /* Number of label Offset */
-    uint32_t        num_label_offset;
-
-    /* Label Index Offset */
-    int32_t         label_index_offset;
-
 } PostProcInfo;
 
 

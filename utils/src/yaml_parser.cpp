@@ -415,40 +415,6 @@ int32_t parse_model_node(ModelInfo *model_info, const YAML::Node &model_node)
     }
 
     /* Parse param.yaml to get post proc information */
-    if (metric_node && metric_node["label_offset_pred"])
-    {
-        const YAML::Node &offset_node = metric_node["label_offset_pred"];
-
-        if (offset_node.Type() == YAML::NodeType::Scalar)
-        {
-            model_info->post_proc_info.label_offset[0] = offset_node.as<int32_t>();
-            model_info->post_proc_info.num_label_offset = 1;
-        }
-        else if (offset_node.Type() == YAML::NodeType::Map)
-        {
-            bool first_iter = true;
-            int32_t cnt = 0;
-            for (const auto& it : offset_node)
-            {
-                if (it.second.Type() == YAML::NodeType::Scalar)
-                {
-                    if(first_iter)
-                    {
-                        model_info->post_proc_info.label_index_offset = it.first.as<int32_t>();
-                        first_iter = false;
-                    }
-                    model_info->post_proc_info.label_offset[cnt++] = it.second.as<int32_t>();
-                    model_info->post_proc_info.num_label_offset++;
-                }
-            }
-        }
-        else
-        {
-            TIOVX_APPS_ERROR("label_offset_pred specification incorrect in param file.\n");
-            return -1;
-        }
-    }
-
     model_info->post_proc_info.formatter[0] = 0;
     model_info->post_proc_info.formatter[1] = 1;
     model_info->post_proc_info.formatter[2] = 2;
@@ -908,7 +874,9 @@ void dump_data(FlowInfo flow_infos[], uint32_t num_flows)
     }
 }
 
-int32_t get_classname(char *model_path, char (*classnames)[256])
+int32_t get_classname(char *model_path,
+                      char (*classnames)[TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME],
+                      size_t max_classname)
 {
     const std::string &dataset_path = std::string(model_path) + "/dataset.yaml";
 
@@ -918,7 +886,7 @@ int32_t get_classname(char *model_path, char (*classnames)[256])
         return -1;
     }
 
-    for (uint32_t i = 0; i < 1000; i++)
+    for (uint32_t i = 0; i < max_classname; i++)
     {
         sprintf(classnames[i], "Unknown");
     }
@@ -941,7 +909,62 @@ int32_t get_classname(char *model_path, char (*classnames)[256])
             name = data["supercategory"].as<std::string>() + "/" + name;
         }
 
-        sprintf(classnames[id], name.data());
+        if(id < (int32_t) max_classname)
+        {
+            snprintf(classnames[id],
+                     TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME,
+                     name.data());
+        }
+    }
+
+    return 0;
+}
+
+int32_t get_label_offset(char *model_path,
+                         int32_t label_offset[],
+                         int32_t *label_index_offset)
+{
+    const std::string params_path = std::string(model_path) + "/param.yaml";
+
+    if (!std::filesystem::exists(params_path))
+    {
+        TIOVX_APPS_ERROR("%s does not exist.\n", params_path.c_str());
+        return -1;
+    }
+
+    const YAML::Node &params_yaml = YAML::LoadFile(params_path);
+    const YAML::Node &metric_node = params_yaml["metric"];
+
+    if (metric_node && metric_node["label_offset_pred"])
+    {
+        const YAML::Node &offset_node = metric_node["label_offset_pred"];
+
+        if (offset_node.Type() == YAML::NodeType::Scalar)
+        {
+            label_offset[0] = offset_node.as<int32_t>();
+        }
+        else if (offset_node.Type() == YAML::NodeType::Map)
+        {
+            bool first_iter = true;
+            int32_t cnt = 0;
+            for (const auto& it : offset_node)
+            {
+                if (it.second.Type() == YAML::NodeType::Scalar)
+                {
+                    if(first_iter)
+                    {
+                        *label_index_offset = it.first.as<int32_t>();
+                        first_iter = false;
+                    }
+                    label_offset[cnt++] = it.second.as<int32_t>();
+                }
+            }
+        }
+        else
+        {
+            TIOVX_APPS_ERROR("label_offset_pred specification incorrect in param file.\n");
+            return -1;
+        }
     }
 
     return 0;

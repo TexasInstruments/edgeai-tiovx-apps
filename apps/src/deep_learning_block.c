@@ -206,24 +206,53 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
         {
             dl_post_proc_cfg.params.task_type = TIVX_DL_POST_PROC_CLASSIFICATION_TASK_TYPE;
             dl_post_proc_cfg.params.oc_prms.num_top_results = post_proc_info->top_n;
-            dl_post_proc_cfg.params.oc_prms.labelOffset = post_proc_info->label_offset[0];
+
+            /* LabelOffset */
+            dl_block->label_offset =  (int32_t*) malloc(TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES * sizeof(int32_t));
+            status = get_label_offset(model_info->model_path,
+                                      dl_block->label_offset,
+                                      NULL);
+            if(0 != status)
+            {
+                TIOVX_APPS_ERROR("Unable to parse label_offset\n");
+                return status;
+            }
+
+            dl_post_proc_cfg.params.oc_prms.labelOffset = dl_block->label_offset[0];
+
+
+            /* Classnames for Image Classification and Object detection*/
+            dl_block->classnames = malloc(TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME * TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES * sizeof(char));
             status = get_classname(model_info->model_path,
-                                    dl_post_proc_cfg.params.oc_prms.classnames);
+                                   dl_block->classnames,
+                                   TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES);
             if(0 != status)
             {
                 TIOVX_APPS_ERROR("Unable to parse classnames\n");
                 return status;
             }
+            dl_post_proc_cfg.params.oc_prms.classnames =  dl_block->classnames;
         }
         else if(0 == strcmp("detection", post_proc_info->task_type))
         {
+            int32_t label_index_offset;
+
             dl_post_proc_cfg.params.task_type = TIVX_DL_POST_PROC_DETECTION_TASK_TYPE;
             dl_post_proc_cfg.params.od_prms.viz_th = post_proc_info->viz_threshold;
-            dl_post_proc_cfg.params.od_prms.labelIndexOffset = post_proc_info->label_index_offset;
-            for(uint32_t i = 0; i < post_proc_info->num_label_offset; i++)
+
+            /* LabelOffset */
+            dl_block->label_offset = (int32_t*) malloc(TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES * sizeof(int32_t));
+            status = get_label_offset(model_info->model_path,
+                                      dl_block->label_offset,
+                                      &label_index_offset);
+            if(0 != status)
             {
-                dl_post_proc_cfg.params.od_prms.labelOffset[i] = post_proc_info->label_offset[i];
+                TIOVX_APPS_ERROR("Unable to parse label_offset\n");
+                return status;
             }
+
+            dl_post_proc_cfg.params.od_prms.labelIndexOffset = label_index_offset;
+            dl_post_proc_cfg.params.od_prms.labelOffset = dl_block->label_offset;
             
             for (uint32_t i = 0; i < 6; i++)
             {
@@ -241,13 +270,19 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
                 dl_post_proc_cfg.params.od_prms.scaleY = (float)(output_height / (float)dl_block->pre_proc_height);
             }
 
+            /* Classnames for Image Classification and Object detection*/
+            dl_block->classnames = malloc(TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME * TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES * sizeof(char));
+
             status = get_classname(model_info->model_path,
-                                    dl_post_proc_cfg.params.od_prms.classnames);
+                                   dl_block->classnames,
+                                   TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES);
             if(0 != status)
             {
                 TIOVX_APPS_ERROR("Unable to parse classnames\n");
                 return status;
             }
+
+            dl_post_proc_cfg.params.od_prms.classnames = dl_block->classnames;
         }
         else if(0 == strcmp("segmentation", post_proc_info->task_type))
         {
