@@ -265,7 +265,6 @@ void tiovx_capture_init_cfg(TIOVXCaptureNodeCfg *node_cfg)
 {
     sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_CAPTURE_SENSOR);
     node_cfg->ch_mask = 1;
-    node_cfg->sensor_index = 0;
     node_cfg->usecase_option = TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0;
     node_cfg->enable_error_detection = 0;
     sprintf(node_cfg->target_string, TIVX_TARGET_CAPTURE1);
@@ -287,7 +286,6 @@ vx_status tiovx_capture_init_node(NodeObj *node)
     }
 
     node_priv->sensor_obj.ch_mask = node_cfg->ch_mask;
-    node_priv->sensor_obj.sensor_index = node_cfg->sensor_index;
     node_priv->sensor_obj.usecase_option = node_cfg->usecase_option;
 
     status = tiovx_sensor_query(&node_priv->sensor_obj);

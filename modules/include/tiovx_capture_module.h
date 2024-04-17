@@ -82,7 +82,6 @@ typedef struct {
     uint32_t                ch_mask;
 
     /*! \brief Index of sensor to be selected as described in imaging repo */
-    vx_int32                sensor_index;
     vx_int32                usecase_option;
     vx_uint8                enable_error_detection;
     char                    error_frame_filename[256];
