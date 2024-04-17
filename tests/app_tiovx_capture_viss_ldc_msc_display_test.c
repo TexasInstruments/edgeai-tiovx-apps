@@ -118,8 +118,8 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
     /* Capture */
     tiovx_capture_init_cfg(&capture_cfg);
 
+    sprintf(capture_cfg.sensor_name, SENSOR_NAME);
     capture_cfg.ch_mask = 1;
-    capture_cfg.sensor_index = 0; /* 0 for IMX390 2MP cameras */
     capture_cfg.enable_error_detection = 0;
 
     capture_node = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);

@@ -90,14 +90,17 @@ vx_status tiovx_init_sensor_obj(SensorObj *sensorObj, char *objName)
     if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX390_UB953_D3") == 0)
     {
         sensorObj->sensorParams.dccId=390;
+        sensorObj->sensor_index = 0;
     }
     else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0820_UB953_LI") == 0)
     {
         sensorObj->sensorParams.dccId=820;
+        sensorObj->sensor_index = 5;
     }
     else if(strcmp(sensorObj->sensor_name, "SENSOR_ONSEMI_AR0233_UB953_MARS") == 0)
     {
         sensorObj->sensorParams.dccId=233;
+        sensorObj->sensor_index = 4;
     }
     else if(strcmp(sensorObj->sensor_name, "SENSOR_SONY_IMX219_RPI") == 0)
     {
