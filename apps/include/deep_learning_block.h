@@ -97,6 +97,12 @@ typedef struct {
     /* Num channles */
     uint32_t        num_channels;
 
+    /* Classname */
+    char            (*classnames)[TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME];
+
+    /* Labeloffset pointers */
+    int32_t         *label_offset;
+
 } DeepLearningBlock;
 
 void initialize_deep_learning_block(DeepLearningBlock *dl_block);

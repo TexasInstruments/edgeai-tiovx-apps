@@ -62,6 +62,7 @@
 #ifndef _TIOVX_APPS_YAML_PARSER_
 #define _TIOVX_APPS_YAML_PARSER_
 
+#include "tiovx_dl_post_proc_module.h"
 #include <apps/include/info.h>
 
 #ifdef __cplusplus
@@ -73,7 +74,13 @@ extern int32_t parse_yaml_file(char       *input_filename,
                                uint32_t   max_flows,
                                uint32_t   *num_flows);
 
-extern int32_t get_classname(char *model_path, char (*classnames)[256]);
+extern int32_t get_classname(char *model_path,
+                             char (*classnames)[TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME],
+                             size_t max_classname);
+
+extern int32_t get_label_offset(char *model_path,
+                                int32_t label_offset[],
+                                int32_t *label_index_offset);
 
 extern void dump_data(FlowInfo flow_infos[], uint32_t num_flows);
 
