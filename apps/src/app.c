@@ -701,12 +701,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
 
             /* Start v4l2 capture*/
             v4l2_capture_start(input_blocks[i].v4l2_obj.v4l2_capture_handle);
-
-            for (j = 0; j < 2; j++)
-            {
-                inbuf = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
-                tiovx_modules_enqueue_buf(inbuf);
-            }
         }
 
         else if (H264_VID == input_blocks[i].input_info->source)
@@ -805,6 +799,91 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
         }
     }
 
+#if defined(TARGET_OS_LINUX)
+    /* Enqueue half buffer from pool to tiovx graph for v4l2 capture */
+    uint8_t buf_cnt = 0;
+    while(buf_cnt < 2)
+    {
+        bool skip = false;
+
+        for(i = 0; i < num_input_blocks; i++)
+        {
+            if (LINUX_CAM == input_blocks[i].input_info->source)
+            {
+                /*
+                 * Dqueue v4l2 buffers and if not NULL store in valid buffers
+                 * which will be used later to enqueue and dqueue in openvx graph
+                 */
+                v4l2_dq_bufs[i] = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
+                if(NULL != v4l2_dq_bufs[i] && NULL ==  v4l2_valid_bufs[i])
+                {
+                    v4l2_valid_bufs[i] = v4l2_dq_bufs[i];
+                    v4l2_dq_bufs[i] = NULL;
+                }
+            }
+        }
+
+        for(i = 0; i < num_input_blocks; i++)
+        {
+            if (LINUX_CAM == input_blocks[i].input_info->source &&
+                NULL == v4l2_valid_bufs[i])
+            {
+                /*
+                 * Skip if any v4l2 buffer is not there
+                 */
+                skip = true;
+                break;
+            }
+        }
+
+        for(i = 0; i < num_input_blocks; i++)
+        {
+            if (LINUX_CAM == input_blocks[i].input_info->source)
+            {
+                /*
+                 * If all v4l2 buffers are present, enqueue to openvx graph.
+                 */
+                if(!skip)
+                {
+                    tiovx_modules_enqueue_buf(v4l2_valid_bufs[i]);
+                    v4l2_valid_bufs[i] = NULL;
+
+                    /* AEWB processing for linux */
+                    linux_h3a_buf_pool = input_blocks[i].v4l2_obj.h3a_pad->buf_pool;
+                    linux_aewb_buf_pool = input_blocks[i].v4l2_obj.aewb_pad->buf_pool;
+                    linux_h3a_buf = tiovx_modules_dequeue_buf(linux_h3a_buf_pool);
+                    linux_aewb_buf = tiovx_modules_dequeue_buf(linux_aewb_buf_pool);
+                    aewb_process(input_blocks[i].v4l2_obj.aewb_handle, linux_h3a_buf, linux_aewb_buf);
+                    tiovx_modules_enqueue_buf(linux_h3a_buf);
+                    tiovx_modules_enqueue_buf(linux_aewb_buf);
+                }
+
+                /*
+                 * Else, enqueue back the dequeue buffer from v4l2 capture
+                 */
+                if(NULL != v4l2_dq_bufs[i])
+                {
+                    v4l2_capture_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle, v4l2_dq_bufs[i]);
+                }
+            }
+        }
+
+        if(!skip)
+        {
+            buf_cnt++;
+        }
+
+    }
+
+    for (i = 0; i < num_flows; i++)
+    {
+        v4l2_valid_bufs[i] = NULL;
+        v4l2_dq_bufs[i] = NULL;
+    }
+
+#endif
+
+
     /* Main loop that runs till interrupt */
     while(run_loop)
     {
@@ -824,9 +903,10 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                  * which will be used later to enqueue and dqueue in openvx graph
                  */
                 v4l2_dq_bufs[i] = v4l2_capture_dqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle);
-                if(NULL != v4l2_dq_bufs[i])
+                if(NULL != v4l2_dq_bufs[i] && NULL ==  v4l2_valid_bufs[i])
                 {
                     v4l2_valid_bufs[i] = v4l2_dq_bufs[i];
+                    v4l2_dq_bufs[i] = NULL;
                 }
             }
         }
@@ -837,7 +917,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                 NULL == v4l2_valid_bufs[i])
             {
                 /*
-                 * Skip the loop if any v4l2 buffer is not there
+                 * Skip if any v4l2 buffer is not there
                  */
                 skip = true;
                 break;
@@ -873,10 +953,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                 /*
                  * Else, enqueue back the dequeue buffer from v4l2 capture
                  */
-                else if(NULL != v4l2_dq_bufs[i])
+                if(NULL != v4l2_dq_bufs[i])
                 {
                     v4l2_capture_enqueue_buf(input_blocks[i].v4l2_obj.v4l2_capture_handle, v4l2_dq_bufs[i]);
                 }
+
             }
         }
 
