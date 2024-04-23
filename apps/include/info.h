@@ -94,7 +94,7 @@ extern "C" {
 typedef enum {
     RTOS_CAM = 0,
     LINUX_CAM,
-    H264_VID,
+    VIDEO,
     RAW_IMG,
     NUM_INPUT_SOURCES
 } InputSource;
@@ -103,6 +103,7 @@ typedef enum {
     RTOS_DISPLAY = 0,
     LINUX_DISPLAY,
     H264_ENCODE,
+    H265_ENCODE,
     IMG_DIR,
     NUM_OUTPUT_SINKS
 } OutputSink;

@@ -8,7 +8,7 @@ inputs:
     # Allowed sources of the input data. Allowed values
     # - RTOS_CAM                [RTOS Camera]
     # - LINUX_CAM               [Linux Camera]
-    # - H264_VID                [RAW H264 Video]
+    # - VIDEO                   [RAW H264/H265 Video]
     # - RAW_IMG                 [Raw Image]
     input0:
         # RTOS Camera source
@@ -57,8 +57,8 @@ inputs:
         ldc: False
 
     input2:
-        # H264 Video Source
-        source: H264_VID
+        # H264/H265 Video Source
+        source: VIDEO
 
         # Input data width
         width: 1280
@@ -117,6 +117,7 @@ outputs:
     # - RTOS_DISPLAY            [RTOS Display]
     # - LINUX_DISPLAY           [Linux Display]
     # - H264_ENCODE             [Encode H264]
+    # - H265_ENCODE             [Encode H265]
     # - IMG_DIR                 [Raw Image]
     #
     output0:
@@ -168,6 +169,22 @@ outputs:
         overlay-perf: True
 
     output3:
+        # Save as H265 Video
+        sink: H265_ENCODE
+
+        # Output display width
+        width: 1920
+
+        # Output display height
+        height: 1080
+
+        # Path of the output
+        output_path: /opt/edgeai-test-data/output/output_video0.h265
+
+        # Overlay performance stat graph [Default: True]
+        overlay-perf: True
+
+    output4:
         # Save as RAW NV12 Image
         sink: IMG_DIR
 

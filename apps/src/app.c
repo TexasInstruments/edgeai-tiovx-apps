@@ -703,7 +703,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
             v4l2_capture_start(input_blocks[i].v4l2_obj.v4l2_capture_handle);
         }
 
-        else if (H264_VID == input_blocks[i].input_info->source)
+        else if (VIDEO == input_blocks[i].input_info->source)
         {
             /* Enqueue buffers to v4l2 decode handle*/
             for (j = 0; j < in_buf_pool->bufq_depth; j++)
@@ -771,7 +771,8 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                                              &out_buf_pool->bufs[j]);
                 }
             }
-            else if (H264_ENCODE == output_blocks[i].output_info->sink)
+            else if (H264_ENCODE == output_blocks[i].output_info->sink ||
+                     H265_ENCODE == output_blocks[i].output_info->sink)
             {
                 for (j = 0; j < out_buf_pool->bufq_depth; j++)
                 {
@@ -981,7 +982,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
             }
 
 #if defined(TARGET_OS_LINUX)
-            else if (H264_VID == input_blocks[i].input_info->source)
+            else if (VIDEO == input_blocks[i].input_info->source)
             {
                 /* Dequeue from graph, enqueue to v4l2 for decode,
                  * then dequeue from v4l2 and enqueue to graph
@@ -1040,7 +1041,8 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                     kms_display_render_buf(output_blocks[i].kms_obj.kms_display_handle,
                                            outbuf);
                 }
-                else if (H264_ENCODE == output_blocks[i].output_info->sink)
+                else if (H264_ENCODE == output_blocks[i].output_info->sink ||
+                         H265_ENCODE == output_blocks[i].output_info->sink)
                 {
                     v4l2_encode_enqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle, outbuf);
                     outbuf = v4l2_encode_dqueue_buf(output_blocks[i].v4l2_obj.v4l2_encode_handle);
@@ -1100,7 +1102,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
             v4l2_capture_stop(input_blocks[i].v4l2_obj.v4l2_capture_handle);
             v4l2_capture_delete_handle(input_blocks[i].v4l2_obj.v4l2_capture_handle);
         }
-        else if (H264_VID == input_blocks[i].input_info->source)
+        else if (VIDEO == input_blocks[i].input_info->source)
         {
             v4l2_decode_stop(input_blocks[i].v4l2_obj.v4l2_decode_handle);
             v4l2_decode_delete_handle(input_blocks[i].v4l2_obj.v4l2_decode_handle);
@@ -1111,7 +1113,8 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
 #if defined(TARGET_OS_LINUX)
     for(i = 0; i < num_output_blocks; i++)
     {
-        if (H264_ENCODE == output_blocks[i].output_info->sink)
+        if (H264_ENCODE == output_blocks[i].output_info->sink ||
+            H265_ENCODE == output_blocks[i].output_info->sink)
         {
             v4l2_encode_stop(output_blocks[i].v4l2_obj.v4l2_encode_handle);
             v4l2_encode_delete_handle(output_blocks[i].v4l2_obj.v4l2_encode_handle);

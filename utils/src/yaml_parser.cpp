@@ -26,9 +26,9 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
     {
         input_info->source = LINUX_CAM;
     }
-    else if("H264_VID" == source)
+    else if("VIDEO" == source)
     {
-        input_info->source = H264_VID;
+        input_info->source = VIDEO;
     }
     else if("RAW_IMG" == source)
     {
@@ -141,7 +141,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         }
     }
 
-    else if (input_info->source == H264_VID)
+    else if (input_info->source == VIDEO)
     {
         /* Get video path */
         if (input_node["video_path"])
@@ -504,6 +504,10 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
     {
         output_info->sink = H264_ENCODE;
     }
+    else if("H265_ENCODE" == sink)
+    {
+        output_info->sink = H265_ENCODE;
+    }
     else if("IMG_DIR" == sink)
     {
         output_info->sink = IMG_DIR;
@@ -541,7 +545,7 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
         output_info->overlay_perf =  output_node["overlay-perf"].as<bool>();
     }
 
-    if(H264_ENCODE == output_info->sink)
+    if(H264_ENCODE == output_info->sink || H265_ENCODE == output_info->sink )
     {
         if(output_node["output_path"])
         {
