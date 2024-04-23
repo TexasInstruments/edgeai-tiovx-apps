@@ -27,7 +27,7 @@ set(SRC_FILES
     src/tiovx_lut_module.c
     )
 
-if ("${TARGET_OS}" STREQUAL "LINUX")
+if ("${TARGET_OS}" STREQUAL "LINUX" AND ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53"))
     list(APPEND
          SRC_FILES
          src/v4l2_capture_module.c
@@ -40,13 +40,17 @@ endif()
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")
     list(APPEND
          SRC_FILES
-         src/tiovx_capture_module.c
-         src/tiovx_aewb_module.c
          src/tiovx_sde_module.c
          src/tiovx_sde_viz_module.c
          src/tiovx_dof_module.c
-         src/tiovx_dof_viz_module.c
-         src/tiovx_display_module.c)
+         src/tiovx_dof_viz_module.c)
+    if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
+        list(APPEND
+             SRC_FILES
+             src/tiovx_capture_module.c
+             src/tiovx_aewb_module.c
+             src/tiovx_display_module.c)
+    endif()
 endif()
 
 build_lib(${PROJECT_NAME}  # Named argument: library name

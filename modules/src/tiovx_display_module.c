@@ -141,6 +141,8 @@ vx_status tiovx_display_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    tivxVideoIOLoadKernels(graph->tiovx_context);
+
     sprintf(node->name, "display_node");
 
     return status;
@@ -178,6 +180,8 @@ vx_status tiovx_display_delete_node(NodeObj *node)
     status = vxReleaseNode(&node->tiovx_node);
 
     status = vxReleaseUserDataObject(&node_priv->config);
+
+    tivxVideoIOUnLoadKernels(graph->tiovx_context);
 
     return status;
 }

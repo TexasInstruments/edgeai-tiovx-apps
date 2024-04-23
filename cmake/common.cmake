@@ -81,9 +81,13 @@ set(TIOVX_LIBS_PATH $ENV{TIOVX_LIBS_PATH})
 set(APP_UTILS_LIBS_PATH $ENV{APP_UTILS_LIBS_PATH})
 set(IMAGING_LIBS_PATH $ENV{IMAGING_LIBS_PATH})
 set(IMAGING_PREBUILT_LIBS_PATH $ENV{IMAGING_PREBUILT_LIBS_PATH})
-set(VHWA_C_MODEL_LIBS_PATH $ENV{VHWA_C_MODEL_LIBS_PATH})
+set(VHWA_C_MODEL_VPAC_LIBS_PATH $ENV{VHWA_C_MODEL_VPAC_LIBS_PATH})
+set(VHWA_C_MODEL_DMPAC_LIBS_PATH $ENV{VHWA_C_MODEL_DMPAC_LIBS_PATH})
 set(PREBUILT_LIBS_PATH $ENV{PREBUILT_LIBS_PATH})
 set(EDGEAI_LIBS_PATH $ENV{EDGEAI_LIBS_PATH})
+set(ARM_TIDL_LIBS_PATH $ENV{ARM_TIDL_LIBS_PATH})
+set(PTK_LIBS_PATH $ENV{PTK_LIBS_PATH})
+set(C7X_TIDL_LIBS_PATH $ENV{C7X_TIDL_LIBS_PATH})
 link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${TARGET_FS}/usr/lib
                  ${CMAKE_LIBRARY_PATH}/usr/lib
@@ -93,9 +97,13 @@ link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${APP_UTILS_LIBS_PATH}
                  ${IMAGING_LIBS_PATH}
                  ${IMAGING_PREBUILT_LIBS_PATH}
-                 ${VHWA_C_MODEL_LIBS_PATH}
+                 ${VHWA_C_MODEL_VPAC_LIBS_PATH}
+                 ${VHWA_C_MODEL_DMPAC_LIBS_PATH}
                  ${PREBUILT_LIBS_PATH}
                  ${EDGEAI_LIBS_PATH}
+                 ${ARM_TIDL_LIBS_PATH}
+                 ${PTK_LIBS_PATH}
+                 ${C7X_TIDL_LIBS_PATH}
                  )
 
 #message("PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
@@ -161,6 +169,7 @@ else()
         m
         yaml-cpp
         app_utils_init
+        app_utils_file_io
         libvx_conformance_engine.a
         vx_conformance_tests
         vx_conformance_tests_testmodule
@@ -196,11 +205,8 @@ else()
         ti_imaging_dcc
         vx_kernels_hwa
         vx_kernels_hwa_tests
-        vx_kernels_imaging
-        vx_kernels_imaging_tests
         vx_target_kernels_dmpac_dof
         vx_target_kernels_dmpac_sde
-        vx_target_kernels_imaging_aewb
         vx_target_kernels_j7_arm
         vx_target_kernels_vpac_ldc
         vx_target_kernels_vpac_msc
@@ -213,7 +219,8 @@ else()
         ee
         flexcc
         flexcfa_vpac3
-        glbce
+        glbce.a
+        glbc.so
         h3a
         ldc
         nsf4
@@ -225,6 +232,25 @@ else()
         utils
         VXLIB_triangulatePoints_i32f_o32f_lib_x86_64
         m
+        vx_kernels_tidl
+        vx_nested_kernels_tidl
+        vx_target_kernels_tidl
+        vx_tiovx_tidl_tests
+        vx_kernels_stereo
+        vx_target_kernels_stereo
+        ptk_algos
+        ptk_base
+        vx_kernels_img_proc
+        vx_target_kernels_img_proc_a72
+        vx_target_kernels_img_proc_c66
+        vx_target_kernels_img_proc_c71
+        vx_target_kernels_img_proc_r5f
+        vx_kernels_common
+        tidl_algo
+        tidl_avx_kernels
+        tidl_custom
+        tidl_obj_algo
+        tidl_priv_algo
        )
 endif()
 

@@ -81,7 +81,6 @@ vx_status tiovx_modules_initialize_graph(GraphObj *graph)
     tivxHwaLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcLoadKernels(graph->tiovx_context);
     tivxTIDLLoadKernels(graph->tiovx_context);
-    tivxVideoIOLoadKernels(graph->tiovx_context);
     tivxExtLoadKernels(graph->tiovx_context);
 
     graph->tiovx_graph = vxCreateGraph(graph->tiovx_context);
@@ -944,7 +943,6 @@ vx_status tiovx_modules_clean_graph(GraphObj *graph)
     vxReleaseGraph(&graph->tiovx_graph);
 
     tivxExtUnLoadKernels(graph->tiovx_context);
-    tivxVideoIOUnLoadKernels(graph->tiovx_context);
     tivxTIDLUnLoadKernels(graph->tiovx_context);
     tivxEdgeaiImgProcUnLoadKernels(graph->tiovx_context);
     tivxHwaUnLoadKernels(graph->tiovx_context);

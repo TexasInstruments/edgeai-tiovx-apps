@@ -354,6 +354,8 @@ vx_status tiovx_capture_init_node(NodeObj *node)
     }
     vxReleaseReference(&exemplar);
 
+    tivxVideoIOLoadKernels(graph->tiovx_context);
+
     sprintf(node->name, "capture_node");
 
     return status;
@@ -400,6 +402,8 @@ vx_status tiovx_capture_delete_node(NodeObj *node)
     {
         tivxReleaseRawImage(&node_priv->error_frame_raw_image);
     }
+
+    tivxVideoIOUnLoadKernels(graph->tiovx_context);
 
     return status;
 }

@@ -199,6 +199,7 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_cfg_size = tiovx_lut_get_cfg_size,
         .get_priv_size = tiovx_lut_get_priv_size
 #if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
+#if defined(TARGET_CPU_A72) || defined(TARGET_CPU_A53)
     },
     {
         .init_node = tiovx_display_init_node,
@@ -223,6 +224,7 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .delete_node = tiovx_aewb_delete_node,
         .get_cfg_size = tiovx_aewb_get_cfg_size,
         .get_priv_size = tiovx_aewb_get_priv_size
+#endif
     },
     {
         .init_node = tiovx_sde_init_node,

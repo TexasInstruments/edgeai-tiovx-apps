@@ -22,7 +22,7 @@ set(SRC_FILES
     app_tiovx_lut_module_test.c
     main.c)
 
-if ("${TARGET_OS}" STREQUAL "LINUX")
+if ("${TARGET_OS}" STREQUAL "LINUX" AND ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53"))
     list(APPEND
          SRC_FILES
          app_tiovx_v4l2_capture_module_test.c
@@ -35,19 +35,22 @@ endif()
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")
     list(APPEND
          SRC_FILES
-         app_tiovx_capture_module_test.c
-         app_tiovx_capture_viss_ldc_msc_display_test.c
-         app_tiovx_dl_pipeline_test.c
-         app_tiovx_display_module_test.c
          app_tiovx_sde_module_test.c
-         app_tiovx_dof_module_test.c
-         app_tiovx_capture_dl_display_pipeline.c)
+         app_tiovx_dof_module_test.c)
 
-         if ("${TARGET_OS}" STREQUAL "LINUX")
+         if ("${TARGET_OS}" STREQUAL "LINUX" AND ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53"))
              list(APPEND
                   SRC_FILES
                   app_tiovx_linux_capture_dof_test.c
                   app_tiovx_linux_decode_sde_test.c)
+         endif()
+
+         if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
+            list(APPEND
+                 SRC_FILES
+                 app_tiovx_dl_pipeline_test.c
+                 app_tiovx_display_module_test.c
+                 app_tiovx_capture_dl_display_pipeline.c)
          endif()
 endif()
 
