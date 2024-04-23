@@ -201,7 +201,12 @@ function(build_lib lib_name lib_type lib_ver)
 
     set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
-    FILE(GLOB HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+    FILE(GLOB HDRS
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/core/include/*.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/core/include/*.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/../utils/include/*.h
+        )
 
     install(TARGETS ${lib_name}
             EXPORT ${lib_name}Targets
