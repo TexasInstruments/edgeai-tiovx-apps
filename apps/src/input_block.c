@@ -506,7 +506,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
     }
 
     /* H264 VID */
-    if(H264_VID == input_info->source)
+    if(VIDEO == input_info->source)
     {
         /* V4L2 Decode */
         {

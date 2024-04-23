@@ -7,7 +7,7 @@ inputs:
         format: NV12
         image_path: /opt/edgeai-test-data/raw_images/tiovx_apps/
     input1:
-        source: H264_VID
+        source: VIDEO
         width: 1280
         height: 768
         video_path: /opt/edgeai-test-data/videos/video0_1280_768.h264
