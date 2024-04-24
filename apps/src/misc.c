@@ -162,25 +162,34 @@ void update_perf_overlay(vx_image image, EdgeAIPerfStats *perf_stats_handle)
     vx_map_id y_ptr_map_id;
     vx_map_id uv_ptr_map_id;
 
-    vxQueryImage(image, VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
-    vxQueryImage(image, VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
+    if(NULL != image)
+    {
+        vxQueryImage(image, VX_IMAGE_WIDTH, &img_width, sizeof(vx_uint32));
+        vxQueryImage(image, VX_IMAGE_HEIGHT, &img_height, sizeof(vx_uint32));
 
-    y_ptr = map_image(image, 0, &y_ptr_map_id);
-    uv_ptr = map_image(image, 1, &uv_ptr_map_id);
+        y_ptr = map_image(image, 0, &y_ptr_map_id);
+        uv_ptr = map_image(image, 1, &uv_ptr_map_id);
 
-    perf_stats_handle->overlay.imgYPtr = (uint8_t *)y_ptr;
-    perf_stats_handle->overlay.imgUVPtr = (uint8_t *)uv_ptr;
-    perf_stats_handle->overlay.imgWidth = img_width;
-    perf_stats_handle->overlay.imgHeight = img_height;
-    perf_stats_handle->overlay.xPos = 0;
-    perf_stats_handle->overlay.yPos = 0;
-    perf_stats_handle->overlay.width = img_width;
-    perf_stats_handle->overlay.height = img_height;
+        perf_stats_handle->overlayType = OVERLAY_TYPE_GRAPH;
+        perf_stats_handle->overlay.imgYPtr = (uint8_t *)y_ptr;
+        perf_stats_handle->overlay.imgUVPtr = (uint8_t *)uv_ptr;
+        perf_stats_handle->overlay.imgWidth = img_width;
+        perf_stats_handle->overlay.imgHeight = img_height;
+        perf_stats_handle->overlay.xPos = 0;
+        perf_stats_handle->overlay.yPos = 0;
+        perf_stats_handle->overlay.width = img_width;
+        perf_stats_handle->overlay.height = img_height;
 
-    update_edgeai_perf_stats(perf_stats_handle);
+        update_edgeai_perf_stats(perf_stats_handle);
 
-    unmap_image(image, y_ptr_map_id);
-    unmap_image(image, uv_ptr_map_id);
+        unmap_image(image, y_ptr_map_id);
+        unmap_image(image, uv_ptr_map_id);
+    }
+    else
+    {
+        perf_stats_handle->overlayType = OVERLAY_TYPE_NONE;
+        update_edgeai_perf_stats(perf_stats_handle);
+    }
 }
 
 void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
