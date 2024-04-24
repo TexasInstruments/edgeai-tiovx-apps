@@ -588,6 +588,7 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
     Buf *perf_overlay_buf = NULL;
 
     EdgeAIPerfStats perf_stats_handle;
+    bool overlay_perf_graph = true;
 
     /* Capture SIGINT to stop loop */
     signal(SIGINT, interrupt_handler);
@@ -656,7 +657,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
 
     /* Initialize perf stats */
     initialize_edgeai_perf_stats(&perf_stats_handle);
-    perf_stats_handle.overlayType = OVERLAY_TYPE_GRAPH;
     perf_stats_handle.numInstances = 0;
     for(i = 0; i < num_output_blocks; i++)
     {
@@ -664,6 +664,12 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
         {
             perf_stats_handle.numInstances++;
         }
+    }
+
+    if(perf_stats_handle.numInstances == 0)
+    {
+        overlay_perf_graph = false;
+        perf_stats_handle.numInstances = 1;
     }
 
     /* Enqueue buffers at start based on input sources in all input blocks */
@@ -1068,6 +1074,12 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                 }
                 tiovx_modules_enqueue_buf(perf_overlay_buf);
             }
+        }
+
+        if(!overlay_perf_graph && cmd_args->verbose)
+        {
+            update_perf_overlay(NULL, &perf_stats_handle);
+            print_perf(&graph, &perf_stats_handle);
         }
     }
 
