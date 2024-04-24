@@ -84,6 +84,9 @@ static uint8_t g_viss_target_idx = 0;
 static char *g_ldc_targets[] = {TIVX_TARGET_VPAC_LDC1, TIVX_TARGET_VPAC2_LDC1};
 static uint8_t g_ldc_target_idx = 0;
 
+static char *g_decode_devices[] = {"/dev/video0", "/dev/video2"};
+static uint8_t g_decode_devices_idx = 0;
+
 #else
 
 #if defined(SOC_J721E) || defined(SOC_J721S2)
@@ -99,6 +102,9 @@ static uint8_t g_viss_target_idx = 0;
 
 static char *g_ldc_targets[] = {TIVX_TARGET_VPAC_LDC1};
 static uint8_t g_ldc_target_idx = 0;
+
+static char *g_decode_devices[] = {"/dev/video0"};
+static uint8_t g_decode_devices_idx = 0;
 
 #endif
 
@@ -517,6 +523,16 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             v4l2_decode_cfg.bufq_depth = 10;
             tee_bufq_depth = v4l2_decode_cfg.bufq_depth;
             sprintf(v4l2_decode_cfg.file, input_info->video_path);
+
+            sprintf(v4l2_decode_cfg.device,
+                    g_decode_devices[g_decode_devices_idx]);
+
+            g_decode_devices_idx++;
+            if(g_decode_devices_idx >=
+               sizeof(g_decode_devices)/sizeof(g_decode_devices[0]))
+            {
+                g_decode_devices_idx = 0;
+            }
 
             input_block->v4l2_obj.v4l2_decode_handle = v4l2_decode_create_handle(&v4l2_decode_cfg,
                                                                                  &v4l2_decode_fmt);
