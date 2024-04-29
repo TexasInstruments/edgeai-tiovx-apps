@@ -279,7 +279,9 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     }
 
     node_cfg->input_cfg.params.width = node_cfg->width;
-    node_cfg->input_cfg.params.height = node_cfg->height;
+    node_cfg->input_cfg.params.height = node_cfg->height
+                                - node_cfg->input_cfg.params.meta_height_before
+                                - node_cfg->input_cfg.params.meta_height_after;
 
     node->num_inputs = 1;
 
@@ -315,7 +317,9 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     for (int i = 0; i < TIOVX_VISS_MODULE_MAX_OUTPUTS; i++) {
         if (node_cfg->output_select[i] == TIOVX_VISS_MODULE_OUTPUT_EN) {
             node_cfg->output_cfgs[i].width = node_cfg->width;
-            node_cfg->output_cfgs[i].height = node_cfg->height;
+            node_cfg->output_cfgs[i].height = node_cfg->height
+                                - node_cfg->input_cfg.params.meta_height_before
+                                - node_cfg->input_cfg.params.meta_height_after;
 
             node->srcs[node->num_outputs].node = node;
             node->srcs[node->num_outputs].pad_index = node->num_outputs;
