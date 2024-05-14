@@ -146,6 +146,7 @@ Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 {
     Buf *buf = NULL;
 
+    sem_wait(&buf_pool->sem);
     LOCK(buf_pool);
 
     if (!buf_pool->free_count) {
@@ -171,6 +172,7 @@ vx_status tiovx_modules_release_buf(Buf *buf)
     buf->pool->free_count++;
 
     UNLOCK(buf->pool);
+    sem_post(&buf->pool->sem);
 
     status = VX_SUCCESS;
 
@@ -218,6 +220,7 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
     buf_pool->enqueue_head = 0;
     buf_pool->enqueue_tail = 0;
     pthread_mutex_init(&buf_pool->lock, NULL);
+    sem_init(&buf_pool->sem, 0, 0);
 
     for(uint8_t i = 0; i < pad->bufq_depth ; i++)
     {
@@ -827,6 +830,10 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
     vx_object_array ref = NULL;
     vx_uint32 num_refs = 0;
 
+    vxGraphParameterDequeueDoneRef(graph->tiovx_graph,
+                                   pad->graph_parameter_index,
+                                   (vx_reference *)&ref, 1, &num_refs);
+
     LOCK(buf_pool);
 
     if (buf_pool->enqueue_tail == buf_pool->enqueue_head) {
@@ -839,10 +846,6 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
                                                     (buf_pool->bufq_depth + 1);
 
     UNLOCK(buf_pool);
-
-    vxGraphParameterDequeueDoneRef(graph->tiovx_graph,
-                                   pad->graph_parameter_index,
-                                   (vx_reference *)&ref, 1, &num_refs);
 
     return buf;
 }
