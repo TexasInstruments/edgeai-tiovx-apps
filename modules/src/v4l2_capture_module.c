@@ -70,6 +70,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define V4L2_CAPTURE_DEFAULT_WIDTH 1920
 #define V4L2_CAPTURE_DEFAULT_HEIGHT 1080
@@ -77,7 +78,7 @@
 #define V4L2_CAPTURE_DEFAULT_DEVICE "/dev/video-imx219-cam0"
 #define V4L2_CAPTURE_DEFAULT_BUFQ_DEPTH 4
 #define V4L2_CAPTURE_MAX_BUFQ_DEPTH 8
-#define V4L2_CAPTURE_MAX_RETRIES 10
+#define V4L2_CAPTURE_TIMEOUT 100
 #define V4L2_CAPTURE_STREAMON_DELAY 2 // in sec
 
 void v4l2_capture_init_cfg(v4l2CaptureCfg *cfg)
@@ -281,27 +282,26 @@ Buf *v4l2_capture_dqueue_buf(v4l2CaptureHandle *handle)
 {
     Buf *tiovx_buffer = NULL;
     struct v4l2_buffer buf;
-    int i = 0;
+    struct pollfd pfd;
+    int ret = 0;
+
+    CLR(&pfd);
+    pfd.fd = handle->fd;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+
+    ret = poll(&pfd, 1, V4L2_CAPTURE_TIMEOUT);
+    if (ret < 0) {
+        TIOVX_MODULE_ERROR("[V4L2_CAPTURE] POLL failed\n");
+        goto ret;
+    }
 
     CLR(&buf);
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_DMABUF;
 
-    for (i=0; i < V4L2_CAPTURE_MAX_RETRIES; i++) {
-        if (-1 == xioctl(handle->fd, VIDIOC_DQBUF, &buf)) {
-            if (errno == EAGAIN) {
-                continue;
-            } else {
-                TIOVX_MODULE_ERROR("[V4L2_CAPTURE] VIDIOC_DQBUF failed\n");
-                goto ret;
-            }
-        } else {
-            break;
-        }
-    }
-
-    if (i == V4L2_CAPTURE_MAX_RETRIES) {
-        TIOVX_MODULE_PRINTF("[V4L2_CAPTURE] DQBUF Exceeded max retries\n");
+    if (-1 == xioctl(handle->fd, VIDIOC_DQBUF, &buf)) {
+        TIOVX_MODULE_ERROR("[V4L2_CAPTURE] VIDIOC_DQBUF failed\n");
         goto ret;
     }
 
