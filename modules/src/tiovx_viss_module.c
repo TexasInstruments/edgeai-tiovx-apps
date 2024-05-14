@@ -71,6 +71,7 @@
 typedef struct {
     vx_user_data_object         viss_params_obj;
     vx_user_data_object         dcc_config_obj;
+    vx_object_array             h3a_stats_arr;
     SensorObj                   sensor_obj;
 } TIOVXVissNodePriv;
 
@@ -413,7 +414,7 @@ vx_status tiovx_viss_create_node(NodeObj *node)
     vx_bool replicate[] = {vx_false_e, vx_false_e, vx_false_e,
                            vx_true_e, vx_false_e, vx_false_e,
                            vx_false_e, vx_false_e, vx_false_e,
-                           vx_false_e, vx_false_e, vx_false_e,
+                           vx_true_e, vx_false_e, vx_false_e,
                            vx_false_e};
 
     if (node_cfg->enable_aewb_pad == vx_true_e) {
@@ -423,10 +424,27 @@ vx_status tiovx_viss_create_node(NodeObj *node)
     }
 
     if (node_cfg->enable_h3a_pad == vx_true_e) {
-        replicate[9] = vx_true_e;
-
         h3a_stats =
             (vx_user_data_object)node->srcs[node->num_outputs - 1].exemplar;
+    } else {
+        h3a_stats = vxCreateUserDataObject(node->graph->tiovx_context,
+                                           "tivx_h3a_data_t",
+                                           sizeof(tivx_h3a_data_t),
+                                           NULL);
+        node_priv->h3a_stats_arr = vxCreateObjectArray(
+                                            node->graph->tiovx_context,
+                                            (vx_reference)h3a_stats,
+                                            node_cfg->num_channels);
+        status = vxGetStatus((vx_reference)node_priv->h3a_stats_arr);
+        if(status != VX_SUCCESS)
+        {
+            TIOVX_MODULE_ERROR("[VISS] Creating h3a_stats_arr failed\n");
+            return status;
+        }
+
+        vxReleaseUserDataObject(&h3a_stats);
+        h3a_stats = (vx_user_data_object)vxGetObjectArrayItem(
+                                                node_priv->h3a_stats_arr, 0);
     }
 
     for (int i = 0, j = 0; i < TIOVX_VISS_MODULE_MAX_OUTPUTS; i++) {
@@ -456,6 +474,10 @@ vx_status tiovx_viss_create_node(NodeObj *node)
     vxReplicateNode(node->graph->tiovx_graph,
                     node->tiovx_node, replicate, 13);
 
+    if (node_cfg->enable_h3a_pad == vx_false_e) {
+        vxReleaseUserDataObject(&h3a_stats);
+    }
+
     return status;
 }
 
@@ -468,6 +490,10 @@ vx_status tiovx_viss_delete_node(NodeObj *node)
 
     status = vxReleaseUserDataObject(&node_priv->viss_params_obj);
     status = vxReleaseUserDataObject(&node_priv->dcc_config_obj);
+
+    if (NULL != node_priv->h3a_stats_arr) {
+        vxReleaseObjectArray(&node_priv->h3a_stats_arr);
+    }
 
     return status;
 }
