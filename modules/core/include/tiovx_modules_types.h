@@ -75,6 +75,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #ifdef TIOVX_MODULE_DEBUG
 #define TIOVX_MODULE_PRINTF(f_, ...) printf("[TIOVX_MODULES][DEBUG] %d: %s: "f_, __LINE__, __func__, ##__VA_ARGS__)
@@ -172,6 +173,9 @@ struct _BufPool {
 
     /*! \brief Mutex for queue management */
     pthread_mutex_t     lock;
+
+    /*! \brief Semaphore for acquire and release */
+    sem_t               sem;
 };
 
 /*!
