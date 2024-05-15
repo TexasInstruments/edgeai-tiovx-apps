@@ -145,18 +145,23 @@ NodeObj* tiovx_modules_add_node(GraphObj *graph, NODE_TYPES node_type, void *cfg
 Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 {
     Buf *buf = NULL;
+    const struct timespec timeout = {
+                                .tv_sec = 0,
+                                .tv_nsec = TIOVX_MODULES_TIMEOUT_MS * 1000000
+                              };
 
-    sem_wait(&buf_pool->sem);
+    sem_timedwait(&buf_pool->sem_acquire, &timeout);
     LOCK(buf_pool);
 
     if (!buf_pool->free_count) {
         TIOVX_MODULE_ERROR("No free buffer\n");
-        return NULL;
+        goto err;
     }
 
     buf_pool->free_count--;
     buf = buf_pool->freeQ[buf_pool->free_count];
 
+err:
     UNLOCK(buf_pool);
 
     return buf;
@@ -172,7 +177,7 @@ vx_status tiovx_modules_release_buf(Buf *buf)
     buf->pool->free_count++;
 
     UNLOCK(buf->pool);
-    sem_post(&buf->pool->sem);
+    sem_post(&buf->pool->sem_acquire);
 
     status = VX_SUCCESS;
 
@@ -220,7 +225,8 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
     buf_pool->enqueue_head = 0;
     buf_pool->enqueue_tail = 0;
     pthread_mutex_init(&buf_pool->lock, NULL);
-    sem_init(&buf_pool->sem, 0, 0);
+    sem_init(&buf_pool->sem_acquire, 0, 0);
+    sem_init(&buf_pool->sem_dequeue, 0, 0);
 
     for(uint8_t i = 0; i < pad->bufq_depth ; i++)
     {
@@ -805,20 +811,22 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
     if (buf_pool->enqueue_tail ==
                     (buf_pool->enqueue_head + 1) % (buf_pool->bufq_depth + 1)) {
         TIOVX_MODULE_ERROR("Queue Full\n");
-        return status;
+        goto err;
     }
 
     buf_pool->enqueuedQ[buf_pool->enqueue_head] = buf;
     buf_pool->enqueue_head = (buf_pool->enqueue_head + 1) %
                                                     (buf_pool->bufq_depth + 1);
 
-    UNLOCK(buf->pool);
-
     vxGraphParameterEnqueueReadyRef(graph->tiovx_graph,
                                     pad->graph_parameter_index,
                                     (vx_reference *)&buf->arr, 1);
 
     status = VX_SUCCESS;
+    sem_post(&buf_pool->sem_dequeue);
+
+err:
+    UNLOCK(buf->pool);
 
     return status;
 }
@@ -829,22 +837,29 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
     GraphObj *graph = pad->node->graph;
     vx_object_array ref = NULL;
     vx_uint32 num_refs = 0;
+    Buf *buf = NULL;
+    const struct timespec timeout = {
+                                .tv_sec = 0,
+                                .tv_nsec = TIOVX_MODULES_TIMEOUT_MS * 1000000
+                              };
 
-    vxGraphParameterDequeueDoneRef(graph->tiovx_graph,
-                                   pad->graph_parameter_index,
-                                   (vx_reference *)&ref, 1, &num_refs);
+    sem_timedwait(&buf_pool->sem_dequeue, &timeout);
 
     LOCK(buf_pool);
 
     if (buf_pool->enqueue_tail == buf_pool->enqueue_head) {
         TIOVX_MODULE_ERROR("Queue Empty\n");
-        return NULL;
+        goto err;
     }
 
-    Buf *buf = buf_pool->enqueuedQ[buf_pool->enqueue_tail];
+    buf = buf_pool->enqueuedQ[buf_pool->enqueue_tail];
     buf_pool->enqueue_tail = (buf_pool->enqueue_tail + 1) %
                                                     (buf_pool->bufq_depth + 1);
 
+    vxGraphParameterDequeueDoneRef(graph->tiovx_graph,
+                                   pad->graph_parameter_index,
+                                   (vx_reference *)&ref, 1, &num_refs);
+err:
     UNLOCK(buf_pool);
 
     return buf;

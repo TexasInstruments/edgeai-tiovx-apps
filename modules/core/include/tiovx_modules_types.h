@@ -105,6 +105,7 @@ extern "C" {
 #define TIOVX_MODULES_DEFAULT_BUFQ_DEPTH      (2u)
 #define TIOVX_MODULES_DEFAULT_NUM_CHANNELS    (1u)
 #define TIOVX_MODULES_MAX_REF_HANDLES     (16u)
+#define TIOVX_MODULES_TIMEOUT_MS          (100)
 
 /*!
  * \brief Enum for pad directions.
@@ -175,7 +176,10 @@ struct _BufPool {
     pthread_mutex_t     lock;
 
     /*! \brief Semaphore for acquire and release */
-    sem_t               sem;
+    sem_t               sem_acquire;
+
+    /*! \brief Semaphore for dequeue and enqueue */
+    sem_t               sem_dequeue;
 };
 
 /*!
