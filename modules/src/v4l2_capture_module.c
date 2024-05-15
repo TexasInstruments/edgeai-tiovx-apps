@@ -198,7 +198,7 @@ v4l2CaptureHandle *v4l2_capture_create_handle(v4l2CaptureCfg *cfg)
     handle->fd = -1;
     memcpy(&handle->cfg, cfg, sizeof(v4l2CaptureCfg));
 
-    handle->fd = open(cfg->device, O_RDWR | O_NONBLOCK, 0);
+    handle->fd = open(cfg->device, O_RDWR, 0);
     if (-1 == handle->fd) {
         TIOVX_MODULE_ERROR("[V4L2_CAPTURE] Cannot open '%s': %d, %s\n",
                             cfg->device, errno, strerror(errno));
