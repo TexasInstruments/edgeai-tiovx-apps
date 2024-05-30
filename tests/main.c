@@ -92,6 +92,7 @@
 #define APP_MODULES_TEST_DOF (1)
 #define APP_MODULES_TEST_LINUX_CAPTURE_DOF (0)
 #define APP_MODULES_TEST_LINUX_DECODE_SDE (0)
+#define APP_MODULES_TEST_PIXELWISE_MULTIPLY (1)
 
 char *EDGEAI_DATA_PATH;
 
@@ -264,6 +265,16 @@ int main(int argc, char *argv[])
         int app_modules_pyramid_test(int argc, char* argv[]);
 
         status = app_modules_pyramid_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_PIXELWISE_MULTIPLY)
+    if(status==0)
+    {
+        printf("Running Pixelwise Multiply module test\n");
+        int app_modules_pixelwise_multiply_test(int argc, char* argv[]);
+
+        status = app_modules_pixelwise_multiply_test(argc, argv);
     }
 #endif
 
