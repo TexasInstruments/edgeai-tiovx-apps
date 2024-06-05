@@ -23,6 +23,7 @@ set(SRC_FILES
     src/tiovx_delay_module.c
     src/tiovx_fakesink_module.c
     src/tiovx_pixelwise_multiply_module.c
+    src/tiovx_pixelwise_add_module.c
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")

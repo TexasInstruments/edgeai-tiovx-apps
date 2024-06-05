@@ -59,74 +59,30 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
+#ifndef _TIOVX_PIXELWISE_ADD_MODULE
+#define _TIOVX_PIXELWISE_ADD_MODULE
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
-#include "tiovx_obj_array_split_module.h"
-#include "tiovx_pyramid_module.h"
-#include "tiovx_delay_module.h"
-#include "tiovx_fakesink_module.h"
-#include "tiovx_pixelwise_multiply_module.h"
-#include "tiovx_pixelwise_add_module.h"
-
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
-#include "tiovx_display_module.h"
-#include "tiovx_capture_module.h"
-#include "tiovx_aewb_module.h"
-#include "tiovx_sde_module.h"
-#include "tiovx_sde_viz_module.h"
-#include "tiovx_dof_module.h"
-#include "tiovx_dof_viz_module.h"
-#endif
+#include "tiovx_modules_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*!
- * \brief Enum that lists all available modules.
- */
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-    TIOVX_OBJ_ARRAY_SPLIT,
-    TIOVX_PYRAMID,
-    TIOVX_DELAY,
-    TIOVX_FAKESINK,
-    TIOVX_PIXELWISE_MULTIPLY,
-    TIOVX_PIXELWISE_ADD,
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
-    TIOVX_DISPLAY,
-    TIOVX_CAPTURE,
-    TIOVX_AEWB,
-    TIOVX_SDE,
-    TIOVX_SDE_VIZ,
-    TIOVX_DOF,
-    TIOVX_DOF_VIZ,
-#endif
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+typedef struct {
+    ImgCfg      input_cfg;
+    vx_int32    output_color_format;
+    char        target_string[TIVX_TARGET_MAX_NAME];
+    vx_enum     convert_policy;
+    vx_int32    num_channels;
+} TIOVXPixelwiseAddNodeCfg;
+
+void tiovx_pixelwise_add_init_cfg(TIOVXPixelwiseAddNodeCfg *cfg);
+vx_status tiovx_pixelwise_add_init_node(NodeObj *node);
+vx_status tiovx_pixelwise_add_create_node(NodeObj *node);
+vx_uint32 tiovx_pixelwise_add_get_cfg_size();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_MODULES_CBS
+#endif
