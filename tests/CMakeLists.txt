@@ -19,6 +19,7 @@ set(SRC_FILES
     app_tiovx_pyramid_module_test.c
     app_tiovx_pixelwise_multiply_module_test.c
     app_tiovx_pixelwise_add_module_test.c
+    app_tiovx_lut_module_test.c
     main.c)
 
 if ("${TARGET_OS}" STREQUAL "LINUX")

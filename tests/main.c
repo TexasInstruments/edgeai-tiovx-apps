@@ -94,6 +94,7 @@
 #define APP_MODULES_TEST_LINUX_DECODE_SDE (0)
 #define APP_MODULES_TEST_PIXELWISE_MULTIPLY (1)
 #define APP_MODULES_TEST_PIXELWISE_ADD (1)
+#define APP_MODULES_TEST_LUT (1)
 
 char *EDGEAI_DATA_PATH;
 
@@ -286,6 +287,16 @@ int main(int argc, char *argv[])
         int app_modules_pixelwise_add_test(int argc, char* argv[]);
 
         status = app_modules_pixelwise_add_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_LUT)
+    if(status==0)
+    {
+        printf("Running LUT module test\n");
+        int app_modules_lut_test(int argc, char* argv[]);
+
+        status = app_modules_lut_test(argc, argv);
     }
 #endif
 
