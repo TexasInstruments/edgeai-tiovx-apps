@@ -69,7 +69,7 @@ extern "C" {
 #endif
 
 typedef struct {
-    Pad         *peer_pad;
+    Pad         *src_pad;
 } TIOVXFakesinkNodeCfg;
 
 void tiovx_fakesink_init_cfg(TIOVXFakesinkNodeCfg *cfg);

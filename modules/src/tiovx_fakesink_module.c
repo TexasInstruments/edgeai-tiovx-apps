@@ -63,7 +63,7 @@
 
 void tiovx_fakesink_init_cfg(TIOVXFakesinkNodeCfg *node_cfg)
 {
-    node_cfg->peer_pad = NULL;
+    node_cfg->src_pad = NULL;
 }
 
 vx_status tiovx_fakesink_init_node(NodeObj *node)
@@ -77,14 +77,14 @@ vx_status tiovx_fakesink_init_node(NodeObj *node)
     node->sinks[0].node = node;
     node->sinks[0].pad_index = 0;
     node->sinks[0].node_parameter_index =
-                          node_cfg->peer_pad->node_parameter_index;
-    node->sinks[0].num_channels = node_cfg->peer_pad->num_channels;
-    vxRetainReference(node_cfg->peer_pad->exemplar);
-    vxRetainReference((vx_reference)node_cfg->peer_pad->exemplar_arr);
-    node->sinks[0].exemplar = node_cfg->peer_pad->exemplar;
-    node->sinks[0].exemplar_arr = node_cfg->peer_pad->exemplar_arr;
+                          node_cfg->src_pad->node_parameter_index;
+    node->sinks[0].num_channels = node_cfg->src_pad->num_channels;
+    vxRetainReference(node_cfg->src_pad->exemplar);
+    vxRetainReference((vx_reference)node_cfg->src_pad->exemplar_arr);
+    node->sinks[0].exemplar = node_cfg->src_pad->exemplar;
+    node->sinks[0].exemplar_arr = node_cfg->src_pad->exemplar_arr;
 
-    status = tiovx_modules_link_pads(node_cfg->peer_pad, &node->sinks[0]);
+    status = tiovx_modules_link_pads(node_cfg->src_pad, &node->sinks[0]);
     if (VX_SUCCESS != status) {
         TIOVX_MODULE_ERROR("[FAKESINK] Failed to link sink pad\n");
         return status;
@@ -100,7 +100,7 @@ vx_status tiovx_fakesink_create_node(NodeObj *node)
     vx_status status = VX_SUCCESS;
     TIOVXFakesinkNodeCfg *node_cfg = (TIOVXFakesinkNodeCfg *)node->node_cfg;
 
-    node->tiovx_node = node_cfg->peer_pad->node->tiovx_node;
+    node->tiovx_node = node_cfg->src_pad->node->tiovx_node;
 
     return status;
 }
