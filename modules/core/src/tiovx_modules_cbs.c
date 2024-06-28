@@ -176,6 +176,14 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_priv_size = NULL
     },
     {
+        .init_node = tiovx_fakesrc_init_node,
+        .create_node = tiovx_fakesrc_create_node,
+        .post_verify_graph = NULL,
+        .delete_node = tiovx_fakesrc_delete_node,
+        .get_cfg_size = tiovx_fakesrc_get_cfg_size,
+        .get_priv_size = NULL
+    },
+    {
         .init_node = tiovx_pixelwise_multiply_init_node,
         .create_node = tiovx_pixelwise_multiply_create_node,
         .post_verify_graph = NULL,
