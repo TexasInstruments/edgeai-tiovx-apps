@@ -95,6 +95,7 @@
 #define APP_MODULES_TEST_PIXELWISE_MULTIPLY (1)
 #define APP_MODULES_TEST_PIXELWISE_ADD (1)
 #define APP_MODULES_TEST_LUT (1)
+#define APP_MODULES_TEST_FAKESRC_FAKESINK (1)
 
 char *EDGEAI_DATA_PATH;
 
@@ -297,6 +298,16 @@ int main(int argc, char *argv[])
         int app_modules_lut_test(int argc, char* argv[]);
 
         status = app_modules_lut_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_FAKESRC_FAKESINK)
+    if(status==0)
+    {
+        printf("Running fakesrc fakesink module test\n");
+        int app_modules_fakesrc_fakesink_test(int argc, char* argv[]);
+
+        status = app_modules_fakesrc_fakesink_test(argc, argv);
     }
 #endif
 
