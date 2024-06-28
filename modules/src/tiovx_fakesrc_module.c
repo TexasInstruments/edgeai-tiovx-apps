@@ -59,78 +59,60 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
-
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
-#include "tiovx_obj_array_split_module.h"
-#include "tiovx_pyramid_module.h"
-#include "tiovx_delay_module.h"
-#include "tiovx_fakesink_module.h"
 #include "tiovx_fakesrc_module.h"
-#include "tiovx_pixelwise_multiply_module.h"
-#include "tiovx_pixelwise_add_module.h"
-#include "tiovx_lut_module.h"
 
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
-#include "tiovx_display_module.h"
-#include "tiovx_capture_module.h"
-#include "tiovx_aewb_module.h"
-#include "tiovx_sde_module.h"
-#include "tiovx_sde_viz_module.h"
-#include "tiovx_dof_module.h"
-#include "tiovx_dof_viz_module.h"
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*!
- * \brief Enum that lists all available modules.
- */
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-    TIOVX_OBJ_ARRAY_SPLIT,
-    TIOVX_PYRAMID,
-    TIOVX_DELAY,
-    TIOVX_FAKESINK,
-    TIOVX_FAKESRC,
-    TIOVX_PIXELWISE_MULTIPLY,
-    TIOVX_PIXELWISE_ADD,
-    TIOVX_LUT,
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
-    TIOVX_DISPLAY,
-    TIOVX_CAPTURE,
-    TIOVX_AEWB,
-    TIOVX_SDE,
-    TIOVX_SDE_VIZ,
-    TIOVX_DOF,
-    TIOVX_DOF_VIZ,
-#endif
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
-
-#ifdef __cplusplus
+void tiovx_fakesrc_init_cfg(TIOVXFakesrcNodeCfg *node_cfg)
+{
+    node_cfg->sink_pad = NULL;
 }
-#endif
 
-#endif //_TIOVX_MODULES_CBS
+vx_status tiovx_fakesrc_init_node(NodeObj *node)
+{
+    vx_status status = VX_FAILURE;
+    TIOVXFakesrcNodeCfg *node_cfg = (TIOVXFakesrcNodeCfg *)node->node_cfg;
+
+    node->num_inputs = 0;
+    node->num_outputs = 1;
+
+    node->srcs[0].node = node;
+    node->srcs[0].pad_index = 0;
+    node->srcs[0].node_parameter_index =
+                          node_cfg->sink_pad->node_parameter_index;
+    node->srcs[0].num_channels = node_cfg->sink_pad->num_channels;
+    vxRetainReference(node_cfg->sink_pad->exemplar);
+    vxRetainReference((vx_reference)node_cfg->sink_pad->exemplar_arr);
+    node->srcs[0].exemplar = node_cfg->sink_pad->exemplar;
+    node->srcs[0].exemplar_arr = node_cfg->sink_pad->exemplar_arr;
+
+    status = tiovx_modules_link_pads(&node->srcs[0], node_cfg->sink_pad);
+    if (VX_SUCCESS != status) {
+        TIOVX_MODULE_ERROR("[FAKESRC] Failed to link sink pad\n");
+        return status;
+    }
+
+    sprintf(node->name, "fakesrc_node");
+
+    return status;
+}
+
+vx_status tiovx_fakesrc_create_node(NodeObj *node)
+{
+    vx_status status = VX_SUCCESS;
+    TIOVXFakesrcNodeCfg *node_cfg = (TIOVXFakesrcNodeCfg *)node->node_cfg;
+
+    node->tiovx_node = node_cfg->sink_pad->node->tiovx_node;
+
+    return status;
+}
+
+vx_status tiovx_fakesrc_delete_node(NodeObj *node)
+{
+    vx_status status = VX_SUCCESS;
+
+    return status;
+}
+
+vx_uint32 tiovx_fakesrc_get_cfg_size()
+{
+    return sizeof(TIOVXFakesrcNodeCfg);
+}
