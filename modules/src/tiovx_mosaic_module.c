@@ -73,7 +73,7 @@ vx_status tiovx_mosaic_create_config(NodeObj *node)
     TIOVXMosaicNodePriv *node_priv = (TIOVXMosaicNodePriv *)node->node_priv;
 
     node_priv->config = vxCreateUserDataObject(node->graph->tiovx_context,
-                                               "ImgMosaicConfig", 
+                                               "ImgMosaicConfig",
                                                sizeof(tivxImgMosaicParams),
                                                NULL);
     status = vxGetStatus((vx_reference)node_priv->config);
@@ -124,6 +124,8 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
     TIOVXMosaicNodePriv *node_priv = (TIOVXMosaicNodePriv *)node->node_priv;
     vx_reference exemplar;
     vx_int32 i;
+
+    CLR(node_priv);
 
     for (i = 0; i < node_cfg->num_inputs; i++)
         node_cfg->input_cfgs[i].color_format = node_cfg->color_format;

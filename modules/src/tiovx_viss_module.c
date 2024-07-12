@@ -149,7 +149,7 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
     else if(node_cfg->viss_params.enable_bayer_op && node_cfg->viss_params.bypass_pcid)
         node_cfg->viss_params.h3a_in              = TIVX_VPAC_VISS_H3A_IN_LSC;
 #else
-    node_cfg->viss_params.h3a_in              = TIVX_VPAC_VISS_H3A_IN_LSC; 
+    node_cfg->viss_params.h3a_in              = TIVX_VPAC_VISS_H3A_IN_LSC;
 #endif
     node_cfg->viss_params.h3a_aewb_af_mode    = TIVX_VPAC_VISS_H3A_MODE_AEWB;
     node_cfg->viss_params.bypass_nsf4         = 0;
@@ -272,6 +272,8 @@ vx_status tiovx_viss_init_node(NodeObj *node)
     TIOVXVissNodeCfg *node_cfg = (TIOVXVissNodeCfg *)node->node_cfg;
     TIOVXVissNodePriv *node_priv = (TIOVXVissNodePriv *)node->node_priv;
     vx_reference exemplar;
+
+    CLR(node_priv);
 
     status = tiovx_init_sensor_obj(&node_priv->sensor_obj, node_cfg->sensor_name);
     if (VX_SUCCESS != status) {

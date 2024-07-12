@@ -141,7 +141,7 @@ vx_status tiovx_dl_post_proc_set_cfg(NodeObj *node)
 
     for(i=0; i < node_cfg->num_input_tensors; i++)
     {
-        node_cfg->input_tensor_cfg[i].datatype = 
+        node_cfg->input_tensor_cfg[i].datatype =
                 get_vx_tensor_datatype(node_cfg->io_buf_desc.outElementType[i]);
 
         node_cfg->input_tensor_cfg[i].num_dims = 3;
@@ -202,6 +202,8 @@ vx_status tiovx_dl_post_proc_init_node(NodeObj *node)
     vx_reference exemplar;
     vx_size tensor_sizes[TIOVX_MODULES_MAX_TENSOR_DIMS];
     vx_int32 i;
+
+    CLR(node_priv);
 
     status = tiovx_dl_post_proc_set_cfg(node);
     if(VX_SUCCESS != status)
@@ -368,4 +370,3 @@ vx_uint32 tiovx_dl_post_proc_get_priv_size()
 {
     return sizeof(TIOVXDLPostProcNodePriv);
 }
-

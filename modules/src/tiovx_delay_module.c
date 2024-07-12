@@ -78,6 +78,8 @@ vx_status tiovx_delay_init_node(NodeObj *node)
     TIOVXDelayNodeCfg *node_cfg = (TIOVXDelayNodeCfg *)node->node_cfg;
     TIOVXDelayNodePriv *node_priv = (TIOVXDelayNodePriv *)node->node_priv;
 
+    CLR(node_priv);
+
     node_priv->delay_obj = vxCreateDelay(
                                   node->graph->tiovx_context,
                                   (vx_reference)node_cfg->src_pad->exemplar_arr,

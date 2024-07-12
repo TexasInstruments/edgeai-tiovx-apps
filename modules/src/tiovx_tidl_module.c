@@ -663,6 +663,8 @@ vx_status tiovx_tidl_init_node(NodeObj *node)
     vx_size tensor_sizes[TIOVX_MODULES_MAX_TENSOR_DIMS];
     vx_int32 i;
 
+    CLR(node_priv);
+
     status = tiovx_tidl_set_cfg(node);
     if(VX_SUCCESS != status)
     {
@@ -763,7 +765,7 @@ vx_status tiovx_tidl_init_node(NodeObj *node)
     sprintf(node->name, "tidl_node");
 
     node_priv->kernel = tivxAddKernelTIDL(node->graph->tiovx_context,
-                                         node_cfg->num_input_tensors, 
+                                         node_cfg->num_input_tensors,
                                          node_cfg->num_output_tensors);
     status = vxGetStatus((vx_reference)node_priv->kernel);
     if (VX_SUCCESS != status)
