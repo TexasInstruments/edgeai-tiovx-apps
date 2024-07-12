@@ -93,6 +93,8 @@ vx_status tiovx_dof_viz_init_node(NodeObj *node)
     TIOVXDofVizNodePriv *node_priv = (TIOVXDofVizNodePriv *)node->node_priv;
     vx_reference exemplar;
 
+    CLR(node_priv);
+
     node_cfg->input_cfg.width = node_cfg->width;
     node_cfg->input_cfg.height = node_cfg->height;
 

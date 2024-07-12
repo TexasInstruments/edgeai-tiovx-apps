@@ -278,6 +278,8 @@ vx_status tiovx_capture_init_node(NodeObj *node)
     vx_reference exemplar;
     IssSensor_CreateParams *sensor_params;
 
+    CLR(node_priv);
+
     status = tiovx_init_sensor_obj(&node_priv->sensor_obj, node_cfg->sensor_name);
     if (VX_SUCCESS != status)
     {

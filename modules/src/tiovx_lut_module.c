@@ -84,6 +84,8 @@ vx_status tiovx_lut_init_node(NodeObj *node)
     vx_reference exemplar;
     vx_enum lut_type;
 
+    CLR(node_priv);
+
     node->num_inputs = 1;
     node->num_outputs = 1;
 
