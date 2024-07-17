@@ -4,6 +4,7 @@ set(PROJ_NAME edgeai-tiovx-apps-main)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/common.cmake)
 
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
 set(SRC_FILES
     src/main.c
     src/app.c
@@ -15,3 +16,4 @@ set(SRC_FILES
 
 build_app(${PROJ_NAME}
           ${SRC_FILES})
+endif()
