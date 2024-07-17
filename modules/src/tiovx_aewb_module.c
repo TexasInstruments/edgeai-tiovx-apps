@@ -63,6 +63,8 @@
 
 #define TIOVX_MODULES_DEFAULT_AEWB_SENSOR "SENSOR_SONY_IMX390_UB953_D3"
 
+IssAeDynamicParams g_ae_dynPrms = {};
+
 typedef struct {
     vx_object_array         config_arr;
     vx_user_data_object     dcc_config;

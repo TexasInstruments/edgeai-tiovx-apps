@@ -29,6 +29,7 @@ set(SRC_FILES
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SRC_FILES
          src/v4l2_capture_module.c
@@ -36,6 +37,7 @@ if ("${TARGET_OS}" STREQUAL "LINUX")
          src/v4l2_encode_module.c
          src/kms_display_module.c
          src/linux_aewb_module.c)
+endif()
 endif()
 
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")

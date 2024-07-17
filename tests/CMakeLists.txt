@@ -24,6 +24,7 @@ set(SRC_FILES
     main.c)
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SRC_FILES
          app_tiovx_v4l2_capture_module_test.c
@@ -31,6 +32,7 @@ if ("${TARGET_OS}" STREQUAL "LINUX")
          app_tiovx_linux_multi_capture_display_test.c
          app_tiovx_linux_decode_display_test.c
          app_tiovx_linux_capture_encode_test.c)
+endif()
 endif()
 
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")
@@ -45,10 +47,12 @@ if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${
          app_tiovx_capture_dl_display_pipeline.c)
 
          if ("${TARGET_OS}" STREQUAL "LINUX")
+         if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
              list(APPEND
                   SRC_FILES
                   app_tiovx_linux_capture_dof_test.c
                   app_tiovx_linux_decode_sde_test.c)
+         endif()
          endif()
 endif()
 

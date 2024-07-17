@@ -77,24 +77,12 @@ add_definitions(
 )
 
 set(VISION_APPS_LIBS_PATH $ENV{VISION_APPS_LIBS_PATH})
-set(TIOVX_LIBS_PATH $ENV{TIOVX_LIBS_PATH})
-set(APP_UTILS_LIBS_PATH $ENV{APP_UTILS_LIBS_PATH})
-set(IMAGING_LIBS_PATH $ENV{IMAGING_LIBS_PATH})
-set(IMAGING_PREBUILT_LIBS_PATH $ENV{IMAGING_PREBUILT_LIBS_PATH})
-set(VHWA_C_MODEL_LIBS_PATH $ENV{VHWA_C_MODEL_LIBS_PATH})
-set(PREBUILT_LIBS_PATH $ENV{PREBUILT_LIBS_PATH})
 set(EDGEAI_LIBS_PATH $ENV{EDGEAI_LIBS_PATH})
 link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${TARGET_FS}/usr/lib
                  ${CMAKE_LIBRARY_PATH}/usr/lib
                  ${CMAKE_LIBRARY_PATH}/lib
                  ${VISION_APPS_LIBS_PATH}
-                 ${TIOVX_LIBS_PATH}
-                 ${APP_UTILS_LIBS_PATH}
-                 ${IMAGING_LIBS_PATH}
-                 ${IMAGING_PREBUILT_LIBS_PATH}
-                 ${VHWA_C_MODEL_LIBS_PATH}
-                 ${PREBUILT_LIBS_PATH}
                  ${EDGEAI_LIBS_PATH}
                  )
 
@@ -146,95 +134,27 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${TARGET_FS}/usr/include/
                    )
 
-if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
-    set(SYSTEM_LINK_LIBS
-        tivision_apps
-        edgeai-tiovx-kernels
-        edgeai-apps-utils
-        m
-        yaml-cpp
-        )
-else()
-    set(SYSTEM_LINK_LIBS
-        edgeai-tiovx-kernels
-        edgeai-apps-utils
-        m
-        yaml-cpp
-        app_utils_init
-        libvx_conformance_engine.a
-        vx_conformance_tests
-        vx_conformance_tests_testmodule
-        vx_framework
-        vx_kernels_host_utils
-        vx_kernels_openvx_core
-        vx_kernels_openvx_ext
-        vx_kernels_openvx_ext_tests
-        vx_kernels_target_utils
-        vx_kernels_test_kernels
-        vx_kernels_test_kernels_tests
-        vx_platform_pc
-        vx_target_kernels_dsp
-        vx_target_kernels_ivision_common
-        vx_target_kernels_openvx_core
-        vx_target_kernels_openvx_ext
-        vx_target_kernels_source_sink
-        vx_target_kernels_tutorial
-        vx_tiovx_internal_tests
-        vx_tiovx_tests
-        vx_tutorial
-        vx_utils
-        vx_vxu
-        algframework_x86_64
-        c6xsim_x86_64_C66
-        dmautils_x86_64
-        vxlib_bamplugin_x86_64
-        vxlib_x86_64
-        app_utils_mem
-        app_utils_hwa
-        app_utils_iss
-        ti_imaging_aealg
-        ti_imaging_dcc
-        vx_kernels_hwa
-        vx_kernels_hwa_tests
-        vx_kernels_imaging
-        vx_kernels_imaging_tests
-        vx_target_kernels_dmpac_dof
-        vx_target_kernels_dmpac_sde
-        vx_target_kernels_imaging_aewb
-        vx_target_kernels_j7_arm
-        vx_target_kernels_vpac_ldc
-        vx_target_kernels_vpac_msc
-        vx_target_kernels_vpac_nf
-        vx_target_kernels_vpac_viss
-        ti_imaging_awbalg
-        bl_filter_lib
-        cac
-        DOF
-        ee
-        flexcc
-        flexcfa_vpac3
-        glbce
-        h3a
-        ldc
-        nsf4
-        nsf4_wb
-        rawfe
-        RawHistogram
-        scalar
-        sde_hw
-        utils
-        VXLIB_triangulatePoints_i32f_o32f_lib_x86_64
-        m
-       )
-endif()
+set(SYSTEM_LINK_LIBS
+    tivision_apps
+    edgeai-tiovx-kernels
+    edgeai-apps-utils
+    m
+    yaml-cpp
+    )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SYSTEM_LINK_LIBS
          drm
          avformat
          avutil
          avcodec)
+else()
+    list(APPEND
+         SYSTEM_LINK_LIBS
+         X11)
+endif()
 endif()
 
 if ("${TARGET_OS}" STREQUAL "QNX")
@@ -263,6 +183,7 @@ set(COMMON_LINK_LIBS
 function(build_app app_name)
     add_executable(${app_name} ${ARGN})
     target_link_libraries(${app_name}
+                          -Wl,--unresolved-symbols=ignore-in-shared-libs
                           ${COMMON_LINK_LIBS}
                           ${TARGET_LINK_LIBS}
                           ${SYSTEM_LINK_LIBS}
