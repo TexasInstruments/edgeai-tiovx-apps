@@ -206,7 +206,7 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
 #if defined(SOC_AM62A) || defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
         for (uint32_t i = 0; i < APP_IPC_CPU_MAX; i++)
         {
-            char *cpu_name = appIpcGetCpuName(i);
+            const char *cpu_name = appIpcGetCpuName(i);
             if (appIpcIsCpuEnabled (i) &&
                 (NULL != strstr (cpu_name, "c7x") ||
                 NULL != strstr (cpu_name, "mcu")))
