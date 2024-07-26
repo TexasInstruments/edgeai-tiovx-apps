@@ -400,7 +400,8 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
     vx_image output[] = {NULL, NULL};
     vx_bool replicate[] = { vx_false_e, vx_false_e, vx_false_e,
                             vx_false_e, vx_false_e, vx_false_e,
-                            vx_true_e, vx_false_e, vx_false_e};
+                            vx_true_e, vx_false_e, vx_false_e,
+                            vx_false_e, vx_false_e, vx_false_e};
 
     for (int i = 0, j = 0; i < TIOVX_LDC_MODULE_MAX_OUTPUTS; i++) {
         if (node_cfg->output_select[i] == TIOVX_LDC_MODULE_OUTPUT_EN) {
@@ -428,7 +429,7 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     vxReplicateNode(node->graph->tiovx_graph,
-                    node->tiovx_node, replicate, 9);
+                    node->tiovx_node, replicate, 12);
 
     return status;
 }

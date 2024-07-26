@@ -381,6 +381,8 @@ vx_status tiovx_multi_scaler_create_node(NodeObj *node)
     TIOVXMultiScalerNodeCfg *node_cfg = (TIOVXMultiScalerNodeCfg *)node->node_cfg;
     vx_image output[] = {NULL, NULL, NULL, NULL, NULL};
     vx_bool replicate[] = {vx_true_e, vx_false_e, vx_false_e,
+                           vx_false_e, vx_false_e, vx_false_e,
+                           vx_false_e, vx_false_e, vx_false_e,
                            vx_false_e, vx_false_e, vx_false_e};
 
     for (int i = 0; i < node->num_outputs; i++) {
@@ -402,7 +404,7 @@ vx_status tiovx_multi_scaler_create_node(NodeObj *node)
     vxSetNodeTarget(node->tiovx_node,
                     VX_TARGET_STRING, node_cfg->target_string);
     vxReplicateNode(node->graph->tiovx_graph,
-                    node->tiovx_node, replicate, 6);
+                    node->tiovx_node, replicate, 12);
 
     return status;
 }
