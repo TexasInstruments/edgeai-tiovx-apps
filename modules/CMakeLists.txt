@@ -26,6 +26,7 @@ set(SRC_FILES
     src/tiovx_pixelwise_multiply_module.c
     src/tiovx_pixelwise_add_module.c
     src/tiovx_lut_module.c
+    src/codec_input_demuxer.c
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
