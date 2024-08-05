@@ -41,6 +41,14 @@ if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
 endif()
 endif()
 
+if ("${TARGET_OS}" STREQUAL "QNX")
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
+    list(APPEND
+         SRC_FILES
+         src/omx_decode_module.c)
+endif()
+endif()
+
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")
     list(APPEND
          SRC_FILES
