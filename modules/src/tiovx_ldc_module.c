@@ -143,18 +143,33 @@ static vx_status tiovx_ldc_module_configure_dcc_params(NodeObj *node)
     return status;
 }
 
+static void tiovx_ldc_module_mesh_table_rect(NodeObj* node, vx_uint32* table_width, vx_uint32* table_height)
+{
+   TIOVXLdcNodeCfg* node_cfg = (TIOVXLdcNodeCfg*) node->node_cfg;
+
+   if (node_cfg->ds_factor == 0)
+   {
+      *table_width  = node_cfg->table_width;
+      *table_height = node_cfg->table_height;
+   }
+   else
+   {
+      *table_width  = (((node_cfg->table_width / (1 << node_cfg->ds_factor)) + 1u) + 15u) & (~15u);
+      *table_height = ((node_cfg->table_height / (1 << node_cfg->ds_factor)) + 1u);
+   }
+}
+
 static vx_status tiovx_ldc_module_configure_mesh_params(NodeObj *node)
 {
-    vx_status status = VX_FAILURE;
+    vx_status status = VX_SUCCESS;
     TIOVXLdcNodeCfg *node_cfg = (TIOVXLdcNodeCfg *)node->node_cfg;
     TIOVXLdcNodePriv *node_priv = (TIOVXLdcNodePriv *)node->node_priv;
 
     vx_uint32 table_width_ds, table_height_ds;
 
-    table_width_ds = (((node_cfg->table_width / (1 << node_cfg->ds_factor)) + 1u) + 15u) & (~15u);
-    table_height_ds = ((node_cfg->table_height / (1 << node_cfg->ds_factor)) + 1u);
+    tiovx_ldc_module_mesh_table_rect(node, &table_width_ds, &table_height_ds);
 
-    if (node_cfg->lut_file[0] != '\0')
+    if (node_cfg->lut_file[0] != '\0' && node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE)
     {
         /* Mesh Image */
         node_priv->mesh_img = vxCreateImage(node->graph->tiovx_context,
@@ -224,6 +239,7 @@ static vx_status tiovx_ldc_module_configure_region_params(NodeObj *node)
     node_cfg->region_params.out_block_width  = node_cfg->out_block_width;
     node_cfg->region_params.out_block_height = node_cfg->out_block_height;
     node_cfg->region_params.pixel_pad        = node_cfg->pixel_pad;
+    node_cfg->region_params.enable           = 1;
 
     node_priv->region_params_obj = vxCreateUserDataObject(
                                         node->graph->tiovx_context,
@@ -335,7 +351,7 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
         return status;
     }
 
-    node->num_inputs = 1;
+    node->num_inputs = node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE_QUEUED ? 2 : 1;
 
     node->sinks[0].node = node;
     node->sinks[0].pad_index = 0;
@@ -351,6 +367,27 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
         return status;
     }
     vxReleaseReference(&exemplar);
+
+    if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE_QUEUED) {
+        vx_uint32 table_width_ds, table_height_ds;
+        tiovx_ldc_module_mesh_table_rect(node, &table_width_ds, &table_height_ds);
+
+        node->sinks[1].node = node;
+        node->sinks[1].pad_index = 1;
+        node->sinks[1].node_parameter_index = 4;
+        node->sinks[1].num_channels = node_cfg->num_channels;
+        exemplar = (vx_reference) vxCreateImage(node->graph->tiovx_context,
+                                                table_width_ds,
+                                                table_height_ds,
+                                                VX_DF_IMAGE_U32);
+        status = tiovx_module_create_pad_exemplar(&node->sinks[1], exemplar);
+        if (VX_SUCCESS != status)
+        {
+            TIOVX_MODULE_ERROR("[LDC] Create Input Failed\n");
+            return status;
+        }
+        vxReleaseReference(&exemplar);
+    }
 
     node->num_outputs = 0;
 
@@ -382,7 +419,7 @@ vx_status tiovx_ldc_init_node(NodeObj *node)
 
     if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_DCC_DATA) {
         tiovx_ldc_module_configure_dcc_params(node);
-    } else if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE) {
+    } else if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE || node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE_QUEUED) {
         tiovx_ldc_module_configure_mesh_params(node);
         tiovx_ldc_module_configure_region_params(node);
     }
@@ -402,6 +439,10 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
                             vx_false_e, vx_false_e, vx_false_e,
                             vx_true_e, vx_false_e, vx_false_e};
 
+   if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE_QUEUED) {
+      replicate[4] = vx_true_e;
+   }
+
     for (int i = 0, j = 0; i < TIOVX_LDC_MODULE_MAX_OUTPUTS; i++) {
         if (node_cfg->output_select[i] == TIOVX_LDC_MODULE_OUTPUT_EN) {
             output[i] = (vx_image)node->srcs[j++].exemplar;
@@ -414,7 +455,7 @@ vx_status tiovx_ldc_create_node(NodeObj *node)
                                 node_priv->warp_matrix,
                                 node_priv->region_params_obj,
                                 node_priv->mesh_params_obj,
-                                node_priv->mesh_img,
+                                (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE_QUEUED ? (vx_image) (node->sinks[1].exemplar) : node_priv->mesh_img),
                                 node_priv->dcc_config_obj,
                                 (vx_image)(node->sinks[0].exemplar),
                                 output[0], output[1]);
@@ -444,10 +485,12 @@ vx_status tiovx_ldc_delete_node(NodeObj *node)
     status = vxReleaseUserDataObject(&node_priv->ldc_params_obj);
     if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_DCC_DATA) {
         status = vxReleaseUserDataObject(&node_priv->dcc_config_obj);
-    } else if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE) {
+    } else if (node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE || node_cfg->ldc_mode == TIOVX_MODULE_LDC_OP_MODE_MESH_IMAGE_QUEUED) {
         status = vxReleaseUserDataObject(&node_priv->region_params_obj);
         status = vxReleaseUserDataObject(&node_priv->mesh_params_obj);
-        status = vxReleaseImage(&node_priv->mesh_img);
+        if (node_priv->mesh_img) {
+            status = vxReleaseImage(&node_priv->mesh_img);
+        }
     }
 
     return status;
