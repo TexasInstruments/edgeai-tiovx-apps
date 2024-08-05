@@ -131,6 +131,7 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${PSDK_INCLUDE_PATH}/drm
                     ${EDGEAI_INCLUDE_PATH}/edgeai-tiovx-kernels
                     ${EDGEAI_INCLUDE_PATH}/edgeai-apps-utils/
+                    ${EDGEAI_INCLUDE_PATH}/
                     ${TARGET_FS}/usr/include/
                    )
 
@@ -166,6 +167,7 @@ if ("${TARGET_OS}" STREQUAL "QNX")
          ti-udmalld
          ti-pdk
          ti-sciclient
+         c++
          c++fs)
     add_definitions(
          -D_QNX_SOURCE
