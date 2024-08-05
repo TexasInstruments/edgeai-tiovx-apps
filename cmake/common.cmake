@@ -154,6 +154,9 @@ set(SYSTEM_LINK_LIBS
     edgeai-apps-utils
     m
     yaml-cpp
+    avformat
+    avutil
+    avcodec
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
@@ -161,9 +164,7 @@ if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SYSTEM_LINK_LIBS
          drm
-         avformat
-         avutil
-         avcodec)
+         )
 else()
     list(APPEND
          SYSTEM_LINK_LIBS
