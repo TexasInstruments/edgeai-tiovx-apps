@@ -23,6 +23,14 @@ set(SRC_FILES
     app_tiovx_fakesrc_fakesink_module_test.c
     main.c)
 
+if ("${TARGET_OS}" STREQUAL "QNX")
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
+    list(APPEND
+         SRC_FILES
+         app_tiovx_qnx_decode_display_test.c)
+endif()
+endif()
+
 if ("${TARGET_OS}" STREQUAL "LINUX")
 if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
