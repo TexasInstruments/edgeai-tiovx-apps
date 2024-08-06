@@ -86,6 +86,12 @@ link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${EDGEAI_LIBS_PATH}
                  )
 
+if ("${TARGET_OS}" STREQUAL "QNX")
+    link_directories(${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/core/nto/aarch64/so.le/
+                     ${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/utility/nto/aarch64/so.le
+                    )
+endif()
+
 #message("PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
 #message("CMAKE_SOURCE_DIR   = ${CMAKE_SOURCE_DIR}")
 
@@ -99,6 +105,7 @@ if ("${EDGEAI_INCLUDE_PATH}" STREQUAL "")
     set(EDGEAI_INCLUDE_PATH ${TARGET_FS}/usr/include/)
 endif()
 
+set(PSDK_QNX_PATH $ENV{PSDK_QNX_PATH})
 
 include_directories(${PROJECT_SOURCE_DIR}
                     ${PROJECT_SOURCE_DIR}/modules/include
@@ -135,6 +142,12 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${TARGET_FS}/usr/include/
                    )
 
+if ("${TARGET_OS}" STREQUAL "QNX")
+    include_directories(${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/khronos/openmaxil
+                        ${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/core/public/khronos/openmaxil
+                       )
+endif()
+
 set(SYSTEM_LINK_LIBS
     tivision_apps
     edgeai-tiovx-kernels
@@ -168,7 +181,9 @@ if ("${TARGET_OS}" STREQUAL "QNX")
          ti-pdk
          ti-sciclient
          c++
-         c++fs)
+         c++fs
+         omxcore_j7
+         omxil_j7_utility)
     add_definitions(
          -D_QNX_SOURCE
     )
