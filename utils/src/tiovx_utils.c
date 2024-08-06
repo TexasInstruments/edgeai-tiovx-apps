@@ -769,3 +769,27 @@ int getImageDmaFd(vx_reference ref, vx_int32 *fd, vx_uint32 *pitch, vx_uint64 *s
 
     return num_planes;
 }
+
+int getReferenceAddr(vx_reference ref, void **addr, vx_uint64 *size)
+{
+    vx_status status = VX_FAILURE;
+    void *addresses[TIOVX_MODULES_MAX_REF_HANDLES];
+    vx_uint32 sizes[TIOVX_MODULES_MAX_REF_HANDLES], num_entries;
+
+    status = tivxReferenceExportHandle(ref, addresses, sizes,
+                                       TIOVX_MODULES_MAX_REF_HANDLES,
+                                       &num_entries);
+    if(status != VX_SUCCESS)
+    {
+        TIOVX_MODULE_ERROR("Error exporting handles\n");
+        return status;
+    }
+
+    *addr = addresses[0];
+    *size = 0;
+    for (int i = 0; i < num_entries; i++) {
+        *size += sizes[i];
+    }
+
+    return status;
+}
