@@ -199,6 +199,8 @@ vx_status tiovx_modules_reference_alloc_mem(vx_reference ref)
         addr[i] = tivxMemAlloc(size[i], TIVX_MEM_EXTERNAL);
     }
 
+    printf("MODULE ALLOC ADDR : %p\n", addr[0]);
+
     status = tivxReferenceImportHandle(ref, (const void **)addr,
                                        size, num_entries);
     if(status != VX_SUCCESS)

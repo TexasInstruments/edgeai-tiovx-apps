@@ -74,7 +74,7 @@
 
 #define OMX_DECODE_DEFAULT_INPUT_FILE "/opt/edgeai-test-data/videos/video0_1280_768.h264"
 #define OMX_DECODE_DEFAULT_BUFQ_DEPTH 4
-#define OMX_DECODE_MAX_BUFQ_DEPTH 10
+#define OMX_DECODE_MAX_BUFQ_DEPTH 14
 #define OMX_DECODE_MAX_BUFQ_DEPTH_OFFSET 3 //This is set in wave5 driver
 
 #define MAX_INBUFS 2
@@ -123,6 +123,8 @@ OMX_ERRORTYPE omx_decode_event_handler(OMX_HANDLETYPE hComponent,
     omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
 
+    printf("EVENT HANDLER CALLED\n");
+
     if (handle->compHandle == NULL) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] EventHandler: compHandle is NULL\n" );
         return OMX_ErrorUndefined;
@@ -131,6 +133,7 @@ OMX_ERRORTYPE omx_decode_event_handler(OMX_HANDLETYPE hComponent,
     switch (eEvent) {
         case OMX_EventError:
         {
+            printf("EVENT HANDLER CALLED OMX_EventError\n");
             if(hComponent == handle->compHandle) {
                 if (OMX_ErrorStreamCorrupt == (OMX_ERRORTYPE)nData1) {
                     TIOVX_MODULE_ERROR("[OMX_DECODE] corrupted stream detected; continuing...\n");
@@ -143,10 +146,12 @@ OMX_ERRORTYPE omx_decode_event_handler(OMX_HANDLETYPE hComponent,
 
         case OMX_EventCmdComplete:
         {
+            printf("EVENT HANDLER CALLED OMX_EventCmdComplete\n");
             switch ((OMX_COMMANDTYPE) nData1) {
                 case OMX_CommandStateSet:
                 {
                     if( hComponent == handle->compHandle ) {
+                        printf("EVENT HANDLER CALLED Posting SEMAPHOR\n");
                         sem_post(&handle->sem);
                     }
 
@@ -178,6 +183,7 @@ OMX_ERRORTYPE omx_decode_empty_buffer_done(OMX_HANDLETYPE hComponent,
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
     omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
 
+    printf("EMPTY BUFFER DONE\n");
     if (handle->compHandle != hComponent ) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] EmptyBufferDone Unknown Component %p\n", hComponent );
         return omxErr;
@@ -205,6 +211,7 @@ OMX_ERRORTYPE omx_decode_fill_buffer_done(OMX_HANDLETYPE hComponent,
     omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
     Buf *tiovx_buffer = (Buf *)(pBufHdr->pAppPrivate);
 
+    printf("FILL BUFFER DONE\n");
     if (handle->compHandle != hComponent ) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] FillBufferDone Unknown Component %p\n", hComponent );
         return omxErr;
@@ -223,6 +230,10 @@ int omx_allocate_output_buffer(omxDecodeHandle *handle, Buf *tiovx_buffer)
     uint64_t size;
 
     getReferenceAddr(tiovx_buffer->handle, &addr, &size);
+
+    uint64_t temp = appMemGetDmaBufFd(addr, NULL);
+    printf("VIRT ADDR %p\n", addr);
+    printf("PHY ADDR %08lx\n", temp);
 
     omxErr = OMX_UseBuffer(handle->compHandle,
                            &handle->omx_bufq[tiovx_buffer->buf_index],
@@ -249,10 +260,15 @@ int omx_allocate_input_buffers(omxDecodeHandle *handle)
             TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_AllocateBuffer() returned 0x%08x\n", omxErr);
             return (int)omxErr;
         }
+        printf("ALLOC IN BUF %d\n", handle->num_inbufs);
     }
 
     return 0;
 }
+
+OMX_CALLBACKTYPE callbacks = {&omx_decode_event_handler,
+                              &omx_decode_empty_buffer_done,
+                              &omx_decode_fill_buffer_done};
 
 int omx_decode_init(omxDecodeHandle *handle)
 {
@@ -284,10 +300,6 @@ int omx_decode_init(omxDecodeHandle *handle)
         TIOVX_MODULE_ERROR("[OMX_DECODE ] OMX_GetComponentsOfRole() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
-
-    OMX_CALLBACKTYPE callbacks = {&omx_decode_event_handler,
-                                  &omx_decode_empty_buffer_done,
-                                  &omx_decode_fill_buffer_done};
 
     omxErr = OMX_GetHandle(&handle->compHandle, (OMX_STRING)comp_name,
                             (OMX_PTR)handle, &callbacks );
@@ -440,6 +452,14 @@ omxDecodeHandle *omx_decode_create_handle(omxDecodeCfg *cfg,
     sem_init(&handle->sem, 0, 0);
     pthread_mutex_init(&handle->str_lock, NULL);
 
+    status = omx_decode_move_to_state(handle, OMX_StateIdle);
+    if (status) {
+        TIOVX_MODULE_ERROR("[OMX_DECODE] Transition LOADED->IDLE failed 0x%x\n", status);
+        return status;
+    }
+
+    printf("MOVED to IDLE\n");
+
     omx_allocate_input_buffers(handle);
 
     return handle;
@@ -465,6 +485,7 @@ int omx_decode_move_to_state(omxDecodeHandle *handle,
             return OMX_ErrorBadParameter;
     }
 
+    printf("CALLING GET STATUS\n");
     omxErr = OMX_GetState(handle->compHandle, &currState);
     if (omxErr != OMX_ErrorNone)
     {
@@ -481,14 +502,17 @@ int omx_decode_move_to_state(omxDecodeHandle *handle,
         return (int)OMX_ErrorNone;
     }
 
+    printf("SEND COMMAND TO SET STATE\n");
     omxErr = OMX_SendCommand(handle->compHandle, OMX_CommandStateSet, newState,
                              NULL);
     if (omxErr != OMX_ErrorNone) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] StateTransition(IDLE) returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
+    printf("SEND COMMAND TO SET STATE DONE\n");
 
-    sem_wait(&handle->sem);
+
+    printf("WAITING ON SEMAPHORE\n");
 
     return 0;
 }
@@ -498,11 +522,9 @@ int omx_decode_start(omxDecodeHandle *handle)
     int status = 0;
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
 
-    status = omx_decode_move_to_state(handle, OMX_StateIdle);
-    if (status) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Transition LOADED->IDLE failed 0x%x\n", status);
-        return status;
-    }
+    printf("STREAM START\n");
+
+    sem_wait(&handle->sem);
 
     status = omx_decode_move_to_state(handle, OMX_StateExecuting);
     if (status) {
@@ -510,20 +532,27 @@ int omx_decode_start(omxDecodeHandle *handle)
         return status;
     }
 
-    for (int i=0; i < handle->num_inbufs; i++) {
-        fread(handle->in_omx_bufq[i]->pBuffer,
-              handle->str.frame_sizes[handle->current_frame],
-              1, handle->rdfd);
-        handle->current_frame += 1;
-        omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->in_omx_bufq[i]);
-        if (omxErr != OMX_ErrorNone) {
-            TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
-            return (int)omxErr;
-        }
+    sem_wait(&handle->sem);
+
+    printf("MOVED to EXECUTING\n");
+
+    printf("FIRST BUFFER SIZE = %lu CURRENT FRAME = %d\n", handle->str.frame_sizes[handle->current_frame], handle->current_frame);
+    printf("INBUF SIZE %lu\n", handle->inbuf_size);
+    int temp = fread(handle->in_omx_bufq[0]->pBuffer,
+          1, handle->inbuf_size, handle->rdfd);
+    handle->in_omx_bufq[0]->nFilledLen = temp;
+    printf("BYTES READ = %d\n", temp);
+    handle->current_frame += 1;
+    printf("LOADING IN BUF %d\n", 0);
+    omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->in_omx_bufq[0]);
+    if (omxErr != OMX_ErrorNone) {
+        TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
+        return (int)omxErr;
     }
 
     for (int i=0; i < handle->num_outbufs; i++) {
         if (handle->queued[i]) {
+            printf("LOADING OUT BUF %d\n", i);
             omxErr = OMX_FillThisBuffer(handle->compHandle, handle->omx_bufq[i]);
             if (omxErr != OMX_ErrorNone) {
                 TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_FillThisBuffer: return omxErr=%08x\n", omxErr);
@@ -531,6 +560,23 @@ int omx_decode_start(omxDecodeHandle *handle)
             }
         }
     }
+
+    printf("LOADED OUT BUFS\n");
+
+    printf("SECOND BUFFER SIZE = %lu CURRENT FRAME = %d\n", handle->str.frame_sizes[handle->current_frame], handle->current_frame);
+
+    fread(handle->in_omx_bufq[1]->pBuffer,
+          handle->str.frame_sizes[handle->current_frame],
+          1, handle->rdfd);
+    handle->current_frame += 1;
+    printf("LOADING IN BUF %d\n", 1);
+    omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->in_omx_bufq[1]);
+    if (omxErr != OMX_ErrorNone) {
+        TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
+        return (int)omxErr;
+    }
+
+    printf("LOADED IN BUFS\n");
 
     handle->stream_start = 1;
 
@@ -545,6 +591,7 @@ int omx_decode_enqueue_buf(omxDecodeHandle *handle, Buf *tiovx_buffer)
     if (handle->stream_start == 0) {
         handle->queued[tiovx_buffer->buf_index] = true;
         status = omx_allocate_output_buffer(handle, tiovx_buffer);
+        printf("USE OUT BUF %d\n", handle->num_outbufs);
         return status;
     } else {
         handle->queued[tiovx_buffer->buf_index] = true;

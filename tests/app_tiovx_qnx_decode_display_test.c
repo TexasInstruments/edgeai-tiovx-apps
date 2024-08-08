@@ -64,7 +64,7 @@
 #include <tiovx_utils.h>
 #include <omx_decode_module.h>
 
-#define APP_BUFQ_DEPTH      (10)
+#define APP_BUFQ_DEPTH      (12)
 #define APP_NUM_CH          (1)
 #define APP_NUM_ITERATIONS  (600)
 
@@ -84,8 +84,10 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     omx_decode_init_cfg(&omx_decode_cfg);
     omx_decode_cfg.bufq_depth = APP_BUFQ_DEPTH;
-    sprintf(omx_decode_cfg.file, "/opt/edgeai-test-data/videos/video0_1280_768.h264");
+    sprintf(omx_decode_cfg.file, "/ti_fs/edgeai-test-data/videos/video0_1280_768.h264");
+    printf("CREATE HANDLE\n");
     omx_decode_handle = omx_decode_create_handle(&omx_decode_cfg, &omx_decode_fmt);
+    printf("CREATE HANDLE DONE\n");
 
     tiovx_display_init_cfg(&display_cfg);
 
@@ -104,17 +106,25 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     in_buf_pool = node->sinks[0].buf_pool;
 
+    printf("DISP INIT DONE\n");
     for (int i = 0; i < APP_BUFQ_DEPTH; i++) {
         inbuf = tiovx_modules_acquire_buf(in_buf_pool);
         omx_decode_enqueue_buf(omx_decode_handle, inbuf);
     }
+    printf("ENQUEUE DONE\n");
 
     omx_decode_start(omx_decode_handle);
 
-    for (int i = 0; i < in_buf_pool->bufq_depth - 2; i++) {
+    printf("START DONE\n");
+    sleep(5);
+    for (int i = 0; i < 3; i++) {
         inbuf = omx_decode_dqueue_buf(omx_decode_handle);
+        printf("DQ DONE\n");
         tiovx_modules_enqueue_buf(inbuf);
+        printf("EQ DONE\n");
     }
+    sleep(100);
+    /*
 
     for (int i = 0; i < APP_NUM_ITERATIONS; i++) {
         inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
@@ -124,7 +134,7 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
     }
 
     omx_decode_stop(omx_decode_handle);
-    omx_decode_delete_handle(omx_decode_handle);
+    omx_decode_delete_handle(omx_decode_handle);*/
 
     tiovx_modules_clean_graph(&graph);
 
