@@ -80,7 +80,7 @@
 #define LDC_PIXEL_PAD       (1)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX390_UB953_D3"
-#define DCC_LDC "/opt/imaging/imx390/wdr/dcc_ldc_wdr.bin"
+#define DCC_LDC TIOVX_MODULES_IMAGING_PATH"/imx390/wdr/dcc_ldc_wdr.bin"
 
 vx_status app_modules_ldc_test(vx_int32 argc, vx_char* argv[])
 {

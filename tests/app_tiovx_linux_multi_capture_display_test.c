@@ -79,7 +79,7 @@
 #define WINDOW_HEIGHT (360)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
-#define DCC_VISS "/opt/imaging/imx219/linear/dcc_viss.bin"
+#define DCC_VISS TIOVX_MODULES_IMAGING_PATH"/imx219/linear/dcc_viss.bin"
 
 #define DEV "/dev/video-imx219-cam%d"
 #define SUBDEV "/dev/v4l-imx219-subdev%d"
@@ -245,7 +245,7 @@ vx_status app_modules_linux_multi_capture_display_test(vx_int32 argc, vx_char* a
     v4l2_capture_cfg.bufq_depth = APP_BUFQ_DEPTH;
 
     aewb_init_cfg(&aewb_cfg);
-    sprintf(aewb_cfg.dcc_2a_file, "/opt/imaging/imx219/linear/dcc_2a.bin");
+    sprintf(aewb_cfg.dcc_2a_file, TIOVX_MODULES_IMAGING_PATH"/imx219/linear/dcc_2a.bin");
 
     for (i = 0; i < NUM_CAMS; i++) {
         viss_node[i] = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&viss_cfg);

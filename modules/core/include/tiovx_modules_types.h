@@ -106,6 +106,14 @@ extern "C" {
 #define TIOVX_MODULES_DEFAULT_NUM_CHANNELS    (1u)
 #define TIOVX_MODULES_MAX_REF_HANDLES     (16u)
 
+#if defined(TARGET_OS_QNX)
+#define TIOVX_MODULES_DATA_PATH "/ti_fs/edgeai/edgeai-test-data/"
+#define TIOVX_MODULES_IMAGING_PATH "/ti_fs/edgeai/imaging/"
+#else
+#define TIOVX_MODULES_DATA_PATH "/opt/edgeai-test-data/"
+#define TIOVX_MODULES_IMAGING_PATH "/opt/imaging/"
+#endif
+
 /*!
  * \brief Enum for pad directions.
  */

@@ -74,7 +74,7 @@
 #define INPUT_HEIGHT (1080)
 
 #define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
-#define DCC_VISS "/opt/imaging/imx219/linear/dcc_viss.bin"
+#define DCC_VISS "/imx219/linear/dcc_viss.bin"
 
 vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 {
@@ -132,7 +132,7 @@ vx_status app_modules_linux_capture_display_test(vx_int32 argc, vx_char* argv[])
 
     aewb_init_cfg(&aewb_cfg);
     sprintf(aewb_cfg.device, "/dev/v4l-imx219-subdev0");
-    sprintf(aewb_cfg.dcc_2a_file, "/opt/imaging/imx219/linear/dcc_2a.bin");
+    sprintf(aewb_cfg.dcc_2a_file, TIOVX_MODULES_IMAGING_PATH"/imx219/linear/dcc_2a.bin");
 
     aewb_handle = aewb_create_handle(&aewb_cfg);
 

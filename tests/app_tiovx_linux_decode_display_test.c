@@ -88,7 +88,7 @@ vx_status app_modules_linux_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     v4l2_decode_init_cfg(&v4l2_decode_cfg);
     v4l2_decode_cfg.bufq_depth = APP_BUFQ_DEPTH;
-    sprintf(v4l2_decode_cfg.file, "/opt/edgeai-test-data/videos/video0_1280_768.h264");
+    sprintf(v4l2_decode_cfg.file, "%s/videos/video0_1280_768.h264", EDGEAI_DATA_PATH);
     v4l2_decode_handle = v4l2_decode_create_handle(&v4l2_decode_cfg, &v4l2_decode_fmt);
 
     tiovx_mosaic_init_cfg(&cfg);
