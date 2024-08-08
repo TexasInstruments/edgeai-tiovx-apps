@@ -96,6 +96,7 @@
 #define APP_MODULES_TEST_PIXELWISE_ADD (1)
 #define APP_MODULES_TEST_LUT (1)
 #define APP_MODULES_TEST_FAKESRC_FAKESINK (1)
+#define APP_MODULES_TEST_QNX_DECODE_DISPLAY (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -396,6 +397,17 @@ int main(int argc, char *argv[])
 
         status = app_modules_linux_decode_sde_test(argc, argv);
     }
+#endif
+#if defined(TARGET_OS_QNX)
+#if (APP_MODULES_TEST_QNX_DECODE_DISPLAY)
+    if(status==0)
+    {
+        printf("Running QNX decode display module test\n");
+        int app_modules_qnx_decode_display_test(int argc, char* argv[]);
+
+        status = app_modules_qnx_decode_display_test(argc, argv);
+    }
+#endif
 #endif
 #endif
 
