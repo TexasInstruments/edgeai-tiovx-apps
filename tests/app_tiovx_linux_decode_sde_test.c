@@ -93,10 +93,10 @@ vx_status app_modules_linux_decode_sde_test(vx_int32 argc, vx_char* argv[])
     v4l2_decode_init_cfg(&v4l2_decode_cfg);
     v4l2_decode_cfg.bufq_depth = APP_BUFQ_DEPTH;
 
-    sprintf(v4l2_decode_cfg.file, "/opt/edgeai-test-data/videos/left-1280x768.h264");
+    sprintf(v4l2_decode_cfg.file, "%s/videos/left-1280x768.h264", EDGEAI_DATA_PATH);
     v4l2_decode_handle_left = v4l2_decode_create_handle(&v4l2_decode_cfg, &v4l2_decode_fmt);
 
-    sprintf(v4l2_decode_cfg.file, "/opt/edgeai-test-data/videos/right-1280x768.h264");
+    sprintf(v4l2_decode_cfg.file, "%s/videos/right-1280x768.h264", EDGEAI_DATA_PATH);
     v4l2_decode_handle_right = v4l2_decode_create_handle(&v4l2_decode_cfg, &v4l2_decode_fmt);
 
     status = tiovx_modules_initialize_graph(&graph);

@@ -75,7 +75,7 @@
 #include <poll.h>
 
 #define V4L2_DECODE_DEFAULT_DEVICE "/dev/video0"
-#define V4L2_DECODE_DEFAULT_INPUT_FILE "/opt/edgeai-test-data/videos/video0_1280_768.h264"
+#define V4L2_DECODE_DEFAULT_INPUT_FILE TIOVX_MODULES_DATA_PATH"/videos/video0_1280_768.h264"
 #define V4L2_DECODE_DEFAULT_BUFQ_DEPTH 4
 #define V4L2_DECODE_MAX_BUFQ_DEPTH 10
 #define V4L2_DECODE_MAX_BUFQ_DEPTH_OFFSET 3 //This is set in wave5 driver

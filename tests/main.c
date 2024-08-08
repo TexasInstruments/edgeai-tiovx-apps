@@ -103,6 +103,10 @@ int main(int argc, char *argv[])
 {
     int status = 0;
 
+#if defined(TARGET_OS_QNX)
+    setenv("EDGEAI_DATA_PATH", "/ti_fs/edgeai/edgeai-test-data/", 1);
+#endif
+
     EDGEAI_DATA_PATH = getenv("EDGEAI_DATA_PATH");
     if (EDGEAI_DATA_PATH == NULL)
     {
