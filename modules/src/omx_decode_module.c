@@ -97,6 +97,7 @@ struct _omxDecodeHandle {
     omxDecodeCfg cfg;
     int current_frame;
     streamContext str;
+    uint32_t str_size;
     FILE *rdfd;
     uint32_t num_inbufs;
     uint32_t num_outbufs;
@@ -183,18 +184,6 @@ OMX_ERRORTYPE omx_decode_empty_buffer_done(OMX_HANDLETYPE hComponent,
     if (handle->compHandle != hComponent ) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] EmptyBufferDone Unknown Component %p\n", hComponent );
         return omxErr;
-    }
-
-    fread(pBufHdr->pBuffer, handle->str.frame_sizes[handle->current_frame],
-          1, handle->rdfd);
-    handle->current_frame += 1;
-    if (handle->current_frame >= handle->str.num_frames) {
-        rewind(handle->rdfd);
-        handle->current_frame = 0;
-    }
-    omxErr = OMX_EmptyThisBuffer(handle->compHandle, pBufHdr);
-    if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr );
     }
 
     return omxErr;
@@ -424,6 +413,10 @@ omxDecodeHandle *omx_decode_create_handle(omxDecodeCfg *cfg,
         goto free_handle;
     }
 
+    fseek(handle->rdfd, 0L, SEEK_END);
+    handle->str_size = ftell(handle->rdfd);
+    rewind(handle->rdfd);
+
     handle->num_inbufs = MAX_INBUFS;
     handle->num_outbufs = handle->cfg.bufq_depth;
 
@@ -516,17 +509,14 @@ int omx_decode_start(omxDecodeHandle *handle)
         return status;
     }
 
-    for (int i=0; i < handle->num_inbufs; i++) {
-        handle->in_omx_bufq[i]->nFilledLen = handle->str.frame_sizes[handle->current_frame];
-        fread(handle->in_omx_bufq[i]->pBuffer,
-              handle->str.frame_sizes[handle->current_frame],
-              1, handle->rdfd);
-        handle->current_frame += 1;
-        omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->in_omx_bufq[i]);
-        if (omxErr != OMX_ErrorNone) {
-            TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
-            return (int)omxErr;
-        }
+    handle->in_omx_bufq[0]->nFilledLen =
+        fread(handle->in_omx_bufq[0]->pBuffer, 1, handle->str_size,
+              handle->rdfd);
+    handle->in_omx_bufq[1]->nFlags |= OMX_BUFFERFLAG_EOS | OMX_BUFFERFLAG_ENDOFFRAME;
+    omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->in_omx_bufq[0]);
+    if (omxErr != OMX_ErrorNone) {
+        TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
+        return (int)omxErr;
     }
 
     for (int i=0; i < handle->num_outbufs; i++) {
