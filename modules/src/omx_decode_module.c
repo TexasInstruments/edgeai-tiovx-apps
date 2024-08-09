@@ -195,6 +195,9 @@ OMX_ERRORTYPE omx_decode_fill_buffer_done(OMX_HANDLETYPE hComponent,
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
     omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
     Buf *tiovx_buffer = (Buf *)(pBufHdr->pAppPrivate);
+    void *addr;
+    uint64_t size;
+
 
     TIOVX_MODULE_PRINTF("[OMX_DECODE] Fill Buffer Done\n");
 
@@ -202,6 +205,9 @@ OMX_ERRORTYPE omx_decode_fill_buffer_done(OMX_HANDLETYPE hComponent,
         TIOVX_MODULE_ERROR("[OMX_DECODE] FillBufferDone Unknown Component %p\n", hComponent );
         return omxErr;
     }
+
+    getReferenceAddr(tiovx_buffer->handle, &addr, &size);
+    memcpy(addr, pBufHdr->pBuffer, size);
 
     handle->processed_queue[handle->pq_head] = tiovx_buffer->buf_index;
     handle->pq_head = (handle->pq_head + 1) % (handle->num_outbufs + 1);
@@ -214,16 +220,11 @@ OMX_ERRORTYPE omx_decode_fill_buffer_done(OMX_HANDLETYPE hComponent,
 int omx_allocate_output_buffer(omxDecodeHandle *handle, Buf *tiovx_buffer)
 {
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
-    void *addr;
-    uint64_t size;
 
-    getReferenceAddr(tiovx_buffer->handle, &addr, &size);
-
-    omxErr = OMX_UseBuffer(handle->compHandle,
-                           &handle->omx_bufq[tiovx_buffer->buf_index],
-                           handle->outPortIndex,
-                           (OMX_PTR)(tiovx_buffer),
-                           size, addr);
+    omxErr = OMX_AllocateBuffer(handle->compHandle,
+                                &handle->omx_bufq[tiovx_buffer->buf_index],
+                                handle->outPortIndex, tiovx_buffer,
+                                handle->outbuf_size);
     if (omxErr != OMX_ErrorNone) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_UseBuffer() returned 0x%08x\n", omxErr);
         return (int)omxErr;
