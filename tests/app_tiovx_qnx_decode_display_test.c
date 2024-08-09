@@ -105,10 +105,24 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
 
     in_buf_pool = node->sinks[0].buf_pool;
 
+    Buf *inbuf_arr[APP_BUFQ_DEPTH];
+
     for (int i = 0; i < APP_BUFQ_DEPTH; i++) {
-        inbuf = tiovx_modules_acquire_buf(in_buf_pool);
-        omx_decode_enqueue_buf(omx_decode_handle, inbuf);
+        inbuf_arr[i] = tiovx_modules_acquire_buf(in_buf_pool);
     }
+
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[11]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[10]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[9]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[8]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[7]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[6]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[5]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[4]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[3]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[2]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[1]);
+    omx_decode_enqueue_buf(omx_decode_handle, inbuf_arr[0]);
 
     omx_decode_start(omx_decode_handle);
 
