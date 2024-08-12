@@ -45,6 +45,7 @@ if ("${TARGET_OS}" STREQUAL "QNX")
 if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SRC_FILES
+         src/omx_encode_module.c
          src/omx_decode_module.c)
 endif()
 endif()
