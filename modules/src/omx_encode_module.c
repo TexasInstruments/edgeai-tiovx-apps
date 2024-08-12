@@ -60,8 +60,7 @@
  *
  */
 
-#include "omx_decode_module.h"
-#include "codec_input_demuxer.h"
+#include "omx_encode_module.h"
 #include "tiovx_utils.h"
 
 #include <OMX_Core.h>
@@ -72,12 +71,15 @@
 
 #include <semaphore.h>
 
-#define OMX_DECODE_DEFAULT_INPUT_FILE TIOVX_MODULES_DATA_PATH"/videos/video0_1280_768.h264"
-#define OMX_DECODE_DEFAULT_BUFQ_DEPTH 4
-#define OMX_DECODE_MAX_BUFQ_DEPTH 16
-#define OMX_DECODE_MAX_BUFQ_DEPTH_OFFSET 3 //This is set in wave5 driver
+#define OMX_ENCODE_DEFAULT_WIDTH 1920
+#define OMX_ENCODE_DEFAULT_HEIGHT 1080
+#define OMX_ENCODE_DEFAULT_COLOR_FORMAT VX_DF_IMAGE_NV12
+#define OMX_ENCODE_DEFAULT_ENCODING AV_CODEC_ID_H264
+#define OMX_ENCODE_DEFAULT_OUTPUT_FILE TIOVX_MODULES_DATA_PATH"/output/qnx_encode.h264"
+#define OMX_ENCODE_DEFAULT_BUFQ_DEPTH 4
+#define OMX_ENCODE_MAX_BUFQ_DEPTH 16
 
-#define MAX_INBUFS 2
+#define MAX_OUTBUFS 4
 #define ALIGN(x,a) (((x) + (a) - 1L) & ~((a) - 1L))
 #define HW_ALIGN 64
 
@@ -87,29 +89,33 @@
     param.nSize = size;                                   \
 }
 
-void omx_decode_init_cfg(omxDecodeCfg *cfg)
+void omx_encode_init_cfg(omxEncodeCfg *cfg)
 {
-    cfg->bufq_depth = OMX_DECODE_DEFAULT_BUFQ_DEPTH;
-    sprintf(cfg->file, OMX_DECODE_DEFAULT_INPUT_FILE);
+    cfg->width = OMX_ENCODE_DEFAULT_WIDTH;
+    cfg->height = OMX_ENCODE_DEFAULT_HEIGHT;
+    cfg->color_format = OMX_ENCODE_DEFAULT_COLOR_FORMAT;
+    cfg->bufq_depth = OMX_ENCODE_DEFAULT_BUFQ_DEPTH;
+    cfg->encoding = OMX_ENCODE_DEFAULT_ENCODING;
+    sprintf(cfg->file, OMX_ENCODE_DEFAULT_OUTPUT_FILE);
 }
 
-struct _omxDecodeHandle {
-    omxDecodeCfg cfg;
-    int current_frame;
-    streamContext str;
-    uint32_t str_size;
-    FILE *rdfd;
+struct _omxEncodeHandle {
+    omxEncodeCfg cfg;
+    FILE *wrfd;
     uint32_t num_inbufs;
     uint32_t num_outbufs;
     uint64_t inbuf_size;
     uint64_t outbuf_size;
     int stream_start;
-    OMX_BUFFERHEADERTYPE *omx_bufq[OMX_DECODE_MAX_BUFQ_DEPTH];
-    bool queued[OMX_DECODE_MAX_BUFQ_DEPTH];
-    int processed_queue[OMX_DECODE_MAX_BUFQ_DEPTH + 1];
+    OMX_BUFFERHEADERTYPE *omx_bufq[OMX_ENCODE_MAX_BUFQ_DEPTH];
+    bool queued[OMX_ENCODE_MAX_BUFQ_DEPTH];
+    int processed_queue[OMX_ENCODE_MAX_BUFQ_DEPTH + 1];
     int pq_head;
     int pq_tail;
-    OMX_BUFFERHEADERTYPE *in_omx_bufq[MAX_INBUFS];
+    OMX_BUFFERHEADERTYPE *out_omx_bufq[MAX_OUTBUFS];
+    uint64_t out_processed_queue[MAX_OUTBUFS + 1];
+    int out_pq_head;
+    int out_pq_tail;
     OMX_HANDLETYPE compHandle;
     OMX_U32 inPortIndex;
     OMX_U32 outPortIndex;
@@ -117,15 +123,15 @@ struct _omxDecodeHandle {
     sem_t dq_sem;
 };
 
-OMX_ERRORTYPE omx_decode_event_handler(OMX_HANDLETYPE hComponent,
+OMX_ERRORTYPE omx_encode_event_handler(OMX_HANDLETYPE hComponent,
         OMX_PTR pAppData, OMX_EVENTTYPE eEvent, OMX_U32 nData1,
         OMX_U32 nData2, OMX_PTR pEventData )
 {
-    omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
+    omxEncodeHandle *handle = (omxEncodeHandle *)pAppData;
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
 
     if (handle->compHandle == NULL) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] EventHandler: compHandle is NULL\n" );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] EventHandler: compHandle is NULL\n" );
         return OMX_ErrorUndefined;
     }
 
@@ -134,9 +140,9 @@ OMX_ERRORTYPE omx_decode_event_handler(OMX_HANDLETYPE hComponent,
         {
             if(hComponent == handle->compHandle) {
                 if (OMX_ErrorStreamCorrupt == (OMX_ERRORTYPE)nData1) {
-                    TIOVX_MODULE_ERROR("[OMX_DECODE] corrupted stream detected; continuing...\n");
+                    TIOVX_MODULE_ERROR("[OMX_ENCODE] corrupted stream detected; continuing...\n");
                 } else {
-                    TIOVX_MODULE_ERROR("[OMX_DECODE] err=0x%x\n", nData1);
+                    TIOVX_MODULE_ERROR("[OMX_ENCODE] err=0x%x\n", nData1);
                 }
             }
             break;
@@ -173,58 +179,63 @@ OMX_ERRORTYPE omx_decode_event_handler(OMX_HANDLETYPE hComponent,
     return omxErr;
 }
 
-OMX_ERRORTYPE omx_decode_empty_buffer_done(OMX_HANDLETYPE hComponent,
+OMX_ERRORTYPE omx_encode_fill_buffer_done(OMX_HANDLETYPE hComponent,
         OMX_PTR pAppData, OMX_BUFFERHEADERTYPE *pBufHdr)
 {
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
-    omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
+    omxEncodeHandle *handle = (omxEncodeHandle *)pAppData;
 
-    TIOVX_MODULE_PRINTF("[OMX_DECODE] Empty Buffer Done\n");
+    TIOVX_MODULE_PRINTF("[OMX_ENCODE] Empty Buffer Done\n");
 
     if (handle->compHandle != hComponent ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] EmptyBufferDone Unknown Component %p\n", hComponent );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] EmptyBufferDone Unknown Component %p\n", hComponent );
         return omxErr;
     }
+
+    fwrite(pBufHdr->pBuffer, pBufHdr->nFilledLen, 1, handle->wrfd);
+
+    handle->out_processed_queue[handle->out_pq_head] =
+                                                    (uint64_t)(pBufHdr->pAppPrivate);
+    handle->out_pq_head = (handle->out_pq_head + 1) % (handle->num_outbufs + 1);
 
     return omxErr;
 }
 
-OMX_ERRORTYPE omx_decode_fill_buffer_done(OMX_HANDLETYPE hComponent,
+OMX_ERRORTYPE omx_encode_empty_buffer_done(OMX_HANDLETYPE hComponent,
         OMX_PTR pAppData, OMX_BUFFERHEADERTYPE *pBufHdr)
 {
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
-    omxDecodeHandle *handle = (omxDecodeHandle *)pAppData;
+    omxEncodeHandle *handle = (omxEncodeHandle *)pAppData;
     Buf *tiovx_buffer = (Buf *)(pBufHdr->pAppPrivate);
-    void *addr;
-    uint64_t size;
 
-
-    TIOVX_MODULE_PRINTF("[OMX_DECODE] Fill Buffer Done\n");
+    TIOVX_MODULE_PRINTF("[OMX_ENCODE] Fill Buffer Done\n");
 
     if (handle->compHandle != hComponent ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] FillBufferDone Unknown Component %p\n", hComponent );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] FillBufferDone Unknown Component %p\n", hComponent );
         return omxErr;
     }
 
-    getReferenceAddr(tiovx_buffer->handle, &addr, &size);
-    memcpy(addr, pBufHdr->pBuffer, size);
-
     handle->processed_queue[handle->pq_head] = tiovx_buffer->buf_index;
-    handle->pq_head = (handle->pq_head + 1) % (handle->num_outbufs + 1);
+    handle->pq_head = (handle->pq_head + 1) % (handle->num_inbufs + 1);
 
     sem_post(&handle->dq_sem);
 
     return omxErr;
 }
 
-int omx_allocate_output_buffer(omxDecodeHandle *handle, Buf *tiovx_buffer)
+int omx_allocate_input_buffer(omxEncodeHandle *handle, Buf *tiovx_buffer)
 {
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
+    void *addr;
+    uint64_t size;
 
-    omxErr = OMX_AllocateBuffer(handle->compHandle,
-                                &handle->omx_bufq[tiovx_buffer->buf_index],
-                                handle->outPortIndex, tiovx_buffer,
-                                handle->outbuf_size);
+    getReferenceAddr(tiovx_buffer->handle, &addr, &size);
+
+    omxErr = OMX_UseBuffer(handle->compHandle,
+                           &handle->omx_bufq[tiovx_buffer->buf_index],
+                           handle->inPortIndex,
+                           (OMX_PTR)(tiovx_buffer),
+                           size, addr);
     if (omxErr != OMX_ErrorNone) {
         TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_UseBuffer() returned 0x%08x\n", omxErr);
         return (int)omxErr;
@@ -233,16 +244,16 @@ int omx_allocate_output_buffer(omxDecodeHandle *handle, Buf *tiovx_buffer)
     return 0;
 }
 
-int omx_allocate_input_buffers(omxDecodeHandle *handle)
+int omx_allocate_output_buffers(omxEncodeHandle *handle)
 {
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
 
-    for (int i = 0; i < handle->num_inbufs; i++) {
-        omxErr = OMX_AllocateBuffer(handle->compHandle, &handle->in_omx_bufq[i],
-                                    handle->inPortIndex, NULL,
-                                    handle->inbuf_size);
+    for (uint64_t i = 0; i < handle->num_outbufs; i++) {
+        omxErr = OMX_AllocateBuffer(handle->compHandle, &handle->out_omx_bufq[i],
+                                    handle->outPortIndex, (OMX_PTR)i,
+                                    handle->outbuf_size);
         if (omxErr != OMX_ErrorNone) {
-            TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_AllocateBuffer() returned 0x%08x\n", omxErr);
+            TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_AllocateBuffer() returned 0x%08x\n", omxErr);
             return (int)omxErr;
         }
     }
@@ -250,55 +261,29 @@ int omx_allocate_input_buffers(omxDecodeHandle *handle)
     return 0;
 }
 
-static OMX_CALLBACKTYPE callbacks = {&omx_decode_event_handler,
-                                     &omx_decode_empty_buffer_done,
-                                     &omx_decode_fill_buffer_done};
+static OMX_CALLBACKTYPE callbacks = {&omx_encode_event_handler,
+                                     &omx_encode_empty_buffer_done,
+                                     &omx_encode_fill_buffer_done};
 
-int omx_decode_init(omxDecodeHandle *handle)
+int omx_encode_init(omxEncodeHandle *handle)
 {
     OMX_ERRORTYPE omxErr;
     OMX_PORT_PARAM_TYPE portParam;
-    OMX_VENDOR_TIVPU_PARAM_TYPE vpuParam = {0};
     OMX_PARAM_PORTDEFINITIONTYPE inPortParam;
     OMX_PARAM_PORTDEFINITIONTYPE outPortParam;
 
     omxErr = OMX_Init();
     if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Component OMX_Init() returned 0x%08x\n", omxErr);
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Component OMX_Init() returned 0x%08x\n", omxErr);
         return (int)omxErr;
     }
 
-    OMX_U32 num_comp = 1;
-    OMX_U8 comp_name[128];
-    OMX_U8 *pcomp_name[1]={comp_name};
-    char role[128];
-
-    if (handle->str.codec == AV_CODEC_ID_H264) {
-        sprintf(role, "video_decoder.avc");
-    } else if(handle->str.codec == AV_CODEC_ID_HEVC) {
-        sprintf(role, "video_decoder.hevc");
-    }
-
-    omxErr = OMX_GetComponentsOfRole (role, &num_comp, pcomp_name);
-    if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE ] OMX_GetComponentsOfRole() returned 0x%08x\n", omxErr );
-        return (int)omxErr;
-    }
+    OMX_STRING comp_name = "OMX.qnx.video.encoder";
 
     omxErr = OMX_GetHandle(&handle->compHandle, (OMX_STRING)comp_name,
                             (OMX_PTR)handle, &callbacks );
     if ((handle->compHandle == NULL) || (omxErr != OMX_ErrorNone)) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Component(%s) OMX_GetHandle() returned 0x%08x\n", comp_name, omxErr );
-        return (int)omxErr;
-    }
-
-    vpuParam.dec_buf_num = handle->cfg.bufq_depth;
-
-    omxErr = OMX_SetParameter(handle->compHandle,
-                              (OMX_INDEXTYPE)OMX_VendorTIVPUDecBufCount,
-                              &vpuParam);
-    if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Component OMX_SetParameter() returned 0x%08x\n", omxErr);
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Component(%s) OMX_GetHandle() returned 0x%08x\n", comp_name, omxErr );
         return (int)omxErr;
     }
 
@@ -308,13 +293,13 @@ int omx_decode_init(omxDecodeHandle *handle)
                               (OMX_INDEXTYPE)(OMX_IndexParamVideoInit),
                               &portParam);
     if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Component OMX_GetParameter() returned 0x%08x version %u\n",
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Component OMX_GetParameter() returned 0x%08x version %u\n",
                   omxErr, portParam.nVersion.nVersion );
         return (int)omxErr;
     }
 
     if (portParam.nPorts < 2) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Invalid number of ports %d\n", portParam.nPorts);
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Invalid number of ports %d\n", portParam.nPorts);
         return (int)omxErr;
     }
 
@@ -326,30 +311,27 @@ int omx_decode_init(omxDecodeHandle *handle)
     omxErr = OMX_GetParameter(handle->compHandle, OMX_IndexParamPortDefinition,
                               &inPortParam );
     if( omxErr != OMX_ErrorNone ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
-    inPortParam.format.video.nFrameWidth   = handle->str.width;
-    inPortParam.format.video.nFrameHeight  = handle->str.height;
-    if (handle->str.codec == AV_CODEC_ID_H264) {
-        inPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
-    } else if(handle->str.codec == AV_CODEC_ID_HEVC) {
-        inPortParam.format.video.eCompressionFormat = OMXQ_VIDEO_CodingHEVC;
-    }
-    inPortParam.nBufferCountActual = MAX_INBUFS;
+    inPortParam.format.video.nFrameWidth   = handle->cfg.width;
+    inPortParam.format.video.nFrameHeight  = handle->cfg.height;
+    inPortParam.format.video.nStride = ALIGN(handle->cfg.width, HW_ALIGN);
+    inPortParam.format.video.eColorFormat  = OMX_COLOR_FormatYUV420SemiPlanar;
+    inPortParam.nBufferCountActual = handle->cfg.bufq_depth;
 
     omxErr = OMX_SetParameter(handle->compHandle, OMX_IndexParamPortDefinition,
                               &inPortParam );
     if( omxErr != OMX_ErrorNone ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_SetParameter() returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_SetParameter() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
     omxErr = OMX_GetParameter(handle->compHandle, OMX_IndexParamPortDefinition,
                               &inPortParam );
     if( omxErr != OMX_ErrorNone ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
@@ -361,86 +343,78 @@ int omx_decode_init(omxDecodeHandle *handle)
     omxErr = OMX_GetParameter(handle->compHandle, OMX_IndexParamPortDefinition,
                               &outPortParam );
     if( omxErr != OMX_ErrorNone ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
-    outPortParam.format.video.nFrameWidth   = ALIGN(handle->str.width, HW_ALIGN);
-    outPortParam.format.video.nFrameHeight  = ALIGN(handle->str.height, HW_ALIGN);
-    outPortParam.format.video.nStride = ALIGN(handle->str.width, HW_ALIGN);
-    outPortParam.format.video.nSliceHeight = ALIGN(handle->str.height, HW_ALIGN);
-    outPortParam.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
-    outPortParam.nBufferCountActual = handle->cfg.bufq_depth;
+    if (handle->cfg.encoding == AV_CODEC_ID_H264) {
+        outPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
+    } else if(handle->cfg.encoding == AV_CODEC_ID_HEVC) {
+        outPortParam.format.video.eCompressionFormat = OMXQ_VIDEO_CodingHEVC;
+    }
+    outPortParam.format.video.nFrameWidth   = ALIGN(handle->cfg.width, HW_ALIGN);
+    outPortParam.format.video.nFrameHeight  = ALIGN(handle->cfg.height, HW_ALIGN);
+    outPortParam.nBufferCountActual = handle->num_outbufs;
 
     omxErr = OMX_SetParameter(handle->compHandle, OMX_IndexParamPortDefinition,
                               &outPortParam );
     if( omxErr != OMX_ErrorNone ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_SetParameter() returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_SetParameter() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
     omxErr = OMX_GetParameter(handle->compHandle, OMX_IndexParamPortDefinition,
                               &outPortParam );
     if( omxErr != OMX_ErrorNone ) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Port OMX_GetParameter() returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
     handle->num_outbufs = outPortParam.nBufferCountActual;
+    handle->out_pq_tail = handle->num_outbufs;
     handle->outbuf_size = outPortParam.nBufferSize;
 
     return omxErr;
 }
 
-omxDecodeHandle *omx_decode_create_handle(omxDecodeCfg *cfg,
-                                            omxDecodeOutFmt *out_fmt)
+omxEncodeHandle *omx_encode_create_handle(omxEncodeCfg *cfg)
 {
-    omxDecodeHandle *handle = NULL;
+    omxEncodeHandle *handle = NULL;
     int status = 0;
 
-    handle = calloc(1, sizeof(omxDecodeHandle));
-    memcpy(&handle->cfg, cfg, sizeof(omxDecodeCfg));
-    handle->current_frame = 0;
+    handle = calloc(1, sizeof(omxEncodeHandle));
+    memcpy(&handle->cfg, cfg, sizeof(omxEncodeCfg));
 
-    if (stream_framelevel_parsing(&handle->str, cfg->file, MAX_FRAMES) < 0) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Stream parsing failed\n");
-        goto free_handle;
-    }
-
-    handle->rdfd = fopen(cfg->file, "r");
-    if (handle->rdfd  == NULL) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Failed to open input file %s\n",
+    handle->wrfd = fopen(cfg->file, "w");
+    if (handle->wrfd  == NULL) {
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Failed to open output file %s\n",
                             cfg->file);
         goto free_handle;
     }
 
-    fseek(handle->rdfd, 0L, SEEK_END);
-    handle->str_size = ftell(handle->rdfd);
-    rewind(handle->rdfd);
+    handle->num_inbufs = handle->cfg.bufq_depth;
+    handle->num_outbufs = MAX_OUTBUFS;
 
-    handle->num_inbufs = MAX_INBUFS;
-    handle->num_outbufs = handle->cfg.bufq_depth;
-
-    for (int i=0; i < handle->num_outbufs; i++) {
+    for (int i=0; i < handle->num_inbufs; i++) {
         handle->queued[i] = false;
     }
 
     handle->pq_head = 0;
-    handle->pq_tail = handle->num_outbufs;
+    handle->pq_tail = handle->num_inbufs;
 
-    out_fmt->width = ALIGN(handle->str.width, HW_ALIGN);
-    out_fmt->height = ALIGN(handle->str.height, HW_ALIGN);
+    handle->out_pq_head = 0;
+    handle->out_pq_tail = handle->num_outbufs;
 
-    status = omx_decode_init(handle);
+    status = omx_encode_init(handle);
     if (status) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Failed to init OMX\n");
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Failed to init OMX\n");
         goto free_handle;
     }
 
     sem_init(&handle->cmd_sem, 0, 0);
     sem_init(&handle->dq_sem, 0, 0);
 
-    omx_allocate_input_buffers(handle);
+    omx_allocate_output_buffers(handle);
 
     return handle;
 
@@ -449,7 +423,7 @@ free_handle:
     return NULL;
 }
 
-int omx_decode_move_to_state(omxDecodeHandle *handle,
+int omx_encode_move_to_state(omxEncodeHandle *handle,
         OMX_STATETYPE newState)
 {
     OMX_ERRORTYPE omxErr;
@@ -468,12 +442,12 @@ int omx_decode_move_to_state(omxDecodeHandle *handle,
     omxErr = OMX_GetState(handle->compHandle, &currState);
     if (omxErr != OMX_ErrorNone)
     {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Failed to get current state!!!\n" );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Failed to get current state!!!\n" );
         return (int)omxErr;
     }
 
     if (currState == OMX_StateInvalid) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Transition from Invalid state is not allowed!!!\n" );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Transition from Invalid state is not allowed!!!\n" );
         return (int)OMX_ErrorInvalidState;
     }
 
@@ -484,7 +458,7 @@ int omx_decode_move_to_state(omxDecodeHandle *handle,
     omxErr = OMX_SendCommand(handle->compHandle, OMX_CommandStateSet, newState,
                              NULL);
     if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] StateTransition(IDLE) returned 0x%08x\n", omxErr );
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] StateTransition(IDLE) returned 0x%08x\n", omxErr );
         return (int)omxErr;
     }
 
@@ -493,38 +467,38 @@ int omx_decode_move_to_state(omxDecodeHandle *handle,
     return 0;
 }
 
-int omx_decode_start(omxDecodeHandle *handle)
+int omx_encode_start(omxEncodeHandle *handle)
 {
     int status = 0;
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
 
-    status = omx_decode_move_to_state(handle, OMX_StateIdle);
+    status = omx_encode_move_to_state(handle, OMX_StateIdle);
     if (status) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Transition LOADED->IDLE failed 0x%x\n", status);
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Transition LOADED->IDLE failed 0x%x\n", status);
         return status;
     }
 
-    status = omx_decode_move_to_state(handle, OMX_StateExecuting);
+    status = omx_encode_move_to_state(handle, OMX_StateExecuting);
     if (status) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Transition IDLE->EXECUTING failed 0x%x\n", status);
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Transition IDLE->EXECUTING failed 0x%x\n", status);
         return status;
-    }
-
-    handle->in_omx_bufq[0]->nFilledLen =
-        fread(handle->in_omx_bufq[0]->pBuffer, 1, handle->str_size,
-              handle->rdfd);
-    handle->in_omx_bufq[1]->nFlags |= OMX_BUFFERFLAG_EOS | OMX_BUFFERFLAG_ENDOFFRAME;
-    omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->in_omx_bufq[0]);
-    if (omxErr != OMX_ErrorNone) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
-        return (int)omxErr;
     }
 
     for (int i=0; i < handle->num_outbufs; i++) {
+        omxErr = OMX_FillThisBuffer(handle->compHandle, handle->out_omx_bufq[i]);
+        if (omxErr != OMX_ErrorNone) {
+            TIOVX_MODULE_ERROR("[OMX_ENCODE] OMX_FillThisBuffer: return omxErr=%08x\n", omxErr);
+            return (int)omxErr;
+        }
+    }
+
+    for (int i=0; i < handle->num_inbufs; i++) {
         if (handle->queued[i]) {
-            omxErr = OMX_FillThisBuffer(handle->compHandle, handle->omx_bufq[i]);
+            handle->omx_bufq[i]->nFilledLen = handle->omx_bufq[i]->nAllocLen;
+            handle->omx_bufq[i]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+            omxErr = OMX_EmptyThisBuffer(handle->compHandle, handle->omx_bufq[i]);
             if (omxErr != OMX_ErrorNone) {
-                TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_FillThisBuffer: return omxErr=%08x\n", omxErr);
+                TIOVX_MODULE_ERROR("[OMX_ENCODE] OMX_EmptyThisBuffer: return omxErr=%08x\n", omxErr);
                 return (int)omxErr;
             }
         }
@@ -535,21 +509,21 @@ int omx_decode_start(omxDecodeHandle *handle)
     return status;
 }
 
-int omx_decode_enqueue_buf(omxDecodeHandle *handle, Buf *tiovx_buffer)
+int omx_encode_enqueue_buf(omxEncodeHandle *handle, Buf *tiovx_buffer)
 {
     int status = 0;
     OMX_ERRORTYPE omxErr = OMX_ErrorNone;
 
     if (handle->stream_start == 0) {
         handle->queued[tiovx_buffer->buf_index] = true;
-        status = omx_allocate_output_buffer(handle, tiovx_buffer);
+        status = omx_allocate_input_buffer(handle, tiovx_buffer);
         return status;
     } else {
         handle->queued[tiovx_buffer->buf_index] = true;
-        omxErr = OMX_FillThisBuffer(handle->compHandle,
+        omxErr = OMX_EmptyThisBuffer(handle->compHandle,
                                     handle->omx_bufq[tiovx_buffer->buf_index]);
         if (omxErr != OMX_ErrorNone) {
-            TIOVX_MODULE_ERROR("[OMX_DECODE] OMX_FillThisBuffer() returned 0x%08x\n", omxErr);
+            TIOVX_MODULE_ERROR("[OMX_ENCODE] OMX_FillThisBuffer() returned 0x%08x\n", omxErr);
             return (int)omxErr;
         }
     }
@@ -557,19 +531,33 @@ int omx_decode_enqueue_buf(omxDecodeHandle *handle, Buf *tiovx_buffer)
     return status;
 }
 
-Buf *omx_decode_dqueue_buf(omxDecodeHandle *handle)
+Buf *omx_encode_dqueue_buf(omxEncodeHandle *handle)
 {
     Buf *tiovx_buffer = NULL;
     int index;
+    OMX_ERRORTYPE omxErr = OMX_ErrorNone;
+
+    while (handle->out_pq_head !=
+                    ((handle->out_pq_tail + 1) % (handle->num_outbufs + 1))) {
+        handle->out_pq_tail = (handle->out_pq_tail + 1) %
+                                                (handle->num_outbufs + 1);
+        index = handle->out_processed_queue[handle->out_pq_tail];
+        omxErr = OMX_FillThisBuffer(handle->compHandle,
+                                    handle->out_omx_bufq[index]);
+        if (omxErr != OMX_ErrorNone) {
+            TIOVX_MODULE_ERROR("[OMX_ENCODE] OMX_FillThisBuffer: return omxErr=%08x\n", omxErr);
+            return NULL;
+        }
+    }
 
     sem_wait(&handle->dq_sem);
 
-    if ((handle->pq_tail + 1) % (handle->num_outbufs + 1) == handle->pq_head) {
-        TIOVX_MODULE_ERROR("[OMX_DECODE] Queue Empty\n");
+    if ((handle->pq_tail + 1) % (handle->num_inbufs + 1) == handle->pq_head) {
+        TIOVX_MODULE_ERROR("[OMX_ENCODE] Queue Empty\n");
         return NULL;
     } else {
         handle->pq_tail = (handle->pq_tail + 1) %
-                                            (handle->num_outbufs + 1);
+                                            (handle->num_inbufs + 1);
     }
 
     index = handle->processed_queue[handle->pq_tail];
@@ -580,18 +568,18 @@ Buf *omx_decode_dqueue_buf(omxDecodeHandle *handle)
     return tiovx_buffer;
 }
 
-int omx_decode_stop(omxDecodeHandle *handle)
+int omx_encode_stop(omxEncodeHandle *handle)
 {
     int status = 0;
 
     return status;
 }
 
-int omx_decode_delete_handle(omxDecodeHandle *handle)
+int omx_encode_delete_handle(omxEncodeHandle *handle)
 {
     int status = 0;
 
-    fclose(handle->rdfd);
+    fclose(handle->wrfd);
     free(handle);
 
     return status;
