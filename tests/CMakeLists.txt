@@ -27,6 +27,7 @@ if ("${TARGET_OS}" STREQUAL "QNX")
 if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SRC_FILES
+         app_tiovx_qnx_capture_encode_test.c
          app_tiovx_qnx_decode_display_test.c)
 endif()
 endif()
