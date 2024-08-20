@@ -81,7 +81,7 @@
 #include "tiovx_pixelwise_add_module.h"
 #include "tiovx_lut_module.h"
 
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2) 
 #include "tiovx_display_module.h"
 #include "tiovx_capture_module.h"
 #include "tiovx_aewb_module.h"
@@ -117,7 +117,7 @@ typedef enum {
     TIOVX_PIXELWISE_MULTIPLY,
     TIOVX_PIXELWISE_ADD,
     TIOVX_LUT,
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
+#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)
     TIOVX_DISPLAY,
     TIOVX_CAPTURE,
     TIOVX_AEWB,

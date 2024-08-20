@@ -437,7 +437,7 @@ vx_status tiovx_tidl_update_checksums(NodeObj *node)
 vx_status tiovx_tidl_set_createParams(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
-#if defined(SOC_J784S4) || defined(SOC_J722S)
+#if defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)
     TIOVXTIDLNodeCfg *node_cfg = (TIOVXTIDLNodeCfg *)node->node_cfg;
 #endif
     TIOVXTIDLNodePriv *node_priv = (TIOVXTIDLNodePriv *)node->node_priv;
@@ -489,7 +489,7 @@ vx_status tiovx_tidl_set_createParams(NodeObj *node)
         {
             prms->coreId = 3;
         }
-#elif defined(SOC_J722S)
+#elif defined(SOC_J722S) || defined(SOC_J742S2)
         if (0 == strcmp(TIVX_TARGET_DSP_C7_2, node_cfg->target_string))
         {
             prms->coreId = 1;
