@@ -203,7 +203,7 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
         printf ("CPU: mpu: TOTAL LOAD = %.2f\n",
                 (float)stats->cpu_load.cpu_load/100);
 
-#if defined(SOC_AM62A) || defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
+#if defined(SOC_AM62A) || defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)
         for (uint32_t i = 0; i < APP_IPC_CPU_MAX; i++)
         {
             const char *cpu_name = appIpcGetCpuName(i);

@@ -63,7 +63,7 @@
 #include <apps/include/output_block.h>
 #include <apps/include/misc.h>
 
-#if defined(SOC_J784S4)
+#if defined(SOC_J784S4) || defined(SOC_J742S2)
 static char *g_encode_devices[] = {"/dev/video1", "/dev/video3"};
 static uint8_t g_encode_devices_idx = 0;
 #else

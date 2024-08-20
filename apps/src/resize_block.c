@@ -64,7 +64,7 @@
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
-#if defined(SOC_J784S4)
+#if defined(SOC_J784S4) || defined(SOC_J742S2)
 static char *g_msc_targets[] = {TIVX_TARGET_VPAC_MSC1, TIVX_TARGET_VPAC_MSC2,
                               TIVX_TARGET_VPAC2_MSC1, TIVX_TARGET_VPAC2_MSC2};
 #else
