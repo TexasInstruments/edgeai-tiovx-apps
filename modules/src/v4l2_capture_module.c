@@ -306,6 +306,12 @@ Buf *v4l2_capture_dqueue_buf(v4l2CaptureHandle *handle)
     }
 
     handle->queued[buf.index] = false;
+
+    if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+        v4l2_capture_enqueue_buf(handle, handle->bufq[buf.index]);
+        goto ret;
+    }
+
     tiovx_buffer = handle->bufq[buf.index];
 
 ret:
