@@ -144,6 +144,7 @@ int kms_display_register_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer)
     int fd[4];
     long unsigned int size[4];
     unsigned int offset[4];
+    static int modeset_done = 0;
 
     if (tiovx_buffer->buf_index >= KMS_DISPLAY_MAX_BUFQ_DEPTH) {
         TIOVX_MODULE_ERROR("[KMS_DISPLAY] Registering buf failed, buf index: %d"
@@ -160,6 +161,13 @@ int kms_display_register_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer)
     drmModeAddFB2(handle->fd, handle->cfg.width, handle->cfg.height,
             handle->cfg.pix_format, gem_handle, pitch, offset,
             &handle->fbs[tiovx_buffer->buf_index], 0);
+
+    if (modeset_done == 0) {
+        drmModeSetCrtc(handle->fd, handle->cfg.crtc,
+                handle->fbs[tiovx_buffer->buf_index], 0, 0,
+                &handle->cfg.connector, 1, &handle->crtc_info->mode);
+        modeset_done = 1;
+    }
 ret:
     return status;
 }
@@ -167,9 +175,8 @@ ret:
 int kms_display_render_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer)
 {
     int status = 0;
-    drmModeSetCrtc(handle->fd, handle->cfg.crtc,
-            handle->fbs[tiovx_buffer->buf_index], 0, 0,
-            &handle->cfg.connector, 1, &handle->crtc_info->mode);
+    drmModePageFlip(handle->fd, handle->cfg.crtc,
+            handle->fbs[tiovx_buffer->buf_index], 0, 0);
     return status;
 }
 
