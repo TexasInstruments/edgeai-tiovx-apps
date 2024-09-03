@@ -233,6 +233,7 @@ static vx_status tiovx_viss_module_configure_dcc_params(NodeObj *node)
 
 void tiovx_viss_init_cfg(TIOVXVissNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     tivx_vpac_viss_params_init(&node_cfg->viss_params);
     #if defined(SOC_AM62A) || defined(SOC_J722S)
         node_cfg->viss_params.bypass_pcid = 1;

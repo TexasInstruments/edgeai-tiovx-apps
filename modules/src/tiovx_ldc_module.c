@@ -293,6 +293,7 @@ static vx_status tiovx_ldc_module_configure_ldc_params(NodeObj *node)
 
 void tiovx_ldc_init_cfg(TIOVXLdcNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     snprintf(node_cfg->dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", TIOVX_MODULES_DEFAULT_LDC_DCC_FILE);
     node_cfg->ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA;
     node_cfg->output_select[0] = TIOVX_LDC_MODULE_OUTPUT_EN;

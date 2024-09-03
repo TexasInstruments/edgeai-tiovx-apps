@@ -100,6 +100,7 @@ vx_status tiovx_dof_module_configure_params(NodeObj *node)
 
 void tiovx_dof_init_cfg(TIOVXDofNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->width = TIOVX_MODULES_DEFAULT_DOF_WIDTH;
     node_cfg->height = TIOVX_MODULES_DEFAULT_DOF_HEIGHT;
     node_cfg->num_channels = 1;

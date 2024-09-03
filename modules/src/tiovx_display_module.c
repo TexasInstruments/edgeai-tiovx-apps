@@ -92,6 +92,7 @@ vx_status tiovx_display_create_config(NodeObj *node)
 
 void tiovx_display_init_cfg(TIOVXDisplayNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->input_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;

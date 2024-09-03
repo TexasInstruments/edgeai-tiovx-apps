@@ -102,6 +102,7 @@ vx_status tiovx_mosaic_create_config(NodeObj *node)
 
 void tiovx_mosaic_init_cfg(TIOVXMosaicNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->num_inputs = 1;
     for(int32_t i = 0; i < TIVX_IMG_MOSAIC_MAX_INPUTS; i++)

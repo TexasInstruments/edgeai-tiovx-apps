@@ -67,6 +67,7 @@ typedef struct {
 
 void tiovx_lut_init_cfg(TIOVXLutNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->img_cfg.width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->img_cfg.height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->img_cfg.color_format = VX_DF_IMAGE_U8;

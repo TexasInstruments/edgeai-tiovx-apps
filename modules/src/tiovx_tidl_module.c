@@ -647,6 +647,7 @@ vx_status tiovx_tidl_create_outArgs(NodeObj *node)
 
 void tiovx_tidl_init_cfg(TIOVXTIDLNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->num_input_tensors = 1;
     node_cfg->num_output_tensors = 1;
     node_cfg->num_channels = 1;

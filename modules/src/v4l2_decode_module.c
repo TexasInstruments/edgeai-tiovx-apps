@@ -86,6 +86,7 @@
 
 void v4l2_decode_init_cfg(v4l2DecodeCfg *cfg)
 {
+    CLR(cfg);
     cfg->bufq_depth = V4L2_DECODE_DEFAULT_BUFQ_DEPTH;
     sprintf(cfg->device, V4L2_DECODE_DEFAULT_DEVICE);
     sprintf(cfg->file, V4L2_DECODE_DEFAULT_INPUT_FILE);

@@ -63,6 +63,7 @@
 
 void tiovx_tee_init_cfg(TIOVXTeeNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->peer_pad = NULL;
     node_cfg->num_outputs = 1;
 }

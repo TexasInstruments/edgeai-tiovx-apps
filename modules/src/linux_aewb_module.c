@@ -254,6 +254,7 @@ void gst_tiovx_isp_map_2A_values (char *sensor_name, int exposure_time,
 
 void aewb_init_cfg(AewbCfg *cfg)
 {
+    CLR(cfg);
     sprintf(cfg->device, AEWB_DEFAULT_DEVICE);
     sprintf(cfg->dcc_2a_file, AEWB_DEFAULT_2A_FILE);
     sprintf(cfg->sensor_name, AEWB_DEFAULT_SENSOR);

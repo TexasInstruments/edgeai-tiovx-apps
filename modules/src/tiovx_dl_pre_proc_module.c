@@ -174,6 +174,7 @@ vx_status tiovx_dl_pre_proc_set_cfg(NodeObj *node)
 
 void tiovx_dl_pre_proc_init_cfg(TIOVXDLPreProcNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->input_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;

@@ -258,6 +258,7 @@ vx_status tiovx_multi_scaler_configure_crop_params(NodeObj *node)
 
 void tiovx_multi_scaler_init_cfg(TIOVXMultiScalerNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
     node_cfg->num_outputs = 1;
     node_cfg->num_channels = 1;

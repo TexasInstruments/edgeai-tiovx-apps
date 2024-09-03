@@ -63,6 +63,7 @@
 
 void tiovx_pixelwise_add_init_cfg(TIOVXPixelwiseAddNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->input_cfg.width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->input_cfg.height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->input_cfg.color_format = VX_DF_IMAGE_U8;

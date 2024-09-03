@@ -86,6 +86,7 @@
 
 void v4l2_encode_init_cfg(v4l2EncodeCfg *cfg)
 {
+    CLR(cfg);
     cfg->width = V4L2_CAPTURE_DEFAULT_WIDTH;
     cfg->height = V4L2_CAPTURE_DEFAULT_HEIGHT;
     cfg->color_format = V4L2_CAPTURE_DEFAULT_COLOR_FORMAT;

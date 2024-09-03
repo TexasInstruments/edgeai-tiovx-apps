@@ -90,6 +90,7 @@ vx_status tiovx_sde_viz_module_configure_params(NodeObj *node)
 
 void tiovx_sde_viz_init_cfg(TIOVXSdeVizNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->width = TIOVX_MODULES_DEFAULT_SDE_VIZ_WIDTH;
     node_cfg->height = TIOVX_MODULES_DEFAULT_SDE_VIZ_HEIGHT;
     node_cfg->num_channels = 1;

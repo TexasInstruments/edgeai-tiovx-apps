@@ -63,6 +63,7 @@
 
 void tiovx_fakesink_init_cfg(TIOVXFakesinkNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->src_pad = NULL;
 }
 

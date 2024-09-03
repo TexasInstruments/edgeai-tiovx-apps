@@ -67,6 +67,7 @@ typedef struct {
 
 void tiovx_delay_init_cfg(TIOVXDelayNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->src_pad = NULL;
     node_cfg->sink_pad = NULL;
     node_cfg->delay = 2;

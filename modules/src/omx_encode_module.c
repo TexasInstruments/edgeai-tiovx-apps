@@ -91,6 +91,7 @@
 
 void omx_encode_init_cfg(omxEncodeCfg *cfg)
 {
+    CLR(cfg);
     cfg->width = OMX_ENCODE_DEFAULT_WIDTH;
     cfg->height = OMX_ENCODE_DEFAULT_HEIGHT;
     cfg->color_format = OMX_ENCODE_DEFAULT_COLOR_FORMAT;

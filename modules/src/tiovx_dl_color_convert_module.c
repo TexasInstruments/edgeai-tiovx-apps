@@ -64,6 +64,7 @@
 
 void tiovx_dl_color_convert_init_cfg(TIOVXDLColorConvertNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->width = TIOVX_MODULES_DEFAULT_IMAGE_WIDTH;
     node_cfg->height = TIOVX_MODULES_DEFAULT_IMAGE_HEIGHT;
     node_cfg->input_cfg.color_format = TIOVX_MODULES_DEFAULT_COLOR_FORMAT;
