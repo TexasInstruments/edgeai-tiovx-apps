@@ -1111,15 +1111,27 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
 #if defined(TARGET_OS_LINUX)
         else if (LINUX_CAM == input_blocks[i].input_info->source)
         {
+            for(j = 0; j < 2; j++) {
+                inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+                tiovx_modules_release_buf(inbuf);
+            }
             v4l2_capture_stop(input_blocks[i].v4l2_obj.v4l2_capture_handle);
             v4l2_capture_delete_handle(input_blocks[i].v4l2_obj.v4l2_capture_handle);
         }
         else if (VIDEO == input_blocks[i].input_info->source)
         {
+            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+            tiovx_modules_release_buf(inbuf);
             v4l2_decode_stop(input_blocks[i].v4l2_obj.v4l2_decode_handle);
             v4l2_decode_delete_handle(input_blocks[i].v4l2_obj.v4l2_decode_handle);
         }
+        else {
+            inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
+            tiovx_modules_release_buf(inbuf);
+        }
 #endif
+        outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
+        tiovx_modules_release_buf(outbuf);
     }
 
 #if defined(TARGET_OS_LINUX)
