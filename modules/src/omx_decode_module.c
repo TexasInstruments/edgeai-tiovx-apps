@@ -89,6 +89,7 @@
 
 void omx_decode_init_cfg(omxDecodeCfg *cfg)
 {
+    CLR(cfg);
     cfg->bufq_depth = OMX_DECODE_DEFAULT_BUFQ_DEPTH;
     sprintf(cfg->file, OMX_DECODE_DEFAULT_INPUT_FILE);
 }

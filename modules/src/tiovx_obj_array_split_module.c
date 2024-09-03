@@ -63,6 +63,7 @@
 
 void tiovx_obj_array_split_init_cfg(TIOVXObjArraySplitNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     node_cfg->input_pad = NULL;
     node_cfg->num_outputs = 2;
     node_cfg->num_output_group0 = 1;

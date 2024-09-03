@@ -83,6 +83,7 @@
 
 void v4l2_capture_init_cfg(v4l2CaptureCfg *cfg)
 {
+    CLR(cfg);
     cfg->width = V4L2_CAPTURE_DEFAULT_WIDTH;
     cfg->height = V4L2_CAPTURE_DEFAULT_HEIGHT;
     cfg->pix_format = V4L2_CAPTURE_DEFAULT_PIX_FMT;

@@ -263,6 +263,7 @@ vx_status tiovx_capture_module_send_error_frame(NodeObj *node)
 
 void tiovx_capture_init_cfg(TIOVXCaptureNodeCfg *node_cfg)
 {
+    CLR(node_cfg);
     sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_CAPTURE_SENSOR);
     node_cfg->ch_mask = 1;
     node_cfg->usecase_option = TIOVX_SENSOR_MODULE_FEATURE_CFG_UC0;

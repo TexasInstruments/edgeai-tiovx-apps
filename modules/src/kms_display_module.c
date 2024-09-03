@@ -98,6 +98,7 @@
 
 void kms_display_init_cfg(kmsDisplayCfg *cfg)
 {
+    CLR(cfg);
     cfg->width = KMS_DISPLAY_DEFAULT_WIDTH;
     cfg->height = KMS_DISPLAY_DEFAULT_HEIGHT;
     cfg->pix_format = KMS_DISPLAY_DEFAULT_PIX_FMT;
