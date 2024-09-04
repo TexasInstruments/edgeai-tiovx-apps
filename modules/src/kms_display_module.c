@@ -71,6 +71,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define KMS_DISPLAY_DEFAULT_WIDTH 1920
 #define KMS_DISPLAY_DEFAULT_HEIGHT 1080
@@ -95,6 +96,7 @@
 
 #define KMS_DISPLAY_DEFAULT_BUFQ_DEPTH 4
 #define KMS_DISPLAY_MAX_BUFQ_DEPTH 8
+#define KMS_DISPLAY_PAGE_FLIP_TIMEOUT 50
 
 void kms_display_init_cfg(kmsDisplayCfg *cfg)
 {
@@ -173,11 +175,37 @@ ret:
     return status;
 }
 
+void page_flip_handler(int fd, uint32_t dequence, uint32_t tv_sec,
+                        uint32_t tv_usec, void *user_data)
+{
+    *((int *)user_data) = 1;
+}
+
+drmEventContext drm_event = {
+    .version = DRM_EVENT_CONTEXT_VERSION,
+    .page_flip_handler = page_flip_handler,
+};
+
 int kms_display_render_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer)
 {
     int status = 0;
+    struct pollfd pfd;
+    int page_flip_done = 0;
+
     drmModePageFlip(handle->fd, handle->cfg.crtc,
-            handle->fbs[tiovx_buffer->buf_index], 0, 0);
+            handle->fbs[tiovx_buffer->buf_index], DRM_MODE_PAGE_FLIP_EVENT,
+            &page_flip_done);
+
+    CLR(&pfd);
+    pfd.fd = handle->fd;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+
+    while (page_flip_done == 0) {
+        poll(&pfd, 1, KMS_DISPLAY_PAGE_FLIP_TIMEOUT);
+        status = drmHandleEvent(handle->fd, &drm_event);
+    }
+
     return status;
 }
 
