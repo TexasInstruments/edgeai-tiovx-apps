@@ -1,0 +1,29 @@
+# Generic config file used for test engine
+# test script will use this to update at runtime and pass it to the applications
+
+title: "Video Demo"
+inputs:
+    input:
+        source: VIDEO
+        width: 1280
+        height: 768
+        video_path: /opt/edgeai-test-data/videos/video0_1280_768.h264
+
+models:
+    dl_model:
+        # This will be updated at runtime by the test_engine.sh
+        model_path: /opt/model_zoo/<type>/<model>
+        topN: 5
+        viz_threshold: 0.6
+        alpha: 0.5
+outputs:
+    output:
+        sink: LINUX_DISPLAY
+        width: 1920
+        height: 1080
+
+flows:
+    flow0:
+        pipeline: [input,dl_model,output]
+        mosaic:
+            - [320,150,1280,720]
