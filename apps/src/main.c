@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
 
     /* Initialize cmd_args */
     cmd_args.verbose = false;
+    cmd_args.gen_data = false;
     cmd_args.dump_dot = false;
 
     int32_t long_index;
@@ -88,11 +89,12 @@ int main(int argc, char *argv[])
     {
         {"help",      no_argument,       0, 'h' },
         {"verbose",   no_argument,       0, 'v' },
+        {"datasheet", no_argument,       0, 'g' },
         {"dump",      no_argument,       0, 'd' },
         {0,           0,                 0,  0  }
     };
 
-    while ((opt = getopt_long(argc, argv,"-hvdl:",
+    while ((opt = getopt_long(argc, argv,"-hvgdl:",
                    long_options, &long_index )) != -1)
     {
         switch (opt)
@@ -102,6 +104,9 @@ int main(int argc, char *argv[])
                 break;
             case 'v' :
                 cmd_args.verbose = true;
+                break;
+            case 'g' :
+                cmd_args.gen_data = true;
                 break;
             case 'd' :
                 cmd_args.dump_dot = true;
@@ -114,6 +119,7 @@ int main(int argc, char *argv[])
                 printf("#  config_file - Path to the configuration file.\n");
                 printf("# OPTIONAL PARAMETERS:\n");
                 printf("#  [--verbose    |-v]\n");
+                printf("#  [--datasheet  |-g]\n");
                 printf("#  [--dump       |-d]\n");
                 printf("#  [--help       |-h]\n");
                 printf("# \n");
