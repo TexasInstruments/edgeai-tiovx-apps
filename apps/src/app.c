@@ -1072,6 +1072,10 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
                 {
                     print_perf(&graph, &perf_stats_handle);
                 }
+                if(cmd_args->gen_data)
+                {
+                    generate_datasheet(&graph, &perf_stats_handle);
+                }
                 tiovx_modules_enqueue_buf(perf_overlay_buf);
             }
         }
@@ -1080,6 +1084,11 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
         {
             update_perf_overlay(NULL, &perf_stats_handle);
             print_perf(&graph, &perf_stats_handle);
+        }
+        if(!overlay_perf_graph && cmd_args->gen_data)
+        {
+            update_perf_overlay(NULL, &perf_stats_handle);
+            generate_datasheet(&graph, &perf_stats_handle);
         }
     }
 
