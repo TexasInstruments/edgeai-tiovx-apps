@@ -110,6 +110,10 @@ vx_status tiovx_init_sensor_obj(SensorObj *sensorObj, char *objName)
     {
         sensorObj->sensorParams.dccId=2312;
     }
+    else if(strcmp(sensorObj->sensor_name, "SENSOR_OX05B1S") == 0)
+    {
+        sensorObj->sensorParams.dccId=5;
+    }
     else
     {
         TIOVX_MODULE_ERROR("[SENSOR-MODULE] Invalid sensor name\n");

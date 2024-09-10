@@ -227,6 +227,37 @@ void get_ov2312_ae_dyn_params (IssAeDynamicParams *p_ae_dynPrms)
     p_ae_dynPrms->numAeDynParams = count;
 }
 
+void get_ox05b1s_ae_dyn_params (IssAeDynamicParams *p_ae_dynPrms)
+{
+   uint8_t count = 0;
+
+   p_ae_dynPrms->targetBrightnessRange.min = 40; /* lower bound of the target brightness range */
+   p_ae_dynPrms->targetBrightnessRange.max = 50; /* upper bound of the target brightness range */
+   p_ae_dynPrms->targetBrightness = 45;          /* target brightness */
+   p_ae_dynPrms->threshold = 5;                  /* maximum change above or below the target brightness */
+   p_ae_dynPrms->enableBlc = 0;                  /* not used */
+
+  /* setting exposure and gains */
+   p_ae_dynPrms->exposureTimeStepSize = 1;       /* step size of automatic adjustment for exposure time */
+
+  /* According to OX05B datasheet:
+   *   - minimum exposure time is 6 row periods
+   *   - maximum exposure time is (frame length - 30) row periods
+   *        - frame length is height + vertical blanking, which is 2128 for 2592x1944 resolution
+   *   - minimum analog gain is 1x (0x3508=0x01, 0x3509=0x00)
+   *   - maximum analog gain is 15.5x (0x3508=0x0F, 0x3509=0x80)
+  */
+   p_ae_dynPrms->exposureTimeRange[count].min = 47;     /* 6*16.67/2128*1000 micro sec */
+   p_ae_dynPrms->exposureTimeRange[count].max = 16435;  /* (2128-30)*16.67/2128*1000 micro sec */
+   p_ae_dynPrms->analogGainRange[count].min = 1024;     /* 1x gain - 16*64 */
+   p_ae_dynPrms->analogGainRange[count].max = 15872;    /* 15.5x gain - 16*15.5*64 = 328*64 = 15872 */
+   p_ae_dynPrms->digitalGainRange[count].min = 256;     /* digital gain not used */
+   p_ae_dynPrms->digitalGainRange[count].max = 256;     /* digital gain not used */
+   count++;
+
+   p_ae_dynPrms->numAeDynParams = count;
+}
+
 void gst_tiovx_isp_map_2A_values (char *sensor_name, int exposure_time,
     int analog_gain, int *exposure_time_mapped, int *analog_gain_mapped)
 {
@@ -247,6 +278,9 @@ void gst_tiovx_isp_map_2A_values (char *sensor_name, int exposure_time,
   } else if (strcmp(sensor_name, "SENSOR_OV2312_UB953_LI") == 0) {
       *exposure_time_mapped = (60 * 1300 * exposure_time / 1000000);
       *analog_gain_mapped = analog_gain;
+  } else if (strcmp(sensor_name, "SENSOR_OX05B1S") == 0) {
+      *exposure_time_mapped = (int) ((double)exposure_time * 2128 * 60 / 1000000 + 0.5);
+      *analog_gain_mapped = analog_gain / 64;
   } else {
       TIOVX_MODULE_ERROR("[AEWB] Unknown sensor: %s", sensor_name);
   }
@@ -340,6 +374,8 @@ AewbHandle *aewb_create_handle(AewbCfg *cfg)
       get_imx390_ae_dyn_params (&handle->sensor_in_data.ae_dynPrms);
     } else if (strcmp(cfg->sensor_name, "SENSOR_OV2312_UB953_LI") == 0) {
       get_ov2312_ae_dyn_params (&handle->sensor_in_data.ae_dynPrms);
+    } else if (strcmp(cfg->sensor_name, "SENSOR_OX05B1S") == 0) {
+      get_ox05b1s_ae_dyn_params (&handle->sensor_in_data.ae_dynPrms);
     } else {
       get_imx219_ae_dyn_params (&handle->sensor_in_data.ae_dynPrms);
     }
