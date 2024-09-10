@@ -191,20 +191,25 @@ int kms_display_render_buf(kmsDisplayHandle *handle, Buf *tiovx_buffer)
     int status = 0;
     struct pollfd pfd;
     int page_flip_done = 0;
+    static int first_frame = 1;
+
+    if (first_frame == 1) {
+        first_frame = 0;
+    } else {
+        CLR(&pfd);
+        pfd.fd = handle->fd;
+        pfd.events = POLLIN;
+        pfd.revents = 0;
+
+        while (page_flip_done == 0) {
+            poll(&pfd, 1, KMS_DISPLAY_PAGE_FLIP_TIMEOUT);
+            status = drmHandleEvent(handle->fd, &drm_event);
+        }
+    }
 
     drmModePageFlip(handle->fd, handle->cfg.crtc,
             handle->fbs[tiovx_buffer->buf_index], DRM_MODE_PAGE_FLIP_EVENT,
             &page_flip_done);
-
-    CLR(&pfd);
-    pfd.fd = handle->fd;
-    pfd.events = POLLIN;
-    pfd.revents = 0;
-
-    while (page_flip_done == 0) {
-        poll(&pfd, 1, KMS_DISPLAY_PAGE_FLIP_TIMEOUT);
-        status = drmHandleEvent(handle->fd, &drm_event);
-    }
 
     return status;
 }
