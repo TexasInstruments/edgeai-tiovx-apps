@@ -78,7 +78,7 @@
 #define V4L2_CAPTURE_DEFAULT_DEVICE "/dev/video-imx219-cam0"
 #define V4L2_CAPTURE_DEFAULT_BUFQ_DEPTH 4
 #define V4L2_CAPTURE_MAX_BUFQ_DEPTH 8
-#define V4L2_CAPTURE_TIMEOUT 100
+#define V4L2_CAPTURE_TIMEOUT 200
 #define V4L2_CAPTURE_STREAMON_DELAY 2 // in sec
 
 void v4l2_capture_init_cfg(v4l2CaptureCfg *cfg)

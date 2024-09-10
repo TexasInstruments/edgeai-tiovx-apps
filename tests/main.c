@@ -85,6 +85,7 @@
 #define APP_MODULES_TEST_LINUX_DECODE_DISPLAY (0)
 #define APP_MODULES_TEST_LINUX_CAPTURE_ENCODE (0)
 #define APP_MODULES_TEST_LINUX_MULTI_CAPTURE_DISPLAY (0)
+#define APP_MODULES_TEST_LINUX_RGB_IR_DISPLAY (0)
 #define APP_MODULES_TEST_CAPTURE_VISS_LDC_MSC_DISPLAY (0)
 #define APP_MODULES_TEST_CAPTURE_DL_DISPLAY (0)
 #define APP_MODULES_TEST_PYRAMID (1)
@@ -265,6 +266,15 @@ int main(int argc, char *argv[])
         int app_modules_linux_multi_capture_display_test(int argc, char* argv[]);
 
         status = app_modules_linux_multi_capture_display_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_LINUX_RGB_IR_DISPLAY)
+    if(status==0)
+    {
+        printf("Running linux rgb ir display test\n");
+        int app_modules_linux_rgb_ir_display_test(int argc, char* argv[]);
+
+        status = app_modules_linux_rgb_ir_display_test(argc, argv);
     }
 #endif
 #if (APP_MODULES_TEST_PYRAMID)
