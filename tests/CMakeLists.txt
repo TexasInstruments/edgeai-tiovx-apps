@@ -39,9 +39,13 @@ if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
          app_tiovx_v4l2_capture_module_test.c
          app_tiovx_linux_capture_display_test.c
          app_tiovx_linux_multi_capture_display_test.c
-         app_tiovx_linux_rgb_ir_capture_display_test.c
          app_tiovx_linux_decode_display_test.c
          app_tiovx_linux_capture_encode_test.c)
+if ("${TARGET_SOC}" STREQUAL "AM62A" OR "${TARGET_SOC}" STREQUAL "J722S")
+    list(APPEND
+         SRC_FILES
+         app_tiovx_linux_rgb_ir_capture_display_test.c)
+endif()
 endif()
 endif()
 
