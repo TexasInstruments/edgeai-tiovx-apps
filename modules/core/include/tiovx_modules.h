@@ -196,6 +196,16 @@ vx_status tiovx_modules_wait_graph(GraphObj *graph);
  */
 vx_status tiovx_modules_release_node(NodeObj *node);
 
+
+/*! \brief Function to swap mem handles of 2 Buffers.
+ *
+ * \param [in,out] buf1 Buffer 1 \ref _Buf.
+ * \param [in,out] buf2 Buffer 2 \ref _Buf.
+ *
+ * \ingroup tiovx_modules
+ */
+vx_status tiovx_modules_buf_swap_mem(Buf *buf1, Buf *buf2);
+
 #ifdef __cplusplus
 }
 #endif
