@@ -344,6 +344,9 @@ typedef struct {
     /* Verbose. */
     bool        verbose;
 
+    /* Generate Datasheet */
+    bool        gen_data;
+
     /* Dump graph as dot */
     bool        dump_dot;
 } CmdArgs;

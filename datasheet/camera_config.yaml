@@ -1,0 +1,30 @@
+# Generic config file used for test engine
+# test script will use this to update at runtime and pass it to the applications
+
+title: "IMX219 Camera"
+inputs:
+    input:
+        source: LINUX_CAM
+        width: 1920
+        height: 1080
+        sensor-name: imx219
+        device: /dev/video-imx219-cam0
+        subdev: /dev/v4l-imx219-subdev0
+models:
+    dl_model:
+        # This will be updated at runtime by the test_engine.sh
+        model_path: /opt/model_zoo/<type>/<model>
+        topN: 5
+        viz_threshold: 0.5
+        alpha: 0.4
+outputs:
+    output:
+        sink: LINUX_DISPLAY
+        width: 1920
+        height: 1080
+
+flows:
+    flow0:
+        pipeline: [input,dl_model,output]
+        mosaic:
+            - [320,150,1280,720]
