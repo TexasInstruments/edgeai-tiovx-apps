@@ -73,14 +73,20 @@
 #define INPUT_WIDTH  (1920)
 #define INPUT_HEIGHT (1080)
 
+#define OUTPUT_WIDTH  (1280)
+#define OUTPUT_HEIGHT (768)
+
 #define SENSOR_NAME "SENSOR_SONY_IMX219_RPI"
+#define ENCODING V4L2_PIX_FMT_H264 //Supported: V4L2_PIX_FMT_H264, V4L2_PIX_FMT_JPEG
 #define DCC_VISS TIOVX_MODULES_IMAGING_PATH"/imx219/linear/dcc_viss.bin"
 
 vx_status app_modules_linux_capture_encode_test(vx_int32 argc, vx_char* argv[])
 {
     vx_status status = VX_FAILURE;
     GraphObj graph;
-    NodeObj *node = NULL;
+    NodeObj *viss_node = NULL;
+    NodeObj *msc_node = NULL;
+    TIOVXMultiScalerNodeCfg msc_cfg;
     TIOVXVissNodeCfg cfg;
     BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
     BufPool *h3a_buf_pool = NULL, *aewb_buf_pool = NULL;
@@ -92,6 +98,7 @@ vx_status app_modules_linux_capture_encode_test(vx_int32 argc, vx_char* argv[])
     AewbCfg aewb_cfg;
     AewbHandle *aewb_handle;
 
+    status = tiovx_modules_initialize_graph(&graph);
     tiovx_viss_init_cfg(&cfg);
 
     sprintf(cfg.sensor_name, SENSOR_NAME);
@@ -105,14 +112,29 @@ vx_status app_modules_linux_capture_encode_test(vx_int32 argc, vx_char* argv[])
     cfg.enable_aewb_pad = vx_true_e;
     cfg.enable_h3a_pad = vx_true_e;
 
-    status = tiovx_modules_initialize_graph(&graph);
-    node = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&cfg);
-    node->sinks[0].bufq_depth = APP_BUFQ_DEPTH;
-    node->srcs[0].bufq_depth = APP_BUFQ_DEPTH;
+    viss_node = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&cfg);
+    viss_node->sinks[0].bufq_depth = APP_BUFQ_DEPTH;
+
+    tiovx_multi_scaler_init_cfg(&msc_cfg);
+
+    msc_cfg.color_format = VX_DF_IMAGE_NV12;
+    msc_cfg.num_outputs = 1;
+    msc_cfg.input_cfg.width = INPUT_WIDTH;
+    msc_cfg.input_cfg.height = INPUT_HEIGHT;
+    msc_cfg.output_cfgs[0].width = OUTPUT_WIDTH;
+    msc_cfg.output_cfgs[0].height = OUTPUT_HEIGHT;
+    sprintf(msc_cfg.target_string, TIVX_TARGET_VPAC_MSC1);
+    tiovx_multi_scaler_module_crop_params_init(&msc_cfg);
+
+    msc_node = tiovx_modules_add_node(&graph, TIOVX_MULTI_SCALER, (void *)&msc_cfg);
+    msc_node->srcs[0].bufq_depth = APP_BUFQ_DEPTH;
+
+    tiovx_modules_link_pads(&viss_node->srcs[0], &msc_node->sinks[0]);
+
     status = tiovx_modules_verify_graph(&graph);
 
-    in_buf_pool = node->sinks[0].buf_pool;
-    out_buf_pool = node->srcs[0].buf_pool;
+    in_buf_pool = viss_node->sinks[0].buf_pool;
+    out_buf_pool = msc_node->srcs[0].buf_pool;
 
     v4l2_capture_init_cfg(&v4l2_capture_cfg);
     v4l2_capture_cfg.width = INPUT_WIDTH;
@@ -123,11 +145,18 @@ vx_status app_modules_linux_capture_encode_test(vx_int32 argc, vx_char* argv[])
 
     v4l2_capture_handle = v4l2_capture_create_handle(&v4l2_capture_cfg);
 
+
     v4l2_encode_init_cfg(&v4l2_encode_cfg);
-    v4l2_encode_cfg.width = INPUT_WIDTH;
-    v4l2_encode_cfg.height = INPUT_HEIGHT;
+    v4l2_encode_cfg.width = OUTPUT_WIDTH;
+    v4l2_encode_cfg.height = OUTPUT_HEIGHT;
     v4l2_encode_cfg.bufq_depth = APP_BUFQ_DEPTH;
-    sprintf(v4l2_encode_cfg.file, "%s/output/linux_encode.h264", EDGEAI_DATA_PATH);
+    v4l2_encode_cfg.encoding = ENCODING;
+    if (ENCODING == V4L2_PIX_FMT_H264) {
+        sprintf(v4l2_encode_cfg.file, "%s/output/linux_encode.h264", EDGEAI_DATA_PATH);
+    } else if (ENCODING == V4L2_PIX_FMT_JPEG) {
+        sprintf(v4l2_encode_cfg.file, "%s/output/linux_encode.mjpeg", EDGEAI_DATA_PATH);
+        sprintf(v4l2_encode_cfg.device, "/dev/video2");
+    }
 
     v4l2_encode_handle = v4l2_encode_create_handle(&v4l2_encode_cfg);
 
@@ -137,10 +166,10 @@ vx_status app_modules_linux_capture_encode_test(vx_int32 argc, vx_char* argv[])
 
     aewb_handle = aewb_create_handle(&aewb_cfg);
 
-    h3a_buf_pool = node->srcs[node->num_outputs - 1].buf_pool;
+    h3a_buf_pool = viss_node->srcs[viss_node->num_outputs - 1].buf_pool;
     h3a_buf = tiovx_modules_acquire_buf(h3a_buf_pool);
-    aewb_buf_pool = node->sinks[1].buf_pool;
-    aewb_buf = tiovx_modules_acquire_buf(node->sinks[1].buf_pool);
+    aewb_buf_pool = viss_node->sinks[1].buf_pool;
+    aewb_buf = tiovx_modules_acquire_buf(viss_node->sinks[1].buf_pool);
 
     for (int i = 0; i < APP_BUFQ_DEPTH; i++) {
         inbuf = tiovx_modules_acquire_buf(in_buf_pool);
