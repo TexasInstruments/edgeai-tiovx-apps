@@ -83,6 +83,7 @@
 #define APP_MODULES_TEST_V4L2_CAPTURE (0)
 #define APP_MODULES_TEST_LINUX_CAPTURE_DISPLAY (0)
 #define APP_MODULES_TEST_LINUX_DECODE_DISPLAY (0)
+#define APP_MODULES_TEST_LINUX_MULTI_DECODE_DISPLAY (1)
 #define APP_MODULES_TEST_LINUX_CAPTURE_ENCODE (0)
 #define APP_MODULES_TEST_LINUX_MULTI_CAPTURE_DISPLAY (0)
 #define APP_MODULES_TEST_LINUX_RGB_IR_DISPLAY (0)
@@ -258,6 +259,15 @@ int main(int argc, char *argv[])
         int app_modules_linux_decode_display_test(int argc, char* argv[]);
 
         status = app_modules_linux_decode_display_test(argc, argv);
+    }
+#endif
+#if (APP_MODULES_TEST_LINUX_MULTI_DECODE_DISPLAY)
+    if(status==0)
+    {
+        printf("Running linux multi decode module test\n");
+        int app_modules_linux_multi_decode_display_test(int argc, char* argv[]);
+
+        status = app_modules_linux_multi_decode_display_test(argc, argv);
     }
 #endif
 #if (APP_MODULES_TEST_LINUX_CAPTURE_ENCODE)

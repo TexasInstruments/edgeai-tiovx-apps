@@ -47,6 +47,11 @@ if ("${TARGET_SOC}" STREQUAL "AM62A" OR "${TARGET_SOC}" STREQUAL "J722S")
          SRC_FILES
          app_tiovx_linux_rgb_ir_capture_display_test.c)
 endif()
+if ("${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J742S2")
+    list(APPEND
+         SRC_FILES
+         app_tiovx_linux_multi_decode_display_test.c)
+endif()
 endif()
 endif()
 
