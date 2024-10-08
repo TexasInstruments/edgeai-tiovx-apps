@@ -85,10 +85,14 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
     node_cfg->viss_params.use_case            = 0;
     node_cfg->viss_params.fcp[0].ee_mode      = TIVX_VPAC_VISS_EE_MODE_OFF;
     node_cfg->viss_params.fcp[0].chroma_mode  = TIVX_VPAC_VISS_CHROMA_MODE_420;
+    node_cfg->viss_params.fcp[0].mux_output0  = 0;
+    node_cfg->viss_params.fcp[0].mux_output1  = 0;
+    node_cfg->viss_params.fcp[0].mux_output3  = 0;
+    node_cfg->viss_params.fcp[0].mux_output4  = 0;
 
+#if defined(SOC_AM62A) || defined(SOC_J722S)
     if(node_cfg->output_select[0] == TIOVX_VISS_MODULE_OUTPUT_EN)
     {
-#if defined(SOC_AM62A) || defined(SOC_J722S)
         if(node_cfg->viss_params.enable_ir_op)
         {
             if(node_cfg->output_cfgs[0].color_format == VX_DF_IMAGE_U8)
@@ -100,16 +104,8 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
                 node_cfg->viss_params.fcp[0].mux_output0  = TIVX_VPAC_VISS_MUX0_IR12_P12;
             }
         }
-        else
+    }
 #endif
-        {
-            node_cfg->viss_params.fcp[0].mux_output0  = 0;
-        }
-    }
-    if(node_cfg->output_select[1] == TIOVX_VISS_MODULE_OUTPUT_EN)
-    {
-        node_cfg->viss_params.fcp[0].mux_output1  = 0;
-    }
     if(node_cfg->output_select[2] == TIOVX_VISS_MODULE_OUTPUT_EN)
     {
         if(node_cfg->output_cfgs[2].color_format == VX_DF_IMAGE_NV12)
@@ -128,14 +124,6 @@ vx_status tiovx_viss_module_configure_params(NodeObj *node)
             node_cfg->viss_params.fcp[0].mux_output2 = TIVX_VPAC_VISS_MUX2_IR12_U16;
         }
 #endif
-    }
-    if(node_cfg->output_select[3] == TIOVX_VISS_MODULE_OUTPUT_EN)
-    {
-        node_cfg->viss_params.fcp[0].mux_output3  = 0;
-    }
-    if(node_cfg->output_select[4] == TIOVX_VISS_MODULE_OUTPUT_EN)
-    {
-        node_cfg->viss_params.fcp[0].mux_output4  = 0;
     }
 
 #if defined(SOC_AM62A) || defined(SOC_J722S)
