@@ -197,23 +197,10 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
 
     if(0 == perf_stats_handle->frameCount)
     {
-        FILE *fptr;
-        const char* filename = "TIOVX_APP_demo";
-
-        fptr = fopen(filename, "w+");
-
-        if (fptr == NULL) {
-            printf("The file is not opened. The program will "
-                   "exit now");
-            exit(0);
-        }
-
         Stats *stats = &perf_stats_handle->stats;
 
         printf("================================================\n\n");
         printf ("CPU: mpu: TOTAL LOAD = %.2f\n",
-                (float)stats->cpu_load.cpu_load/100);
-        fprintf(fptr, "A53 Load (%%) = %.2f\n",
                 (float)stats->cpu_load.cpu_load/100);
 
 #if defined(SOC_AM62A) || defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)
@@ -227,11 +214,6 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
                 printf ("CPU: %6s: TOTAL LOAD = %.2f\n",
                         appIpcGetCpuName (i),
                         (float)stats->cpu_loads[i].cpu_load/100);
-                if (strstr(cpu_name, "c7x"))
-                {
-                    fprintf(fptr, "C7x Load (%%) = %.2f\n",
-                            (float)stats->cpu_loads[i].cpu_load/100);
-                }
             }
         }
 
@@ -253,9 +235,6 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
                             appPerfStatsGetHwaName (id),
                             (float)load/100,
                             (hwaLoad->pixels_processed / hwaLoad->total_time));
-                    fprintf(fptr, "%6s Load (%%) = %.2f\n",
-                            appPerfStatsGetHwaName (id),
-                            (float)load/100);
                 }
             }
         }
@@ -263,21 +242,12 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
         printf ("DDR: READ  BW: AVG = %6d MB/s, PEAK = %6d MB/s\n",
                 stats->ddr_load.read_bw_avg, stats->ddr_load.read_bw_peak);
 
-        fprintf(fptr, "DDR Read BW (MB/s): %6d\n",
-                stats->ddr_load.read_bw_avg);
-
         printf ("DDR: WRITE BW: AVG = %6d MB/s, PEAK = %6d MB/s\n",
                 stats->ddr_load.write_bw_avg, stats->ddr_load.write_bw_peak);
-
-        fprintf(fptr, "DDR Write BW (MB/s): %6d\n",
-                stats->ddr_load.write_bw_avg);
 
         printf ("DDR: TOTAL BW: AVG = %6d MB/s, PEAK = %6d MB/s\n",
                 stats->ddr_load.read_bw_avg + stats->ddr_load.write_bw_avg,
                 stats->ddr_load.write_bw_peak + stats->ddr_load.read_bw_peak);
-
-        fprintf(fptr, "DDR Total BW (MB/s): %6d\n",
-                stats->ddr_load.read_bw_avg + stats->ddr_load.write_bw_avg);
 
         for (uint32_t i = 0; i < NUM_THERMAL_ZONE; i++)
         {
@@ -287,7 +257,6 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
         }
 
         printf ("FPS: %d\n\n",stats->fps);
-        fprintf(fptr, "FPS: %d\n", stats->fps);
 
         for(uint32_t i = 0; i < graph->num_nodes; i++)
         {
@@ -299,12 +268,10 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
                             &perf,
                             sizeof(perf));
                 printf("%s - %0.3f ms\n", graph->node_list[i].name, perf.avg/1000000.0);
-                fprintf(fptr, "Inference time (ms): %0.3f\n", perf.avg/1000000.0);
             }
         }
 
         printf("\n");
-        fprintf(fptr,"\n");
 
         vx_perf_t graph_perf;
         vxQueryGraph(graph->tiovx_graph,
@@ -313,7 +280,6 @@ void print_perf(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
                     sizeof(graph_perf));
         printf("Graph - %0.3f ms\n", graph_perf.avg/1000000.0);
         printf("================================================\n\n");
-        fclose(fptr);
     }
 }
 
@@ -335,18 +301,20 @@ void generate_datasheet(GraphObj *graph, EdgeAIPerfStats *perf_stats_handle)
 
         Stats *stats = &perf_stats_handle->stats;
 
-        fprintf(fptr, "A53 Load (%%) = %.2f\n",
+        fprintf(fptr, "MPU Load (%%) = %.2f\n",
                 (float)stats->cpu_load.cpu_load/100);
 
 #if defined(SOC_AM62A) || defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S)
+        int c7x_id = 0;
         for (uint32_t i = 0; i < APP_IPC_CPU_MAX; i++)
         {
             const char *cpu_name = appIpcGetCpuName(i);
             if (appIpcIsCpuEnabled (i) &&
                 (NULL != strstr (cpu_name, "c7x")))
             {
-                fprintf(fptr, "C7x Load (%%) = %.2f\n",
-                        (float)stats->cpu_loads[i].cpu_load/100);
+                fprintf(fptr, "C7x_%d Load (%%) = %.2f\n",
+                        c7x_id, (float)stats->cpu_loads[i].cpu_load/100);
+                c7x_id++;
             }
         }
 
