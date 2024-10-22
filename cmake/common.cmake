@@ -33,6 +33,7 @@ endif()
 
 set(TARGET_SOC_LOWER $ENV{SOC})
 set(TARGET_OS        $ENV{TARGET_OS})
+set(QNX_SDP          $ENV{QNX_SDP})
 
 if ("${TARGET_OS}" STREQUAL "")
     set(TARGET_OS           LINUX)
@@ -82,6 +83,7 @@ add_definitions(
 
 set(VISION_APPS_LIBS_PATH $ENV{VISION_APPS_LIBS_PATH})
 set(EDGEAI_LIBS_PATH $ENV{EDGEAI_LIBS_PATH})
+set(QNX_LIB_PATH $ENV{QNX_LIB_PATH})
 link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${TARGET_FS}/usr/lib
                  ${CMAKE_LIBRARY_PATH}/usr/lib
@@ -93,6 +95,7 @@ link_directories(${TARGET_FS}/usr/lib/aarch64-linux
 if ("${TARGET_OS}" STREQUAL "QNX")
     link_directories(${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/core/nto/aarch64/so.le/
                      ${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/utility/nto/aarch64/so.le
+                     ${QNX_LIB_PATH}
                     )
 endif()
 
@@ -186,12 +189,24 @@ if ("${TARGET_OS}" STREQUAL "QNX")
          ti-pdk
          ti-sciclient
          c++
-         c++fs
          omxcore_j7
          omxil_j7_utility)
     add_definitions(
          -D_QNX_SOURCE
     )
+endif()
+
+if ("${TARGET_SOC}" STREQUAL "AM62A" AND "${TARGET_OS}" STREQUAL "QNX")
+    list(APPEND
+         SYSTEM_LINK_LIBS
+         ti-csirxlld
+         ti-fvid2lld)
+endif()
+
+if ("${QNX_SDP}" STREQUAL "710")
+    list(APPEND
+         SYSTEM_LINK_LIBS
+         c++fs)
 endif()
 
 set(COMMON_LINK_LIBS

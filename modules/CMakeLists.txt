@@ -50,6 +50,14 @@ if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
 endif()
 endif()
 
+if ("${TARGET_SOC}" STREQUAL "AM62A" AND "${TARGET_OS}" STREQUAL "QNX")
+    list(APPEND
+         SRC_FILES
+         src/tiovx_capture_module.c
+         src/qnx_display_module.c
+         src/tiovx_aewb_module.c)  
+endif()
+
 if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${TARGET_SOC}" STREQUAL "J742S2" OR "${TARGET_SOC}" STREQUAL "J784S4" OR "${TARGET_SOC}" STREQUAL "J722S")
     list(APPEND
          SRC_FILES
