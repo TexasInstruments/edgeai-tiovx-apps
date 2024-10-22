@@ -75,13 +75,23 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
+#include "qnx_display_module.h"
+#endif
+
 #define NUM_ITERATIONS   (300)
 
 #define APP_BUFQ_DEPTH   (1)
 #define APP_NUM_CH       (1)
 
+#if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
 #define VISS_INPUT_WIDTH  1936
 #define VISS_INPUT_HEIGHT 1100
+
+#else
+#define VISS_INPUT_WIDTH  1936
+#define VISS_INPUT_HEIGHT 1096
+#endif
 
 #define VISS_OUTPUT_WIDTH  (VISS_INPUT_WIDTH)
 #define VISS_OUTPUT_HEIGHT (VISS_INPUT_HEIGHT)
@@ -95,8 +105,14 @@
 #define MSC_INPUT_WIDTH  LDC_OUTPUT_WIDTH
 #define MSC_INPUT_HEIGHT LDC_OUTPUT_HEIGHT
 
+#if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
 #define MSC_OUTPUT_WIDTH  MSC_INPUT_WIDTH/2
 #define MSC_OUTPUT_HEIGHT MSC_INPUT_HEIGHT/2
+
+#else
+#define MSC_OUTPUT_WIDTH  MSC_INPUT_WIDTH
+#define MSC_OUTPUT_HEIGHT MSC_INPUT_HEIGHT
+#endif
 
 #define LDC_TABLE_WIDTH     (1920)
 #define LDC_TABLE_HEIGHT    (1080)
@@ -109,11 +125,23 @@
 #define DCC_VISS TIOVX_MODULES_IMAGING_PATH"/imx390/linear/dcc_viss.bin"
 #define DCC_LDC TIOVX_MODULES_IMAGING_PATH"/imx390/linear/dcc_ldc.bin"
 
+#if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
 #define POST_PROC_OUT_WIDTH (1280)
 #define POST_PROC_OUT_HEIGHT (720)
 
+#else
+#define POST_PROC_OUT_WIDTH   (1920)
+#define POST_PROC_OUT_HEIGHT  (1080)
+#endif
+
+#if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
 #define TIDL_IO_CONFIG_FILE_PATH "/opt/model_zoo/ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416/artifacts/detslabels_tidl_io_1.bin"
 #define TIDL_NETWORK_FILE_PATH "/opt/model_zoo/ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416/artifacts/detslabels_tidl_net.bin"
+
+#else 
+#define TIDL_IO_CONFIG_FILE_PATH "/ti_fs/model_zoo/ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416/artifacts/subgraph_0_tidl_io_1.bin"
+#define TIDL_NETWORK_FILE_PATH "/ti_fs/model_zoo/ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416/artifacts/subgraph_0_tidl_net.bin"
+#endif
 
 static char imgnet_labels3[TIVX_DL_POST_PROC_MAX_NUM_CLASSNAMES][TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME] =
 {
@@ -128,6 +156,9 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
     GraphObj graph;
     Pad *input_pad = NULL, *output_pad[4] = {NULL, NULL, NULL, NULL}, *post_proc_in_img_pad = NULL;
     Buf *inbuf = NULL;
+    #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
+    Buf *outbuf = NULL; 
+    #endif
 
     status = tiovx_modules_initialize_graph(&graph);
     graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
@@ -140,6 +171,9 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         tiovx_capture_init_cfg(&capture_cfg);
 
         capture_cfg.ch_mask = 1;
+        #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
+        sprintf(capture_cfg.target_string, TIVX_TARGET_CAPTURE2);  
+        #endif
 
         capture_node = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
         input_pad = &capture_node->srcs[0];
@@ -386,6 +420,7 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
     }
 
     /* Display */
+    #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
     {
         TIOVXDisplayNodeCfg display_cfg;
         NodeObj *display_node;
@@ -404,9 +439,11 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
         /* Link DL Post Proc to Display */
         tiovx_modules_link_pads(output_pad[0], &display_node->sinks[0]);
     }
+   #endif 
 
     status = tiovx_modules_verify_graph(&graph);
 
+  #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
     for (int32_t i = 0; i < input_pad->buf_pool->bufq_depth; i++)
     {
         inbuf = tiovx_modules_acquire_buf(input_pad->buf_pool);
@@ -429,4 +466,46 @@ vx_status app_modules_capture_dl_display_test(int argc, char* argv[])
     tiovx_modules_clean_graph(&graph);
 
     return status;
+   #endif
+    
+  #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
+    for (int32_t i = 0; i < input_pad->buf_pool->bufq_depth; i++)
+    {
+        inbuf = tiovx_modules_acquire_buf(input_pad->buf_pool);
+        tiovx_modules_enqueue_buf(inbuf);
+    }
+
+    for (int32_t i=0; i< output_pad[0]->buf_pool->bufq_depth;i++)
+    { 
+        outbuf = tiovx_modules_acquire_buf(output_pad[0]->buf_pool);
+        tiovx_modules_enqueue_buf(outbuf);
+    }
+
+    int frame_count = 0;
+    while (frame_count++ < NUM_ITERATIONS)
+    {
+        inbuf = tiovx_modules_dequeue_buf(input_pad->buf_pool);
+        tiovx_modules_enqueue_buf(inbuf);
+        outbuf = tiovx_modules_dequeue_buf(output_pad[0]->buf_pool);
+        /* function to render screen support using QNX on AM62A SOC */
+        qnx_display_render_buf(outbuf);
+        tiovx_modules_enqueue_buf(outbuf);
+    }
+
+    for (int32_t i = 0; i < 2; i++)
+    {
+        inbuf = tiovx_modules_dequeue_buf(input_pad->buf_pool);
+        tiovx_modules_release_buf(inbuf);
+    }
+ 
+    for(int32_t i =0; i< output_pad[0]->buf_pool->bufq_depth; i++)
+    {
+        outbuf = tiovx_modules_dequeue_buf(output_pad[0]-> buf_pool);
+        tiovx_modules_release_buf(outbuf);
+    }
+
+    tiovx_modules_clean_graph(&graph);
+
+    return status;
+    #endif
 }

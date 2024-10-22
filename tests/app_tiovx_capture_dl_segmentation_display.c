@@ -60,17 +60,30 @@
  *
  */
 
+/*
+ * Pipeline:
+ *
+ * Capture(IMX390 2MP) --> VISS --> LDC --> MSC0 --> MSC1 --> DL_PRE_PROC --> TIDL
+ *                                             |                                  |
+ *                                             |                                   --> DL_POST_PROC --> Display
+ *                                             |                                  |
+ *                                             ---------------------------------->
+ */
+
 #include <tiovx_modules.h>
 #include <tiovx_utils.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <edgeai_nv12_drawing_utils.h>
 
 #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
 #include "qnx_display_module.h"
 #endif
 
+#define NUM_ITERATIONS   (300)
+
 #define APP_BUFQ_DEPTH   (1)
 #define APP_NUM_CH       (1)
-
-#define NUM_ITERATIONS   (400)
 
 #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
 #define VISS_INPUT_WIDTH  1936
@@ -113,7 +126,25 @@
 #define DCC_VISS TIOVX_MODULES_IMAGING_PATH"/imx390/linear/dcc_viss.bin"
 #define DCC_LDC TIOVX_MODULES_IMAGING_PATH"/imx390/linear/dcc_ldc.bin"
 
-vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* argv[])
+#if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
+#define POST_PROC_OUT_WIDTH (1280)
+#define POST_PROC_OUT_HEIGHT (720)
+
+#else
+#define POST_PROC_OUT_WIDTH   (1920)
+#define POST_PROC_OUT_HEIGHT  (1080)
+#endif
+
+#if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
+#define TIDL_IO_CONFIG_FILE_PATH "/opt/model_zoo/TFL-SS-2580-deeplabv3_mobv2-ade20k32-mlperf-512x512/artifacts/201_tidl_io_1.bin"
+#define TIDL_NETWORK_FILE_PATH "/opt/model_zoo/TFL-SS-2580-deeplabv3_mobv2-ade20k32-mlperf-512x512/artifacts/201_tidl_net.bin"
+
+#else 
+#define TIDL_IO_CONFIG_FILE_PATH "/ti_fs/model_zoo/TFL-SS-2580-deeplabv3_mobv2-ade20k32-mlperf-512x512/artifacts/201_tidl_io_1.bin"
+#define TIDL_NETWORK_FILE_PATH "/ti_fs/model_zoo/TFL-SS-2580-deeplabv3_mobv2-ade20k32-mlperf-512x512/artifacts/201_tidl_net.bin"
+#endif
+
+vx_status app_modules_capture_dl_segmentation_display_test(vx_int32 argc, vx_char* argv[])
 {
     vx_status status = VX_FAILURE;
     GraphObj graph;
@@ -123,9 +154,6 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
     TIOVXVissNodeCfg viss_cfg;
     TIOVXLdcNodeCfg ldc_cfg;
     TIOVXMultiScalerNodeCfg msc_cfg;
-    #if !defined(SOC_AM62A)
-    TIOVXDisplayNodeCfg display_cfg;
-    #endif
     BufPool *in_buf_pool = NULL;
     Buf *inbuf = NULL;
     #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
@@ -133,8 +161,19 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
     Buf *outbuf = NULL;
     #endif
     int32_t frame_count = 0;
-    Pad *output_pad[4] = {NULL, NULL, NULL, NULL};  
+    Pad *input_pad =NULL, *output_pad[4] = {NULL, NULL, NULL, NULL};  
 
+    /* RGB Color Map for Semantic Segmentation */
+static uint8_t RGB_COLOR_MAP[26][3] = {{255,0,0},{0,255,0},{73,102,92},
+                                       {255,255,0},{0,255,255},{0,99,245},
+                                       {255,127,0},{0,255,100},{235,117,117},
+                                       {242,15,109},{118,194,167},{255,0,255},
+                                       {231,200,255},{255,186,239},{0,110,0},
+                                       {0,0,255},{110,0,0},{110,110,0},
+                                       {100,0,50},{90,60,0},{255,255,255} ,
+                                       {170,0,255},{204,255,0},{78,69,128},
+                                       {133,133,74},{0,0,110}};
+   
     status = tiovx_modules_initialize_graph(&graph);
     graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
 
@@ -149,6 +188,7 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
     #endif
 
     capture_node = tiovx_modules_add_node(&graph, TIOVX_CAPTURE, (void *)&capture_cfg);
+    input_pad = &capture_node->srcs[0];
 
     /* TEE */
     tiovx_tee_init_cfg(&tee_cfg);
@@ -159,6 +199,7 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
     tee_node = tiovx_modules_add_node(&graph, TIOVX_TEE, (void *)&tee_cfg);
 
     tee_node->srcs[0].bufq_depth = 4; /* This must be greater than 3 */
+    input_pad = &tee_node->srcs[0]; // This is for enqueing
 
     /* VISS */
     tiovx_viss_init_cfg(&viss_cfg);
@@ -180,16 +221,16 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
 
     /* AEWB */
 
-        TIOVXAewbNodeCfg aewb_cfg;
-        tiovx_aewb_init_cfg(&aewb_cfg);
+    TIOVXAewbNodeCfg aewb_cfg;
+    tiovx_aewb_init_cfg(&aewb_cfg);
 
-        sprintf(aewb_cfg.sensor_name, SENSOR_NAME);
-        aewb_cfg.ch_mask = 1;
-        aewb_cfg.awb_mode = ALGORITHMS_ISS_AWB_AUTO;
-        aewb_cfg.awb_num_skip_frames = 9;
-        aewb_cfg.ae_num_skip_frames  = 9;
+    sprintf(aewb_cfg.sensor_name, SENSOR_NAME);
+    aewb_cfg.ch_mask = 1;
+    aewb_cfg.awb_mode = ALGORITHMS_ISS_AWB_AUTO;
+    aewb_cfg.awb_num_skip_frames = 0;
+    aewb_cfg.ae_num_skip_frames  = 0;
 
-        aewb_node = tiovx_modules_add_node(&graph, TIOVX_AEWB, (void *)&aewb_cfg);
+    aewb_node = tiovx_modules_add_node(&graph, TIOVX_AEWB, (void *)&aewb_cfg);
 
 
     /* LDC */
@@ -220,59 +261,134 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
 
     ldc_node = tiovx_modules_add_node(&graph, TIOVX_LDC, (void *)&ldc_cfg);
 
-    /* MSC */
+    /* DL Pre Proc */
+
+    TIOVXDLPreProcNodeCfg dl_pre_proc_cfg;
+    NodeObj *dl_pre_proc_node;
+
+    tiovx_dl_pre_proc_init_cfg(&dl_pre_proc_cfg);
+
+    dl_pre_proc_cfg.io_config_path = TIDL_IO_CONFIG_FILE_PATH;
+    dl_pre_proc_cfg.params.tensor_format = 1; //BGR
+
+    dl_pre_proc_node = tiovx_modules_add_node(&graph, TIOVX_DL_PRE_PROC, (void *)&dl_pre_proc_cfg);
+
+    /* TIDL */
+    
+    TIOVXTIDLNodeCfg tidl_cfg;
+    NodeObj *tidl_node;
+    tiovx_tidl_init_cfg(&tidl_cfg);
+    tidl_cfg.io_config_path = TIDL_IO_CONFIG_FILE_PATH;
+    tidl_cfg.network_path = TIDL_NETWORK_FILE_PATH;
+    tidl_node = tiovx_modules_add_node(&graph, TIOVX_TIDL, (void *)&tidl_cfg);
+
+    /* DL POST PROC*/
+
+    TIOVXDLPostProcNodeCfg dl_post_proc_cfg;
+    NodeObj *dl_post_proc_node;
+    tiovx_dl_post_proc_init_cfg(&dl_post_proc_cfg);
+    dl_post_proc_cfg.width = POST_PROC_OUT_WIDTH;
+    dl_post_proc_cfg.height = POST_PROC_OUT_HEIGHT;
+    uint32_t max_color_class = sizeof(RGB_COLOR_MAP)/sizeof(RGB_COLOR_MAP[0]);
+    //additional line added
+    dl_post_proc_cfg.num_input_tensors=1;
+    dl_post_proc_cfg.params.task_type = TIVX_DL_POST_PROC_SEGMENTATION_TASK_TYPE;
+    dl_post_proc_cfg.params.ss_prms.alpha = 0.5;
+    dl_post_proc_cfg.params.ss_prms.YUVColorMap = (uint8_t **) malloc(sizeof(uint8_t *) * max_color_class);
+    for (uint32_t i = 0; i < max_color_class; i++)
+            {
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i] = (uint8_t *) malloc(sizeof(uint8_t) * 3);
+                uint8_t R = RGB_COLOR_MAP[i][0];
+                uint8_t G = RGB_COLOR_MAP[i][1];
+                uint8_t B = RGB_COLOR_MAP[i][2];
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i][0] = RGB2Y(R,G,B);
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i][1] = RGB2U(R,G,B);
+                dl_post_proc_cfg.params.ss_prms.YUVColorMap[i][2] = RGB2V(R,G,B);
+            }
+    dl_post_proc_cfg.params.ss_prms.MaxColorClass = max_color_class;
+    
+    dl_post_proc_cfg.io_config_path = TIDL_IO_CONFIG_FILE_PATH;
+    dl_post_proc_node = tiovx_modules_add_node(&graph, TIOVX_DL_POST_PROC, (void *)&dl_post_proc_cfg);
+
+    /* MSC0*/
     tiovx_multi_scaler_init_cfg(&msc_cfg);
 
     msc_cfg.color_format = VX_DF_IMAGE_NV12;
-    msc_cfg.num_outputs = 1;
+    msc_cfg.num_outputs = 2;
 
-    msc_cfg.input_cfg.width = MSC_INPUT_WIDTH;
-    msc_cfg.input_cfg.height = MSC_INPUT_HEIGHT;
+    msc_cfg.input_cfg.width = LDC_OUTPUT_WIDTH;
+    msc_cfg.input_cfg.height = LDC_OUTPUT_HEIGHT;
 
-    msc_cfg.output_cfgs[0].width = MSC_OUTPUT_WIDTH;
-    msc_cfg.output_cfgs[0].height = MSC_OUTPUT_HEIGHT;
+    // This is for pre proc
+    msc_cfg.output_cfgs[0].width = LDC_OUTPUT_WIDTH / 2;
+    msc_cfg.output_cfgs[0].height = LDC_OUTPUT_HEIGHT / 2;
+
+    msc_cfg.output_cfgs[1].width = POST_PROC_OUT_WIDTH;
+    msc_cfg.output_cfgs[1].height = POST_PROC_OUT_HEIGHT;
 
     sprintf(msc_cfg.target_string, TIVX_TARGET_VPAC_MSC1);
     tiovx_multi_scaler_module_crop_params_init(&msc_cfg);
 
     msc_node = tiovx_modules_add_node(&graph, TIOVX_MULTI_SCALER, (void *)&msc_cfg);
 
-    /* DISPLAY */
-   #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
-    tiovx_display_init_cfg(&display_cfg);
+    /* MSC1*/
+    TIOVXMultiScalerNodeCfg msc1_cfg;
+    NodeObj *msc1_node;
+    TIOVXDLPreProcNodeCfg *tempCfg = (TIOVXDLPreProcNodeCfg *)dl_pre_proc_node->node_cfg;
 
-    display_cfg.width = MSC_OUTPUT_WIDTH;
-    display_cfg.height = MSC_OUTPUT_HEIGHT;
-    display_cfg.params.outWidth  = MSC_OUTPUT_WIDTH;
-    display_cfg.params.outHeight = MSC_OUTPUT_HEIGHT;
-    display_cfg.params.posX = (1920 - MSC_OUTPUT_WIDTH)/2;
-    display_cfg.params.posY = (1080 - MSC_OUTPUT_HEIGHT)/2;
+    tiovx_multi_scaler_init_cfg(&msc1_cfg);
 
-    display_node = tiovx_modules_add_node(&graph, TIOVX_DISPLAY, (void *)&display_cfg);
-    #endif 
-    /* Link Nodes */
+    msc1_cfg.color_format = VX_DF_IMAGE_NV12;
+    msc1_cfg.num_outputs = 1;
+
+    msc1_cfg.input_cfg.width = LDC_OUTPUT_WIDTH / 2;
+    msc1_cfg.input_cfg.height = LDC_OUTPUT_HEIGHT / 2;
+
+    msc1_cfg.output_cfgs[0].width = tempCfg->input_cfg.width;
+    msc1_cfg.output_cfgs[0].height = tempCfg->input_cfg.height;
+
+    sprintf(msc1_cfg.target_string, TIVX_TARGET_VPAC_MSC1);
+    tiovx_multi_scaler_module_crop_params_init(&msc1_cfg);
+
+    msc1_node = tiovx_modules_add_node(&graph, TIOVX_MULTI_SCALER, (void *)&msc1_cfg);
+
+    /* Link PADS */
     tiovx_modules_link_pads(&tee_node->srcs[1], &viss_node->sinks[0]);
     tiovx_modules_link_pads(&viss_node->srcs[1], &aewb_node->sinks[0]); 
     tiovx_modules_link_pads(&viss_node->srcs[0], &ldc_node->sinks[0]);
-    tiovx_modules_link_pads(&ldc_node->srcs[0], &msc_node->sinks[0]);
+    tiovx_modules_link_pads(&ldc_node->srcs[0],&msc_node->sinks[0]);
+    tiovx_modules_link_pads(&msc_node->srcs[0],&msc1_node->sinks[0]);
+    tiovx_modules_link_pads(&msc1_node->srcs[0],&dl_pre_proc_node->sinks[0]);
+    tiovx_modules_link_pads(&dl_pre_proc_node->srcs[0],&tidl_node->sinks[0]);
+    tiovx_modules_link_pads(&tidl_node->srcs[0], &dl_post_proc_node->sinks[0]); // Tensor pad
+    tiovx_modules_link_pads(&msc_node->srcs[1], &dl_post_proc_node->sinks[1]); // Image Pad
 
-    #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
-    tiovx_modules_link_pads(&msc_node->srcs[0], &display_node->sinks[0]); 
-    #endif
+    /* Connect the floating node to Display */
+     status = tiovx_modules_verify_graph(&graph);
 
-    status = tiovx_modules_verify_graph(&graph);
-    #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
+    #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
     in_buf_pool = tee_node->srcs[0].buf_pool;
+    out_buf_pool = dl_post_proc_node->srcs[0].buf_pool;
     for (int32_t i = 0; i < in_buf_pool->bufq_depth; i++)
     {
         inbuf = tiovx_modules_acquire_buf(in_buf_pool);
         tiovx_modules_enqueue_buf(inbuf);
     }
 
+    for (int32_t i=0; i< out_buf_pool->bufq_depth;i++)
+    { 
+        outbuf = tiovx_modules_acquire_buf(out_buf_pool);
+        tiovx_modules_enqueue_buf(outbuf);
+    }
+
     while (frame_count++ < NUM_ITERATIONS)
     {
         inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
         tiovx_modules_enqueue_buf(inbuf);
+        outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
+        /* function to render screen support using QNX on AM62A SOC */
+        qnx_display_render_buf(outbuf);
+        tiovx_modules_enqueue_buf(outbuf);
     }
 
     for (int32_t i = 0; i < 2; i++)
@@ -280,50 +396,15 @@ vx_status app_modules_capture_viss_ldc_msc_display_test(vx_int32 argc, vx_char* 
         inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
         tiovx_modules_release_buf(inbuf);
     }
-
-    tiovx_modules_clean_graph(&graph);
-
-    return status;
-    #endif
-
-    #if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
-    in_buf_pool = tee_node->srcs[0].buf_pool;
-    out_buf_pool = msc_node -> srcs[0].buf_pool;
-    for (int32_t i = 0; i < in_buf_pool->bufq_depth; i++)
+ 
+    for(int32_t i =0; i< out_buf_pool->bufq_depth; i++)
     {
-        inbuf = tiovx_modules_acquire_buf(in_buf_pool);
-        tiovx_modules_enqueue_buf(inbuf);
-    }
-   
-    for (int32_t i=0;i< out_buf_pool->bufq_depth;i++)
-    { 
-        outbuf = tiovx_modules_acquire_buf(out_buf_pool);
-        tiovx_modules_enqueue_buf(outbuf);
-    }
-  
-    while (frame_count++ < NUM_ITERATIONS)
-    {
-        inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-        tiovx_modules_enqueue_buf(inbuf);
-        outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-        /*function to render screen support using QNX on AM62A SOC*/
-        qnx_display_render_buf(outbuf); 
-        tiovx_modules_enqueue_buf(outbuf);     
-
-    }
-    for (int32_t i = 0; i < 2; i++)
-    {
-        inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-        tiovx_modules_release_buf(inbuf);     
-    }
-    
-    for (int32_t i=0; i< out_buf_pool->bufq_depth;i++)
-    { 
         outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
         tiovx_modules_release_buf(outbuf);
     }
 
     tiovx_modules_clean_graph(&graph);
+    free(dl_post_proc_cfg.params.ss_prms.YUVColorMap);
 
     return status;
     #endif

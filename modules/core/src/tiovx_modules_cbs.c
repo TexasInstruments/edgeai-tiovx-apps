@@ -206,8 +206,8 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .delete_node = tiovx_lut_delete_node,
         .get_cfg_size = tiovx_lut_get_cfg_size,
         .get_priv_size = tiovx_lut_get_priv_size
-#if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)
     },
+    #if !defined(SOC_AM62A)
     {
         .init_node = tiovx_display_init_node,
         .create_node = tiovx_display_create_node,
@@ -216,6 +216,8 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_cfg_size = tiovx_display_get_cfg_size,
         .get_priv_size = tiovx_display_get_priv_size
     },
+    #endif
+    #if !(defined(TARGET_OS_LINUX))
     {
         .init_node = tiovx_capture_init_node,
         .create_node = tiovx_capture_create_node,
@@ -232,6 +234,8 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_cfg_size = tiovx_aewb_get_cfg_size,
         .get_priv_size = tiovx_aewb_get_priv_size
     },
+    #endif
+    #if !defined(SOC_AM62A)
     {
         .init_node = tiovx_sde_init_node,
         .create_node = tiovx_sde_create_node,
@@ -264,7 +268,5 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_cfg_size = tiovx_dof_viz_get_cfg_size,
         .get_priv_size = tiovx_dof_viz_get_priv_size
     }
-#else
-    }
-#endif
+   #endif
 };
