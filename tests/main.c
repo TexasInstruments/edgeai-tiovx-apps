@@ -100,6 +100,8 @@
 #define APP_MODULES_TEST_QNX_DECODE_DISPLAY (0)
 #define APP_MODULES_TEST_QNX_CAPTURE_ENCODE (0)
 #define APP_MODULES_TEST_LINUX_MULTI_GRAPH (0)
+#define APP_MODULES_TEST_CAPTURE_CLASSIFICATION_DL_DISPLAY (0)
+#define APP_MODULES_TEST_CAPTURE_SEGMENTATION_DL_DISPLAY (0)
 
 char *EDGEAI_DATA_PATH;
 
@@ -335,6 +337,68 @@ int main(int argc, char *argv[])
 
         status = app_modules_fakesrc_fakesink_test(argc, argv);
     }
+#endif
+
+#if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
+#if (APP_MODULES_TEST_CAPTURE_VISS_LDC_MSC_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->viss->ldc->msc->display test\n");
+        int app_modules_capture_viss_ldc_msc_display_test(int argc, char* argv[]);
+
+        status = app_modules_capture_viss_ldc_msc_display_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_CAPTURE_DL_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->dl->display test\n");
+        int app_modules_capture_dl_display_test(int argc, char* argv[]);
+
+        status = app_modules_capture_dl_display_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_CAPTURE_CLASSIFICATION_DL_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->classification->dl->display\n");
+        int app_modules_capture_dl_classification_display_test(int argc, char* argv[]);
+        
+        status = app_modules_capture_dl_classification_display_test(argc,argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_QNX_CAPTURE_ENCODE)
+    if(status==0)
+    {
+        printf("Running QNX capture encode module test\n");
+        int app_modules_qnx_capture_encode_test(int argc, char* argv[]);
+
+        status = app_modules_qnx_capture_encode_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_QNX_DECODE_DISPLAY)
+    if(status==0)
+    {
+        printf("Running QNX decode display module test\n");
+        int app_modules_qnx_decode_display_test(int argc, char* argv[]);
+
+        status = app_modules_qnx_decode_display_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_CAPTURE_SEGMENTATION_DL_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->segmentation->dl->display\n");
+        int app_modules_capture_dl_segmentation_display_test(int argc, char* argv[]);
+
+        status = app_modules_capture_dl_segmentation_display_test(argc,argv);
+    }
+#endif
 #endif
 
 #if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)

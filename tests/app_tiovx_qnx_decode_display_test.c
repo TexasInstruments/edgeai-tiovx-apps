@@ -76,7 +76,9 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
     vx_status status = VX_FAILURE;
     GraphObj graph;
     NodeObj *node = NULL;
+    #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
     TIOVXDisplayNodeCfg display_cfg;
+    #endif
     BufPool *in_buf_pool = NULL;
     Buf *inbuf = NULL;
     omxDecodeCfg omx_decode_cfg;
@@ -87,7 +89,7 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
     omx_decode_cfg.bufq_depth = APP_BUFQ_DEPTH;
     sprintf(omx_decode_cfg.file, "%s/videos/video0_1280_768.h264", EDGEAI_DATA_PATH);
     omx_decode_handle = omx_decode_create_handle(&omx_decode_cfg, &omx_decode_fmt);
-
+    #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
     tiovx_display_init_cfg(&display_cfg);
 
     display_cfg.width = 1280;
@@ -96,10 +98,13 @@ vx_status app_modules_qnx_decode_display_test(vx_int32 argc, vx_char* argv[])
     display_cfg.params.outHeight = 768;
     display_cfg.params.posX = (1920 - 1280)/2;
     display_cfg.params.posY = (1080 - 768)/2;
+    #endif
 
     status = tiovx_modules_initialize_graph(&graph);
     graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
+    #if !(defined(SOC_AM62A) && defined(TARGET_OS_QNX))
     node = tiovx_modules_add_node(&graph, TIOVX_DISPLAY, (void *)&display_cfg);
+    #endif
     node->sinks[0].bufq_depth = APP_BUFQ_DEPTH;
     status = tiovx_modules_verify_graph(&graph);
 
