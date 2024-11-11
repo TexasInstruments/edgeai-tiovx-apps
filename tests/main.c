@@ -84,7 +84,7 @@
 #define APP_MODULES_TEST_LINUX_CAPTURE_DISPLAY (0)
 #define APP_MODULES_TEST_LINUX_DECODE_DISPLAY (0)
 #define APP_MODULES_TEST_LINUX_CAPTURE_ENCODE (0)
-#define APP_MODULES_TEST_LINUX_MULTI_CAPTURE_DISPLAY (0)
+#define APP_MODULES_TEST_LINUX_MULTI_CAPTURE_DISPLAY (1)
 #define APP_MODULES_TEST_LINUX_RGB_IR_DISPLAY (0)
 #define APP_MODULES_TEST_CAPTURE_VISS_LDC_MSC_DISPLAY (0)
 #define APP_MODULES_TEST_CAPTURE_DL_DISPLAY (0)
@@ -273,9 +273,12 @@ int main(int argc, char *argv[])
     if(status==0)
     {
         printf("Running linux multi capture display test\n");
+        int i = 5;
+        while (i-->0){
         int app_modules_linux_multi_capture_display_test(int argc, char* argv[]);
 
         status = app_modules_linux_multi_capture_display_test(argc, argv);
+        }
     }
 #endif
 #if (APP_MODULES_TEST_LINUX_RGB_IR_DISPLAY)

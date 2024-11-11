@@ -84,7 +84,7 @@
 #define DEV "/dev/video-imx219-cam%d"
 #define SUBDEV "/dev/v4l-imx219-subdev%d"
 
-#define NUM_CAMS 2
+#define NUM_CAMS 4
 
 typedef struct {
     Pad *pad;
