@@ -182,7 +182,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             v4l2_pix_format = V4L2_PIX_FMT_SRGGB12;
 #endif
             output_width = 1936;
-            output_height = 1096;
+            output_height = 1100;
         }
         else if (0 == strcmp("imx219",input_info->sensor_name))
         {

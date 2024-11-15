@@ -80,7 +80,7 @@ vx_status app_modules_capture_test(vx_int32 argc, vx_char* argv[])
     char output_filename[100];
     int32_t i, frame_count;
 
-    sprintf(output_filename, "%s/output/imx390_1936x1096_capture_nv12.yuv", EDGEAI_DATA_PATH);
+    sprintf(output_filename, "%s/output/imx390_1936x1100_capture_nv12.yuv", EDGEAI_DATA_PATH);
 
     status = tiovx_modules_initialize_graph(&graph);
     graph.schedule_mode = VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO;
