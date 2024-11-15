@@ -1139,8 +1139,6 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
             tiovx_modules_release_buf(inbuf);
         }
 #endif
-        outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
-        tiovx_modules_release_buf(outbuf);
     }
 
 #if defined(TARGET_OS_LINUX)
@@ -1151,6 +1149,10 @@ int32_t run_app(FlowInfo flow_infos[], uint32_t num_flows, CmdArgs *cmd_args)
         {
             v4l2_encode_stop(output_blocks[i].v4l2_obj.v4l2_encode_handle);
             v4l2_encode_delete_handle(output_blocks[i].v4l2_obj.v4l2_encode_handle);
+        }
+        if (LINUX_DISPLAY == output_blocks[i].output_info->sink)
+        {
+            kms_display_delete_handle(output_blocks[i].kms_obj.kms_display_handle);
         }
     }
 #endif
