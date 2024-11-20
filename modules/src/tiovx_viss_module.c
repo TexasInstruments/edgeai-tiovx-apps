@@ -67,6 +67,9 @@
 #define TIOVX_MODULES_DEFAULT_VISS_SENSOR "SENSOR_SONY_IMX219_RPI"
 #define TIOVX_MODULES_DEFAULT_VISS_WIDTH 1920
 #define TIOVX_MODULES_DEFAULT_VISS_HEIGHT 1080
+#define NUM_BINS 128
+#define OFFSET 0
+#define DISTRIBUTION_RANGE 128
 
 typedef struct {
     vx_user_data_object         viss_params_obj;
@@ -237,6 +240,7 @@ void tiovx_viss_init_cfg(TIOVXVissNodeCfg *node_cfg)
     sprintf(node_cfg->sensor_name, TIOVX_MODULES_DEFAULT_VISS_SENSOR);
     node_cfg->enable_h3a_pad = vx_false_e;
     node_cfg->enable_aewb_pad = vx_false_e;
+    node_cfg->enable_histogram_pad = vx_false_e;
 
     node_cfg->input_cfg.params.num_exposures = 1;
     node_cfg->input_cfg.params.line_interleaved = vx_false_e;
@@ -386,6 +390,31 @@ vx_status tiovx_viss_init_node(NodeObj *node)
         node->num_outputs++;
     }
 
+    if (node_cfg->enable_histogram_pad == vx_true_e) {
+        #ifdef SOC_J721E
+            TIOVX_MODULE_ERROR("[VISS] Raw Histogram is not supported on J721E\n");
+            status = VX_FAILURE;
+            return status;
+        #endif
+        node->srcs[node->num_outputs].node = node;
+        node->srcs[node->num_outputs].pad_index = node->num_outputs;
+        node->srcs[node->num_outputs].node_parameter_index = 12;
+        node->srcs[node->num_outputs].num_channels = node_cfg->num_channels;
+        exemplar = (vx_reference)vxCreateDistribution(
+                                        node->graph->tiovx_context,
+                                        NUM_BINS,
+                                        OFFSET,
+                                        DISTRIBUTION_RANGE);
+        status = tiovx_module_create_pad_exemplar(&node->srcs[node->num_outputs],
+                                                  exemplar);
+        if (VX_SUCCESS != status) {
+            TIOVX_MODULE_ERROR("[VISS] Create Histogram Output Failed\n");
+            return status;
+        }
+        vxReleaseReference(&exemplar);
+        node->num_outputs++;
+    }
+
     sprintf(node->name, "viss_node");
 
     tiovx_viss_module_configure_params(node);
@@ -402,6 +431,8 @@ vx_status tiovx_viss_create_node(NodeObj *node)
     vx_user_data_object ae_awb_result = NULL;
     vx_image output[] = {NULL, NULL, NULL, NULL, NULL};
     vx_user_data_object h3a_stats = NULL;
+    vx_distribution histogram = NULL;
+    int output_index = 0;
     vx_bool replicate[] = {vx_false_e, vx_false_e, vx_false_e,
                            vx_true_e, vx_false_e, vx_false_e,
                            vx_false_e, vx_false_e, vx_false_e,
@@ -410,13 +441,21 @@ vx_status tiovx_viss_create_node(NodeObj *node)
 
     if (node_cfg->enable_aewb_pad == vx_true_e) {
         replicate[1] = vx_true_e;
-
         ae_awb_result = (vx_user_data_object)node->sinks[1].exemplar;
+    }
+
+    for (int i = 0; i < TIOVX_VISS_MODULE_MAX_OUTPUTS; i++) {
+        if (node_cfg->output_select[i] == TIOVX_VISS_MODULE_OUTPUT_EN) {
+            output[i] = (vx_image)node->srcs[output_index].exemplar;
+            replicate[i+4] = vx_true_e;
+            output_index++;
+        }
     }
 
     if (node_cfg->enable_h3a_pad == vx_true_e) {
         h3a_stats =
-            (vx_user_data_object)node->srcs[node->num_outputs - 1].exemplar;
+            (vx_user_data_object)node->srcs[output_index].exemplar;
+        output_index++;
     } else {
         h3a_stats = vxCreateUserDataObject(node->graph->tiovx_context,
                                            "tivx_h3a_data_t",
@@ -438,11 +477,10 @@ vx_status tiovx_viss_create_node(NodeObj *node)
                                                 node_priv->h3a_stats_arr, 0);
     }
 
-    for (int i = 0, j = 0; i < TIOVX_VISS_MODULE_MAX_OUTPUTS; i++) {
-        if (node_cfg->output_select[i] == TIOVX_VISS_MODULE_OUTPUT_EN) {
-            output[i] = (vx_image)node->srcs[j++].exemplar;
-            replicate[i+4] = vx_true_e;
-        }
+    if (node_cfg->enable_histogram_pad == vx_true_e) {
+        replicate[12] = vx_true_e;
+        histogram = (vx_distribution)node->srcs[output_index].exemplar;
+        output_index++;
     }
 
     node->tiovx_node = tivxVpacVissNode(node->graph->tiovx_graph,
@@ -452,7 +490,7 @@ vx_status tiovx_viss_create_node(NodeObj *node)
                                 (tivx_raw_image)(node->sinks[0].exemplar),
                                 output[0], output[1], output[2],
                                 output[3], output[4],
-                                h3a_stats, NULL, NULL, NULL);
+                                h3a_stats, NULL, NULL, histogram);
 
     status = vxGetStatus((vx_reference)node->tiovx_node);
     if (VX_SUCCESS != status) {

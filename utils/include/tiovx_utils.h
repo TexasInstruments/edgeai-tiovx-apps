@@ -75,6 +75,7 @@ extern char *EDGEAI_DATA_PATH;
 
 vx_status readImage(char* file_name, vx_image img);
 vx_status writeImage(char* file_name, vx_image img);
+vx_status writeDistribution(char* file_name, vx_distribution dist);
 vx_status resetImage(vx_image img, int32_t value);
 
 vx_status readRawImage(char* file_name, tivx_raw_image img, vx_uint32 *bytes_read);

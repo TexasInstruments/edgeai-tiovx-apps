@@ -84,6 +84,7 @@ typedef struct {
     char                        sensor_name[ISS_SENSORS_MAX_NAME];
     vx_bool                     enable_h3a_pad;
     vx_bool                     enable_aewb_pad;
+    vx_bool                     enable_histogram_pad;
 } TIOVXVissNodeCfg;
 
 void tiovx_viss_init_cfg(TIOVXVissNodeCfg *cfg);
