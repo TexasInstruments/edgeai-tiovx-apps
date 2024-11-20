@@ -367,6 +367,48 @@ vx_status readImage(char* file_name, vx_image img)
     return(status);
 }
 
+vx_status writeDistribution(char* file_name, vx_distribution dist)
+{
+    vx_status status;
+
+    status = vxGetStatus((vx_reference)dist);
+
+    if((vx_status)VX_SUCCESS == status)
+    {
+        FILE * fp = fopen(file_name,"wb");
+
+        if(fp == NULL)
+        {
+            TIOVX_MODULE_ERROR("Unable to open file %s \n", file_name);
+            return (VX_FAILURE);
+        }
+
+        {
+            void  *data_ptr;
+            vx_map_id map_id;
+            vx_size num_dist;
+            vx_size dist_size;
+
+            vxQueryDistribution(dist, VX_DISTRIBUTION_BINS, &num_dist, sizeof(vx_size));
+            vxQueryDistribution(dist, VX_DISTRIBUTION_SIZE, &dist_size, sizeof(vx_size));
+
+            status = vxMapDistribution(dist,
+                                       &map_id,
+                                       &data_ptr,
+                                       VX_READ_ONLY,
+                                       VX_MEMORY_TYPE_HOST,
+                                       0);
+
+            fwrite(data_ptr, dist_size/num_dist, num_dist, fp);
+            status = vxUnmapDistribution(dist, map_id);
+        }
+
+        fclose(fp);
+    }
+
+    return(status);
+}
+
 vx_status writeImage(char* file_name, vx_image img)
 {
     vx_status status;

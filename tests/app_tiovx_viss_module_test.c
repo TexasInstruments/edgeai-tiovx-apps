@@ -79,13 +79,19 @@ vx_status app_modules_viss_test(vx_int32 argc, vx_char* argv[])
     NodeObj *node = NULL;
     TIOVXVissNodeCfg cfg;
     BufPool *in_buf_pool = NULL, *out_buf_pool = NULL;
-    Buf *inbuf = NULL, *outbuf = NULL;
+    Buf *inbuf = NULL, *out_buf = NULL;
     char input_filename[100];
     char output_filename[100];
     vx_uint32 bytes_read;
 
     sprintf(input_filename, "%s/raw_images/modules_test/imx219_1920x1080_capture.raw", EDGEAI_DATA_PATH);
     sprintf(output_filename, "%s/output/imx219_1920x1080_capture_nv12.yuv", EDGEAI_DATA_PATH);
+#ifndef SOC_J721E
+    BufPool *histogram_buf_pool = NULL;
+    Buf *histogram_buf = NULL;
+    char output_distribution_name[100];
+    sprintf(output_distribution_name, "%s/output/imx219_1920x1080_capture_distribution.bin", EDGEAI_DATA_PATH);
+#endif
 
     tiovx_viss_init_cfg(&cfg);
 
@@ -93,6 +99,9 @@ vx_status app_modules_viss_test(vx_int32 argc, vx_char* argv[])
     snprintf(cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", DCC_VISS);
     cfg.width = INPUT_WIDTH;
     cfg.height = INPUT_HEIGHT;
+#ifndef SOC_J721E
+    cfg.enable_histogram_pad = vx_true_e;
+#endif
     sprintf(cfg.target_string, TIVX_TARGET_VPAC_VISS1);
 
     cfg.input_cfg.params.format[0].pixel_container = TIVX_RAW_IMAGE_8_BIT;
@@ -108,20 +117,32 @@ vx_status app_modules_viss_test(vx_int32 argc, vx_char* argv[])
     tiovx_modules_enqueue_buf(inbuf);
 
     out_buf_pool = node->srcs[0].buf_pool;
-    outbuf = tiovx_modules_acquire_buf(out_buf_pool);
-    tiovx_modules_enqueue_buf(outbuf);
+    out_buf = tiovx_modules_acquire_buf(out_buf_pool);
+    tiovx_modules_enqueue_buf(out_buf);
+#ifndef SOC_J721E
+    histogram_buf_pool = node->srcs[1].buf_pool;
+    histogram_buf = tiovx_modules_acquire_buf(histogram_buf_pool);
+    tiovx_modules_enqueue_buf(histogram_buf);
+#endif
 
     tiovx_modules_schedule_graph(&graph);
     tiovx_modules_wait_graph(&graph);
 
     inbuf = tiovx_modules_dequeue_buf(in_buf_pool);
-    outbuf = tiovx_modules_dequeue_buf(out_buf_pool);
+    out_buf = tiovx_modules_dequeue_buf(out_buf_pool);
+#ifndef SOC_J721E
+    histogram_buf = tiovx_modules_dequeue_buf(histogram_buf_pool);
+#endif
 
-    writeImage(output_filename, (vx_image)outbuf->handle);
-
+    writeImage(output_filename, (vx_image)out_buf->handle);
+#ifndef SOC_J721E
+    writeDistribution(output_distribution_name, (vx_distribution)histogram_buf->handle);
+#endif
     tiovx_modules_release_buf(inbuf);
-    tiovx_modules_release_buf(outbuf);
-
+    tiovx_modules_release_buf(out_buf);
+#ifndef SOC_J721E
+    tiovx_modules_release_buf(histogram_buf);
+#endif
     tiovx_modules_clean_graph(&graph);
 
     return status;
