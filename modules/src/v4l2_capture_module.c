@@ -75,11 +75,15 @@
 #define V4L2_CAPTURE_DEFAULT_WIDTH 1920
 #define V4L2_CAPTURE_DEFAULT_HEIGHT 1080
 #define V4L2_CAPTURE_DEFAULT_PIX_FMT V4L2_PIX_FMT_SRGGB8
+#define V4L2_CAPTURE_DEFAULT_BPP 1
 #define V4L2_CAPTURE_DEFAULT_DEVICE "/dev/video-imx219-cam0"
 #define V4L2_CAPTURE_DEFAULT_BUFQ_DEPTH 4
 #define V4L2_CAPTURE_MAX_BUFQ_DEPTH 8
 #define V4L2_CAPTURE_TIMEOUT 200
 #define V4L2_CAPTURE_STREAMON_DELAY 2 // in sec
+
+#define ALIGN(x,a) (((x) + (a) - 1L) & ~((a) - 1L))
+#define HW_ALIGN 16
 
 void v4l2_capture_init_cfg(v4l2CaptureCfg *cfg)
 {
@@ -88,6 +92,7 @@ void v4l2_capture_init_cfg(v4l2CaptureCfg *cfg)
     cfg->height = V4L2_CAPTURE_DEFAULT_HEIGHT;
     cfg->pix_format = V4L2_CAPTURE_DEFAULT_PIX_FMT;
     cfg->bufq_depth = V4L2_CAPTURE_DEFAULT_BUFQ_DEPTH;
+    cfg->bpp = V4L2_CAPTURE_DEFAULT_BPP;
     sprintf(cfg->device, V4L2_CAPTURE_DEFAULT_DEVICE);
 }
 
@@ -151,6 +156,8 @@ int v4l2_capture_set_fmt(v4l2CaptureHandle *handle)
     fmt.fmt.pix.height = handle->cfg.height;
     fmt.fmt.pix.pixelformat = handle->cfg.pix_format;
     fmt.fmt.pix.field = V4L2_FIELD_ANY;
+    fmt.fmt.pix.bytesperline = ALIGN(handle->cfg.width, HW_ALIGN) *
+                                handle->cfg.bpp;
 
     if (-1 == xioctl(handle->fd, VIDIOC_S_FMT, &fmt)) {
         TIOVX_MODULE_ERROR("[V4L2_CAPTURE] Set format failed\n");

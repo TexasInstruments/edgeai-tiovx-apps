@@ -140,6 +140,7 @@ vx_status app_modules_linux_capture_encode_test(vx_int32 argc, vx_char* argv[])
     v4l2_capture_cfg.width = INPUT_WIDTH;
     v4l2_capture_cfg.height = INPUT_HEIGHT;
     v4l2_capture_cfg.pix_format = V4L2_PIX_FMT_SRGGB8;
+    v4l2_capture_cfg.bpp = 1;
     v4l2_capture_cfg.bufq_depth = APP_BUFQ_DEPTH;
     sprintf(v4l2_capture_cfg.device, "/dev/video-imx219-cam0");
 

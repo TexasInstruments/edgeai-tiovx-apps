@@ -76,6 +76,7 @@ typedef struct {
     char        device[TIVX_TARGET_MAX_NAME];
     uint32_t    pix_format;
     uint32_t    bufq_depth;
+    uint8_t     bpp;
 } v4l2CaptureCfg;
 
 typedef struct _v4l2CaptureHandle v4l2CaptureHandle;

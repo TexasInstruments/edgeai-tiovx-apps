@@ -149,6 +149,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
     uint32_t format_msb = 0;
 #if defined(TARGET_OS_LINUX)
     uint32_t v4l2_pix_format = 0;
+    uint32_t bpp = 0;
 #endif
     uint32_t output_width = 0;
     uint32_t output_height = 0;
@@ -180,6 +181,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             format_msb = 11;
 #if defined(TARGET_OS_LINUX)
             v4l2_pix_format = V4L2_PIX_FMT_SRGGB12;
+            bpp = 2;
 #endif
             output_width = 1936;
             output_height = 1100;
@@ -191,6 +193,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             format_msb = 7;
 #if defined(TARGET_OS_LINUX)
             v4l2_pix_format = V4L2_PIX_FMT_SRGGB8;
+            bpp = 1;
 #endif
             output_width = 1920;
             output_height = 1080;
@@ -202,6 +205,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             format_pixel_container = TIVX_RAW_IMAGE_16_BIT;
             format_msb = 9;
             v4l2_pix_format = v4l2_fourcc('B','G','I','0');
+            bpp = 2;
             output_width = 1600;
             output_height = 1300;
         }
@@ -390,6 +394,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             v4l2_capture_cfg.width = output_width;
             v4l2_capture_cfg.height = output_height;
             v4l2_capture_cfg.pix_format = v4l2_pix_format;
+            v4l2_capture_cfg.bpp = bpp;
             v4l2_capture_cfg.bufq_depth = 4 + 1;
             sprintf(v4l2_capture_cfg.device, input_info->device);
             input_block->v4l2_obj.v4l2_capture_handle = v4l2_capture_create_handle(&v4l2_capture_cfg);

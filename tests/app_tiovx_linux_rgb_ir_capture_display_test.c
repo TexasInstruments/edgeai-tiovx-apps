@@ -276,6 +276,7 @@ vx_status app_modules_linux_rgb_ir_display_test(vx_int32 argc, vx_char* argv[])
     v4l2_capture_cfg.width = INPUT_WIDTH;
     v4l2_capture_cfg.height = INPUT_HEIGHT;
     v4l2_capture_cfg.pix_format = v4l2_fourcc('B','G','I','0');
+    v4l2_capture_cfg.bpp = 2;
     v4l2_capture_cfg.bufq_depth = APP_BUFQ_DEPTH;
 
     viss_node[0] = tiovx_modules_add_node(&graph, TIOVX_VISS, (void *)&viss_cfg_rgb);
