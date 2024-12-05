@@ -39,9 +39,9 @@ NOCOLOR='\033[0m'
 
 ####################################################################################################
 timeout=20
-config_file=("$topdir/datasheet/video_config.yaml" \
-             "$topdir/datasheet/camera_config.yaml")
-parse_script="$topdir/datasheet/convert_to_csv.sh" 
+config_file=("$topdir/scripts/video_config.yaml" \
+             "$topdir/scripts/camera_config.yaml")
+parse_script="$topdir/scripts/convert_to_csv.sh" 
 ####################################################################################################
 cleanup() {
 	echo
@@ -60,13 +60,11 @@ MODEL_NAME=("ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416" \
             "ONR-CL-6360-regNetx-200mf" \
             "TFL-CL-0000-mobileNetV1-mlperf")
 
-rm -rf $appdir/datasheet/${SOC}_camera_tiovx_apps_stats.txt
-
 for config in "${config_file[@]}"; do
     if [[ $config =~ "video" ]]; then
-        rm -rf $appdir/datasheet/${SOC}_video_tiovx_apps.txt
+        rm -rf $topdir/scripts/${SOC}_video_tiovx_apps.txt
     else
-        rm -rf $appdir/datasheet/${SOC}_camera_tiovx_apps_stats.txt
+        rm -rf $topdir/scripts/${SOC}_camera_tiovx_apps_stats.txt
     fi
 
     for modelname in "${MODEL_NAME[@]}"; do

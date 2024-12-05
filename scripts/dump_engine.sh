@@ -138,11 +138,11 @@ for model_path in $(eval $searchcmd); do
 done
 
 if [[ $config_file =~ "video" ]]; then
-    echo -e "Model Name: $modelname" >> $appdir/datasheet/${SOC}_video_tiovx_apps.txt
-    cat $appdir/TIOVX_APP_demo >> $appdir/datasheet/${SOC}_video_tiovx_apps.txt
+    echo -e "Model Name: $modelname" >> $appdir/scripts/${SOC}_video_tiovx_apps.txt
+    cat $appdir/TIOVX_APP_demo >> $appdir/scripts/${SOC}_video_tiovx_apps.txt
 else
-    echo -e "Model Name: $modelname" >> $appdir/datasheet/${SOC}_camera_tiovx_apps.txt
-    cat $appdir/TIOVX_APP_demo >> $appdir/datasheet/${SOC}_camera_tiovx_apps.txt
+    echo -e "Model Name: $modelname" >> $appdir/scripts/${SOC}_camera_tiovx_apps.txt
+    cat $appdir/TIOVX_APP_demo >> $appdir/scripts/${SOC}_camera_tiovx_apps.txt
 fi
 
 rm -rf $appdir/TIOVX_APP_demo
