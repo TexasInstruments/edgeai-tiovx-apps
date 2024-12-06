@@ -201,7 +201,9 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             sprintf(sensor_name, "SENSOR_OV2312_UB953_LI");
             format_pixel_container = TIVX_RAW_IMAGE_16_BIT;
             format_msb = 9;
+#if defined(TARGET_OS_LINUX)
             v4l2_pix_format = v4l2_fourcc('B','G','I','0');
+#endif
             output_width = 1600;
             output_height = 1300;
         }

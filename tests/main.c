@@ -337,6 +337,28 @@ int main(int argc, char *argv[])
     }
 #endif
 
+#if defined(SOC_AM62A) && defined(TARGET_OS_QNX)
+#if (APP_MODULES_TEST_CAPTURE_VISS_LDC_MSC_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->viss->ldc->msc->display test\n");
+        int app_modules_capture_viss_ldc_msc_display_test(int argc, char* argv[]);
+
+        status = app_modules_capture_viss_ldc_msc_display_test(argc, argv);
+    }
+#endif
+
+#if (APP_MODULES_TEST_CAPTURE_DL_DISPLAY)
+    if(status==0)
+    {
+        printf("Running capture->dl->display test\n");
+        int app_modules_capture_dl_display_test(int argc, char* argv[]);
+
+        status = app_modules_capture_dl_display_test(argc, argv);
+    }
+#endif
+#endif
+
 #if defined(SOC_J721E) || defined(SOC_J721S2) || defined(SOC_J784S4) || defined(SOC_J722S) || defined(SOC_J742S2)
 #if (APP_MODULES_TEST_DL_PIPELINE)
     if(status==0)
