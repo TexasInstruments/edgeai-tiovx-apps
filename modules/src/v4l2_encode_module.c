@@ -321,6 +321,12 @@ int v4l2_encode_dqueue_capbuf(v4l2EncodeHandle *handle)
 
     fwrite(mapped, buf_planes[0].bytesused, 1, handle->wrfd);
 
+    status = munmap(mapped, buf.m.planes[0].length);
+    if(0 != status) {
+        TIOVX_MODULE_ERROR("[V4L2_ENCODE] unable to unmap memory"
+                        "address/%p size %d \n", mapped, buf.m.planes[0].length);
+    }
+
     return status;
 }
 
