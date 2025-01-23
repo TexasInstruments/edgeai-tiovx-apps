@@ -376,6 +376,42 @@ vx_status tiovx_multi_scaler_module_update_crop_params(NodeObj *node)
     return status;
 }
 
+vx_status tiovx_multi_scaler_module_update_input_params(NodeObj *node)
+{
+    vx_status status = VX_FAILURE;
+    vx_reference refs[1];
+    tivx_vpac_msc_input_params_t input_prm;
+    vx_user_data_object input_prm_obj;
+
+    tivx_vpac_msc_input_params_init(&input_prm);
+
+#if !defined(J721E) //This feature is supported only on VPAC3 and VPAC3L
+    if (node->num_outputs <= 2) {
+        input_prm.is_enable_simul_processing = 1;
+    }
+#endif
+    input_prm_obj = vxCreateUserDataObject(node->graph->tiovx_context,
+                                           "tivx_vpac_msc_input_params_t",
+                                           sizeof(tivx_vpac_msc_input_params_t),
+                                           &input_prm);
+
+    refs[0] = (vx_reference)input_prm_obj;
+    status = tivxNodeSendCommand(node->tiovx_node, 0u,
+                                 TIVX_VPAC_MSC_CMD_SET_INPUT_PARAMS,
+                                 refs, 1u);
+
+    if((vx_status)VX_SUCCESS != status)
+    {
+        TIOVX_MODULE_ERROR(
+                "[MULTI-SCALER-MODULE] Node send command "
+                "TIVX_VPAC_MSC_CMD_SET_INPUT_PARAMS, failed!\n");
+    }
+
+    vxReleaseUserDataObject(&input_prm_obj);
+
+    return status;
+}
+
 vx_status tiovx_multi_scaler_create_node(NodeObj *node)
 {
     vx_status status = VX_FAILURE;
@@ -430,6 +466,7 @@ vx_status tiovx_multi_scaler_post_verify_graph(NodeObj *node)
 
     status = tiovx_multi_scaler_module_update_filter_coeffs(node);
     status = tiovx_multi_scaler_module_update_crop_params(node);
+    status = tiovx_multi_scaler_module_update_input_params(node);
 
     return status;
 }
