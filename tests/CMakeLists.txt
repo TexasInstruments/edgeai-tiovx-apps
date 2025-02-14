@@ -28,7 +28,12 @@ if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SRC_FILES
          app_tiovx_qnx_capture_encode_test.c
-         app_tiovx_qnx_decode_display_test.c)
+         app_tiovx_qnx_decode_display_test.c
+         app_tiovx_capture_module_test.c
+         app_tiovx_capture_viss_ldc_msc_display_test.c
+         app_tiovx_capture_dl_display_pipeline.c
+         app_tiovx_capture_dl_classification_display.c
+         app_tiovx_capture_dl_segmentation_display.c)
 endif()
 endif()
 
@@ -69,6 +74,7 @@ if ("${TARGET_SOC}" STREQUAL "J721E" OR "${TARGET_SOC}" STREQUAL "J721S2" OR "${
                   app_tiovx_linux_decode_sde_test.c)
          endif()
          endif()
+
 endif()
 
 build_app(${PROJ_NAME}

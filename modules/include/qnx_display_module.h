@@ -59,86 +59,21 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _TIOVX_MODULES_CBS
-#define _TIOVX_MODULES_CBS
+#ifndef _QNX_DISPLAY_MODULE
+#define _QNX_DISPLAY_MODULE
 
-#include "tiovx_multi_scaler_module.h"
-#include "tiovx_dl_color_convert_module.h"
-#include "tiovx_color_convert_module.h"
-#include "tiovx_viss_module.h"
-#include "tiovx_ldc_module.h"
-#include "tiovx_tee_module.h"
-#include "tiovx_tidl_module.h"
-#include "tiovx_dl_pre_proc_module.h"
-#include "tiovx_dl_post_proc_module.h"
-#include "tiovx_mosaic_module.h"
-#include "tiovx_obj_array_split_module.h"
-#include "tiovx_pyramid_module.h"
-#include "tiovx_delay_module.h"
-#include "tiovx_fakesink_module.h"
-#include "tiovx_fakesrc_module.h"
-#include "tiovx_pixelwise_multiply_module.h"
-#include "tiovx_pixelwise_add_module.h"
-#include "tiovx_lut_module.h"
-
-#if !defined(SOC_AM62A)
-#include "tiovx_display_module.h"
-#endif
-#if !(defined(TARGET_OS_LINUX))
-#include "tiovx_capture_module.h"
-#include "tiovx_aewb_module.h"
-#endif
-#if !defined(SOC_AM62A)
-#include "tiovx_sde_module.h"
-#include "tiovx_sde_viz_module.h"
-#include "tiovx_dof_module.h"
-#include "tiovx_dof_viz_module.h"
-#endif
+#include <screen/screen.h>
+#include "tiovx_modules_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*!
- * \brief Enum that lists all available modules.
- */
-typedef enum {
-    TIOVX_MULTI_SCALER = 0,
-    TIOVX_DL_COLOR_CONVERT,
-    TIOVX_COLOR_CONVERT,
-    TIOVX_VISS,
-    TIOVX_LDC,
-    TIOVX_TEE,
-    TIOVX_TIDL,
-    TIOVX_DL_PRE_PROC,
-    TIOVX_DL_POST_PROC,
-    TIOVX_MOSAIC,
-    TIOVX_OBJ_ARRAY_SPLIT,
-    TIOVX_PYRAMID,
-    TIOVX_DELAY,
-    TIOVX_FAKESINK,
-    TIOVX_FAKESRC,
-    TIOVX_PIXELWISE_MULTIPLY,
-    TIOVX_PIXELWISE_ADD,
-    TIOVX_LUT,
-#if !defined(SOC_AM62A)
-    TIOVX_DISPLAY,
-#endif
-#if !defined(TARGET_OS_LINUX)
-    TIOVX_CAPTURE,
-    TIOVX_AEWB,
-#endif
-#if !defined(SOC_AM62A)
-    TIOVX_SDE,
-    TIOVX_SDE_VIZ,
-    TIOVX_DOF,
-    TIOVX_DOF_VIZ,
-#endif
-    TIOVX_MODULES_NUM_MODULES,
-} NODE_TYPES;
+    
+int32_t qnx_display_render_buf(Buf *tiovx_buffer);
+void qnx_display_init();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_TIOVX_MODULES_CBS
+#endif
