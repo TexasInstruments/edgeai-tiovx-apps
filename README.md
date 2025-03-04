@@ -37,7 +37,7 @@ Detailed documentation can be found on [WIKI](https://github.com/TexasInstrument
     root@j7-evm:/opt/edgeai-tiovx-apps# mkdir build
     root@j7-evm:/opt/edgeai-tiovx-apps# cd build
     root@j7-evm:/opt/edgeai-tiovx-apps/build# cmake ..
-    root@j7-evm:/opt/edgeai-tiovx-apps/build# make -j2
+    root@j7-evm:/opt/edgeai-tiovx-apps/build# make -j2 install
     ```
 
 2. Please use [EdgeAI App Stack](https://github.com/TexasInstruments/edgeai-app-stack) for cross compilation
