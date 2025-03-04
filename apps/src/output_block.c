@@ -211,7 +211,7 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
         output_pad = &mosaic_node->srcs[0];
     }
 
-#if !defined(SOC_AM62A) && !defined(SOC_J722S)
+#if !defined(SOC_AM62A)
     /* RTOS_DISPLAY */
     if(output_info->sink == RTOS_DISPLAY)
     {
