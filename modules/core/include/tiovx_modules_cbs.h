@@ -83,8 +83,6 @@
 
 #if !defined(SOC_AM62A)
 #include "tiovx_display_module.h"
-#endif
-#if !(defined(TARGET_OS_LINUX))
 #include "tiovx_capture_module.h"
 #include "tiovx_aewb_module.h"
 #endif
@@ -123,8 +121,6 @@ typedef enum {
     TIOVX_LUT,
 #if !defined(SOC_AM62A)
     TIOVX_DISPLAY,
-#endif
-#if !defined(TARGET_OS_LINUX)
     TIOVX_CAPTURE,
     TIOVX_AEWB,
 #endif
