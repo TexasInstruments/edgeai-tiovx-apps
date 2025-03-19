@@ -216,6 +216,8 @@ NodeCbs gNodeCbs[TIOVX_MODULES_NUM_MODULES] =
         .get_cfg_size = tiovx_display_get_cfg_size,
         .get_priv_size = tiovx_display_get_priv_size
     },
+   #endif
+   #if (defined(SOC_AM62A) && defined(TARGET_OS_QNX))
     {
         .init_node = tiovx_capture_init_node,
         .create_node = tiovx_capture_create_node,
