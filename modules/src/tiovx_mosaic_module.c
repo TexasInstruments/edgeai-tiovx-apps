@@ -142,6 +142,7 @@ vx_status tiovx_mosaic_init_node(NodeObj *node)
         node->sinks[i].pad_index = i;
         node->sinks[i].node_parameter_index = (3+i);
         node->sinks[i].num_channels = node_cfg->num_channels[i];
+        node->sinks[i].enqueue_arr = vx_true_e;
         exemplar = (vx_reference)vxCreateImage(node->graph->tiovx_context,
                                                node_cfg->input_cfgs[i].width,
                                                node_cfg->input_cfgs[i].height,

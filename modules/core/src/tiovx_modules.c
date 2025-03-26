@@ -308,7 +308,15 @@ BufPool* tiovx_modules_allocate_bufpool(Pad *pad)
         buf_pool->bufs[i].pool = buf_pool;
         buf_pool->bufs[i].buf_index = i;
         buf_pool->bufs[i].num_channels = pad->num_channels;
-        buf_pool->ref_list[i] = (vx_reference)buf_pool->bufs[i].arr;
+
+        if (pad->enqueue_arr)
+        {
+            buf_pool->ref_list[i] = (vx_reference)buf_pool->bufs[i].arr;
+        }
+        else
+        {
+            buf_pool->ref_list[i] = (vx_reference)buf_pool->bufs[i].handle;
+        }
 
         for (uint8_t j=0; j < pad->num_channels; j++) {
             vx_reference ref = vxGetObjectArrayItem(buf_pool->bufs[i].arr, j);
@@ -866,6 +874,7 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
     BufPool *buf_pool = buf->pool;
     Pad *pad = buf_pool->pad;
     GraphObj *graph = pad->node->graph;
+    vx_reference *enqueue_list;
 
     LOCK(buf->pool);
 
@@ -881,9 +890,18 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
 
     UNLOCK(buf->pool);
 
+    if (pad->enqueue_arr)
+    {
+        enqueue_list = (vx_reference *)&buf->arr;
+    }
+    else
+    {
+        enqueue_list = (vx_reference *)&buf->handle;
+    }
+
     vxGraphParameterEnqueueReadyRef(graph->tiovx_graph,
                                     pad->graph_parameter_index,
-                                    (vx_reference *)&buf->arr, 1);
+                                    enqueue_list, 1);
 
     status = VX_SUCCESS;
 
