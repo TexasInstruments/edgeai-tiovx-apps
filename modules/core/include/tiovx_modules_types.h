@@ -221,6 +221,9 @@ struct _Pad {
     /*! \brief vx_reference that defines the data that this pad handles */
     vx_reference        exemplar;
     vx_object_array     exemplar_arr;
+
+    /*! \brief vx_bool Enqueue objext array instead of handle if set to true */
+    vx_bool             enqueue_arr;
 };
 
 /*!

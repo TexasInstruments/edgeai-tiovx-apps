@@ -335,6 +335,7 @@ vx_status tiovx_capture_init_node(NodeObj *node)
     node->srcs[0].pad_index = 0;
     node->srcs[0].node_parameter_index = 1;
     node->srcs[0].num_channels = node_priv->sensor_obj.num_cameras_enabled;
+    node->srcs[0].enqueue_arr = vx_true_e;
 
     if (0 == node_priv->capture_format) // RAW
     {
