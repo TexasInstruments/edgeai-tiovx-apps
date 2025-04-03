@@ -85,6 +85,7 @@ vx_status tiovx_tee_init_node(NodeObj *node)
     vxRetainReference((vx_reference)node_cfg->peer_pad->exemplar_arr);
     node->sinks[0].exemplar = node_cfg->peer_pad->exemplar;
     node->sinks[0].exemplar_arr = node_cfg->peer_pad->exemplar_arr;
+    node->sinks[0].enqueue_arr = node_cfg->peer_pad->enqueue_arr;
 
     for (int i = 0; i < node_cfg->num_outputs; i++) {
         node->srcs[i].node = node;
@@ -96,6 +97,7 @@ vx_status tiovx_tee_init_node(NodeObj *node)
         vxRetainReference((vx_reference)node_cfg->peer_pad->exemplar_arr);
         node->srcs[i].exemplar = node_cfg->peer_pad->exemplar;
         node->srcs[i].exemplar_arr = node_cfg->peer_pad->exemplar_arr;
+        node->srcs[i].enqueue_arr = node_cfg->peer_pad->enqueue_arr;
     }
 
     if (SRC == node_cfg->peer_pad->direction) {
