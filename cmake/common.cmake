@@ -55,6 +55,10 @@ elseif ("${TARGET_SOC_LOWER}" STREQUAL "j742s2")
     set(TARGET_PLATFORM     J7)
     set(TARGET_CPU          A72)
     set(TARGET_SOC          J742S2)
+elseif ("${TARGET_SOC_LOWER}" STREQUAL "tda54")
+    set(TARGET_PLATFORM     TDA5)
+    set(TARGET_CPU          A720)
+    set(TARGET_SOC          TDA54)
 elseif ("${TARGET_SOC_LOWER}" STREQUAL "j722s")
     set(TARGET_PLATFORM     J7)
     set(TARGET_CPU          A53)
@@ -172,7 +176,7 @@ set(SYSTEM_LINK_LIBS
     )
 
 if ("${TARGET_OS}" STREQUAL "LINUX")
-if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A53")
+if ("${TARGET_CPU}" STREQUAL "A72" OR "${TARGET_CPU}" STREQUAL "A720" OR "${TARGET_CPU}" STREQUAL "A53")
     list(APPEND
          SYSTEM_LINK_LIBS
          drm
