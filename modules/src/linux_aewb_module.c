@@ -62,7 +62,9 @@
 
 #include "linux_aewb_module.h"
 #include "tiovx_utils.h"
+#if (!(defined(SOC_J784S4) || defined(SOC_J721S2) || defined(SOC_J742S2)))
 #include "ti_2a_wrapper.h"
+#endif
 
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -304,9 +306,11 @@ struct _AewbHandle {
     SensorObj           sensor_obj;
     uint8_t             *dcc_2a_buf;
     uint32_t            dcc_2a_buf_size;
+    #if (!(defined(SOC_J784S4) || defined(SOC_J721S2) || defined(SOC_J742S2)))
     TI_2A_wrapper       ti_2a_wrapper;
     sensor_config_get   sensor_in_data;
     sensor_config_set   sensor_out_data;
+    #endif
     int fd;
 };
 
@@ -363,6 +367,7 @@ AewbHandle *aewb_create_handle(AewbCfg *cfg)
     fread (handle->dcc_2a_buf, 1, handle->dcc_2a_buf_size, dcc_2a_fp);
     fclose (dcc_2a_fp);
 
+    #if (!(defined(SOC_J784S4) || defined(SOC_J721S2) || defined(SOC_J742S2)))
     status = TI_2A_wrapper_create(&handle->ti_2a_wrapper, &handle->aewb_config,
                 handle->dcc_2a_buf, handle->dcc_2a_buf_size);
     if (status) {
@@ -379,6 +384,7 @@ AewbHandle *aewb_create_handle(AewbCfg *cfg)
     } else {
       get_imx219_ae_dyn_params (&handle->sensor_in_data.ae_dynPrms);
     }
+    #endif
 
     return handle;
 
@@ -398,10 +404,12 @@ int aewb_write_to_sensor(AewbHandle *handle)
     int coarse_integration_time = 0;
     struct v4l2_control control;
 
+    #if (!(defined(SOC_J784S4) || defined(SOC_J721S2) || defined(SOC_J742S2)))
     gst_tiovx_isp_map_2A_values (handle->cfg.sensor_name,
             handle->sensor_out_data.aePrms.exposureTime[0],
             handle->sensor_out_data.aePrms.analogGain[0],
             &coarse_integration_time, &analog_gain);
+    #endif
 
     control.id = V4L2_CID_EXPOSURE;
     control.value = coarse_integration_time;
@@ -436,12 +444,14 @@ int aewb_process(AewbHandle *handle, Buf *h3a_buf, Buf *aewb_buf)
             sizeof (tivx_ae_awb_params_t), &aewb_buf_map_id,
             (void **)&aewb_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
 
+    #if (!(defined(SOC_J784S4) || defined(SOC_J721S2) || defined(SOC_J742S2)))
     status = TI_2A_wrapper_process(&handle->ti_2a_wrapper, &handle->aewb_config,
             h3a_ptr, &handle->sensor_in_data, aewb_ptr,
             &handle->sensor_out_data);
     if (status) {
         TIOVX_MODULE_ERROR("[AEWB] Process call failed: %d", status);
     }
+    #endif
 
     vxUnmapUserDataObject ((vx_user_data_object)h3a_buf->handle, h3a_buf_map_id);
     vxUnmapUserDataObject ((vx_user_data_object)aewb_buf->handle, aewb_buf_map_id);
@@ -455,7 +465,9 @@ int aewb_delete_handle(AewbHandle *handle)
 {
     int status = 0;
 
+    #if (!(defined(SOC_J784S4) || defined(SOC_J721S2) || defined(SOC_J742S2)))
     TI_2A_wrapper_delete(&handle->ti_2a_wrapper);
+    #endif
     tivxMemFree((void *)handle->dcc_2a_buf, handle->dcc_2a_buf_size,
             TIVX_MEM_EXTERNAL);
     close(handle->fd);
