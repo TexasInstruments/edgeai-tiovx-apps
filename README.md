@@ -16,12 +16,12 @@ Detailed documentation can be found on [WIKI](https://github.com/TexasInstrument
 │       YAML based config file for apps
 │       Refer to template config file for details on how to modify or write new configs
 ├── modules
-│       A thin framwork to abstract some OpenVX things to make the application code
-│       simpler. These modules can directly be used to wrte custome pipelines. Plese
+│       A thin framework to abstract some OpenVX things to make the application code
+│       simpler. These modules can directly be used to write custom pipelines. Plese
 │       refer to tests
 ├── tests
 │       Some simple tests for modules that also servers as examples on how to use
-│       modules to write custome pipelines
+│       modules to write custom pipelines
 └── utils
         Some utility functions used by apps and modules
 ```
