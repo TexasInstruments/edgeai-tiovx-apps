@@ -151,6 +151,7 @@ Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 
     if (!buf_pool->free_count) {
         TIOVX_MODULE_ERROR("No free buffer\n");
+        UNLOCK(buf_pool);
         return NULL;
     }
 
@@ -881,6 +882,7 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
     if (buf_pool->enqueue_tail ==
                     (buf_pool->enqueue_head + 1) % (buf_pool->bufq_depth + 1)) {
         TIOVX_MODULE_ERROR("Queue Full\n");
+        UNLOCK(buf_pool);
         return status;
     }
 
@@ -923,6 +925,7 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
 
     if (buf_pool->enqueue_tail == buf_pool->enqueue_head) {
         TIOVX_MODULE_ERROR("Queue Empty\n");
+        UNLOCK(buf_pool);
         return NULL;
     }
 
