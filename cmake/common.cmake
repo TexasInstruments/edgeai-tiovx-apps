@@ -87,7 +87,7 @@ add_definitions(
 
 set(VISION_APPS_LIBS_PATH $ENV{VISION_APPS_LIBS_PATH})
 set(EDGEAI_LIBS_PATH $ENV{EDGEAI_LIBS_PATH})
-set(PSDK_QNX_PATH $ENV{PSDK_QNX_PATH})
+set(PSDK_QNX_BUILD_PATH $ENV{PSDK_QNX_BUILD_PATH})
 link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  ${TARGET_FS}/usr/lib
                  ${CMAKE_LIBRARY_PATH}/usr/lib
@@ -97,17 +97,23 @@ link_directories(${TARGET_FS}/usr/lib/aarch64-linux
                  )
 
 if ("${TARGET_OS}" STREQUAL "QNX")
-    link_directories(${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/core/nto/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/utility/nto/aarch64/so.le
-                     ${PSDK_QNX_PATH}/qnx/resmgr/ipc_qnx_rsmgr/usr/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/resmgr/udma_qnx_rsmgr/usr/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/sharedmemallocator/usr/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/pdk_libs/pdk/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/pdk_libs/sciclient/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/pdk_libs/udmalld/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/pdk_libs/csirxlld/aarch64/so.le/
-                     ${PSDK_QNX_PATH}/qnx/pdk_libs/fvid2lld/aarch64/so.le/
+if ("${TARGET_SOC_LOWER}" STREQUAL "tda54")
+    link_directories(${PSDK_QNX_BUILD_PATH}/resmgrs/ipc/tiipc-usr/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/resmgrs/sharedmemallocator/usr/aarch64/so.le/
                     )
+else()
+    link_directories(${PSDK_QNX_BUILD_PATH}/codec/vpu/OpenMAXIL/core/nto/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/codec/vpu/OpenMAXIL/utility/nto/aarch64/so.le
+                     ${PSDK_QNX_BUILD_PATH}/resmgr/ipc_qnx_rsmgr/usr/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/resmgr/udma_qnx_rsmgr/usr/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/sharedmemallocator/usr/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/pdk_libs/pdk/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/pdk_libs/sciclient/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/pdk_libs/udmalld/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/pdk_libs/csirxlld/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/pdk_libs/fvid2lld/aarch64/so.le/
+                    )
+endif()
 endif()
 
 #message("PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
@@ -159,9 +165,11 @@ include_directories(${PROJECT_SOURCE_DIR}
                    )
 
 if ("${TARGET_OS}" STREQUAL "QNX")
-    include_directories(${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/khronos/openmaxil
-                        ${PSDK_QNX_PATH}/qnx/codec/vpu/OpenMAXIL/core/public/khronos/openmaxil
+if (NOT ("${TARGET_SOC_LOWER}" STREQUAL "tda54"))
+    include_directories(${PSDK_QNX_BUILD_PATH}/qnx/codec/vpu/OpenMAXIL/khronos/openmaxil
+                        ${PSDK_QNX_BUILD_PATH}/qnx/codec/vpu/OpenMAXIL/core/public/khronos/openmaxil
                        )
+endif()
 endif()
 
 set(SYSTEM_LINK_LIBS
@@ -189,6 +197,16 @@ endif()
 endif()
 
 if ("${TARGET_OS}" STREQUAL "QNX")
+if ("${TARGET_SOC_LOWER}" STREQUAL "tda54")
+    list(APPEND
+         SYSTEM_LINK_LIBS
+         sharedmemallocator
+         tiipc-usr
+         c++)
+    add_definitions(
+         -D_QNX_SOURCE
+    )
+else()
     list(APPEND
          SYSTEM_LINK_LIBS
          sharedmemallocator
@@ -203,6 +221,7 @@ if ("${TARGET_OS}" STREQUAL "QNX")
     add_definitions(
          -D_QNX_SOURCE
     )
+endif()
 endif()
 
 if ("${TARGET_SOC}" STREQUAL "AM62A" AND "${TARGET_OS}" STREQUAL "QNX")
