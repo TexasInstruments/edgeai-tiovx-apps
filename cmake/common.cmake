@@ -153,7 +153,7 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${TARGET_FS}/usr/include/
                    )
 
-if (NOT("${TARGET_SOC_LOWER}" STREQUAL "j784s4" OR "${TARGET_SOC_LOWER}" STREQUAL "j742s2" OR "${TARGET_SOC_LOWER}" STREQUAL "j721s2"))
+if ("${TARGET_SOC_LOWER}" STREQUAL "am62a")
     include_directories(${PSDK_INCLUDE_PATH}/processor_sdk/imaging/ti_2a_wrapper/include)
 endif()
 
