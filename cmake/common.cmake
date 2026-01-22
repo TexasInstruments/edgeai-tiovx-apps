@@ -98,8 +98,8 @@ link_directories(${TARGET_FS}/usr/lib/aarch64-linux
 
 if ("${TARGET_OS}" STREQUAL "QNX")
 if ("${TARGET_SOC_LOWER}" STREQUAL "tda54")
-    link_directories(${PSDK_QNX_BUILD_PATH}/resmgrs/ipc/tiipc-usr/aarch64/so.le/
-                     ${PSDK_QNX_BUILD_PATH}/resmgrs/sharedmemallocator/usr/aarch64/so.le/
+    link_directories(${PSDK_QNX_BUILD_PATH}/src/resmgrs/ipc/tiipc-usr/aarch64/so.le/
+                     ${PSDK_QNX_BUILD_PATH}/src/resmgrs/sharedmemallocator/usr/aarch64/so.le/
                     )
 else()
     link_directories(${PSDK_QNX_BUILD_PATH}/codec/vpu/OpenMAXIL/core/nto/aarch64/so.le/
