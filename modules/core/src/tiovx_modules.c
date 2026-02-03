@@ -572,7 +572,7 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exe
         return ret;
     }
 
-    status = vxQueryReference(exemplar1, VX_REFERENCE_TYPE,
+    status = vxQueryReference(exemplar2, VX_REFERENCE_TYPE,
                               (void *)&type2, sizeof(type2));
     if(status != VX_SUCCESS) {
         TIOVX_MODULE_ERROR("Type Query of exemplar2 failed\n");
