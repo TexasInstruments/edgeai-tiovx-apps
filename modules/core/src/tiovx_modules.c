@@ -151,6 +151,7 @@ Buf* tiovx_modules_acquire_buf(BufPool *buf_pool)
 
     if (!buf_pool->free_count) {
         TIOVX_MODULE_ERROR("No free buffer\n");
+        UNLOCK(buf_pool);
         return NULL;
     }
 
@@ -571,7 +572,7 @@ vx_bool tiovx_modules_compare_exemplars(vx_reference exemplar1, vx_reference exe
         return ret;
     }
 
-    status = vxQueryReference(exemplar1, VX_REFERENCE_TYPE,
+    status = vxQueryReference(exemplar2, VX_REFERENCE_TYPE,
                               (void *)&type2, sizeof(type2));
     if(status != VX_SUCCESS) {
         TIOVX_MODULE_ERROR("Type Query of exemplar2 failed\n");
@@ -881,6 +882,7 @@ vx_status tiovx_modules_enqueue_buf(Buf *buf)
     if (buf_pool->enqueue_tail ==
                     (buf_pool->enqueue_head + 1) % (buf_pool->bufq_depth + 1)) {
         TIOVX_MODULE_ERROR("Queue Full\n");
+        UNLOCK(buf_pool);
         return status;
     }
 
@@ -923,6 +925,7 @@ Buf* tiovx_modules_dequeue_buf(BufPool *buf_pool)
 
     if (buf_pool->enqueue_tail == buf_pool->enqueue_head) {
         TIOVX_MODULE_ERROR("Queue Empty\n");
+        UNLOCK(buf_pool);
         return NULL;
     }
 

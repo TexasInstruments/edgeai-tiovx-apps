@@ -245,6 +245,7 @@ vx_status app_modules_linux_multi_capture_display_test(vx_int32 argc, vx_char* a
     v4l2_capture_cfg.bufq_depth = APP_BUFQ_DEPTH;
 
     aewb_init_cfg(&aewb_cfg);
+    sprintf(aewb_cfg.sensor_name, SENSOR_NAME);
     sprintf(aewb_cfg.dcc_2a_file, TIOVX_MODULES_IMAGING_PATH"/imx219/linear/dcc_2a.bin");
 
     for (i = 0; i < NUM_CAMS; i++) {

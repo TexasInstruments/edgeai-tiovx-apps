@@ -140,7 +140,6 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/algos/awb/include
                     ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/algos/dcc/include
                     ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/sensor_drv/include
-                    ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/ti_2a_wrapper/include
                     ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/kernels/include
                     ${PSDK_INCLUDE_PATH}/processor_sdk/imaging/utils/itt_server/include/
                     ${PSDK_INCLUDE_PATH}/processor_sdk/tidl_j7/arm-tidl/rt/inc/
@@ -163,6 +162,10 @@ include_directories(${PROJECT_SOURCE_DIR}
                     ${EDGEAI_INCLUDE_PATH}/
                     ${TARGET_FS}/usr/include/
                    )
+
+if ("${TARGET_SOC_LOWER}" STREQUAL "am62a")
+    include_directories(${PSDK_INCLUDE_PATH}/processor_sdk/imaging/ti_2a_wrapper/include)
+endif()
 
 if ("${TARGET_OS}" STREQUAL "QNX")
 if (NOT ("${TARGET_SOC_LOWER}" STREQUAL "tda54"))

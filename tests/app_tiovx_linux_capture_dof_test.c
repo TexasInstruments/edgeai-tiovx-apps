@@ -252,6 +252,7 @@ vx_status app_modules_linux_capture_dof_test(vx_int32 argc, vx_char* argv[])
     kms_display_handle = kms_display_create_handle(&kms_display_cfg);
 
     aewb_init_cfg(&aewb_cfg);
+    sprintf(aewb_cfg.sensor_name, SENSOR_NAME);
     sprintf(aewb_cfg.device, "/dev/v4l-imx219-subdev0");
     sprintf(aewb_cfg.dcc_2a_file, TIOVX_MODULES_IMAGING_PATH"/imx219/linear/dcc_2a.bin");
 
