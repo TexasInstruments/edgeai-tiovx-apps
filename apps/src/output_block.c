@@ -173,7 +173,7 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
         mosaic_cfg.output_cfg.height = output_info->height;
         mosaic_cfg.params.clear_count  = 4;
 
-        sprintf(mosaic_cfg.target_string, TIVX_TARGET_VPAC_MSC2);
+        sprintf(mosaic_cfg.target_string, "%s", TIVX_TARGET_VPAC_MSC2);
 
         mosaic_cfg.background_img = vxCreateImage(graph->tiovx_context,
                                                   output_info->width,
@@ -268,7 +268,7 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
 
         v4l2_encode_cfg.width = output_info->width;
         v4l2_encode_cfg.height = output_info->height;
-        sprintf(v4l2_encode_cfg.file, output_info->output_path);
+        sprintf(v4l2_encode_cfg.file, "%s", output_info->output_path);
 
         if(output_info->sink == H264_ENCODE)
         {
@@ -280,7 +280,7 @@ int32_t create_output_block(GraphObj *graph, OutputBlock *output_block)
         }
 
         sprintf(v4l2_encode_cfg.device,
-                g_encode_devices[g_encode_devices_idx]);
+                "%s", g_encode_devices[g_encode_devices_idx]);
 
         g_encode_devices_idx++;
         if(g_encode_devices_idx >=

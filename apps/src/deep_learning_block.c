@@ -147,7 +147,7 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
         dl_pre_proc_cfg.io_config_path = model_info->io_config_path;
         dl_pre_proc_cfg.params.tensor_format = pre_proc_info->tensor_format;
 
-        sprintf(dl_pre_proc_cfg.target_string, g_mpu_targets[g_mpu_target_idx]);
+        sprintf(dl_pre_proc_cfg.target_string, "%s", g_mpu_targets[g_mpu_target_idx]);
 
         dl_pre_proc_node = tiovx_modules_add_node(graph,
                                                   TIOVX_DL_PRE_PROC,
@@ -173,7 +173,7 @@ int32_t create_deep_learning_block(GraphObj *graph, DeepLearningBlock *dl_block)
         tidl_cfg.io_config_path = model_info->io_config_path;
         tidl_cfg.network_path = model_info->network_path;
 
-        sprintf(tidl_cfg.target_string, g_c7x_targets[g_c7x_target_idx]);
+        sprintf(tidl_cfg.target_string, "%s", g_c7x_targets[g_c7x_target_idx]);
 
         tidl_node = tiovx_modules_add_node(graph,
                                            TIOVX_TIDL,
