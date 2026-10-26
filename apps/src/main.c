@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         switch (opt)
         {
             case 1 :
-                sprintf(cmd_args.config_file, optarg);
+                sprintf(cmd_args.config_file, "%s", optarg);
                 break;
             case 'v' :
                 cmd_args.verbose = true;

@@ -732,11 +732,11 @@ void tiovx_modules_modify_node_names(GraphObj *graph)
             continue;
         }
 
-        sprintf(i_node_name, graph->node_list[i].name);
+        sprintf(i_node_name, "%s", graph->node_list[i].name);
 
         for(uint8_t j = i+1; j < graph->num_nodes; j++) {
             vx_char j_node_name[VX_MAX_REFERENCE_NAME - 3];
-            sprintf(j_node_name, graph->node_list[j].name);
+            sprintf(j_node_name, "%s", graph->node_list[j].name);
             if(0 == strcmp(i_node_name, j_node_name)) {
                 sprintf(graph->node_list[j].name,
                         "%s_%02d",

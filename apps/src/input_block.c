@@ -228,7 +228,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
             tiovx_capture_init_cfg(&capture_cfg);
 
-            sprintf(capture_cfg.sensor_name, sensor_name);
+            sprintf(capture_cfg.sensor_name, "%s", sensor_name);
             capture_cfg.ch_mask = input_info->channel_mask;
 
             sprintf(capture_cfg.target_string,
@@ -278,11 +278,11 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             viss_cfg.width = output_width;
             viss_cfg.height = output_height;
 
-            sprintf(viss_cfg.sensor_name, sensor_name);
+            sprintf(viss_cfg.sensor_name, "%s", sensor_name);
             snprintf(viss_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", viss_dcc_path);
 
             sprintf(viss_cfg.target_string,
-                    g_viss_targets[g_viss_target_idx]);
+                    "%s", g_viss_targets[g_viss_target_idx]);
 
             g_viss_target_idx++;
             if(g_viss_target_idx >=
@@ -318,7 +318,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
             tiovx_aewb_init_cfg(&aewb_cfg);
 
-            sprintf(aewb_cfg.sensor_name, sensor_name);
+            sprintf(aewb_cfg.sensor_name, "%s", sensor_name);
             aewb_cfg.ch_mask = input_info->channel_mask;
             aewb_cfg.awb_mode = ALGORITHMS_ISS_AWB_AUTO;
             aewb_cfg.awb_num_skip_frames = 9;
@@ -344,7 +344,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             ldc_cfg.input_cfg.height = output_height;
 
             sprintf(ldc_cfg.target_string,
-                    g_ldc_targets[g_ldc_target_idx]);
+                    "%s", g_ldc_targets[g_ldc_target_idx]);
 
             g_ldc_target_idx++;
             if(g_ldc_target_idx >=
@@ -353,7 +353,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
                 g_ldc_target_idx = 0;
             }
 
-            sprintf(ldc_cfg.sensor_name, sensor_name);
+            sprintf(ldc_cfg.sensor_name, "%s", sensor_name);
             snprintf(ldc_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", ldc_dcc_path);
             ldc_cfg.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA;
 
@@ -393,7 +393,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             v4l2_capture_cfg.height = output_height;
             v4l2_capture_cfg.pix_format = v4l2_pix_format;
             v4l2_capture_cfg.bufq_depth = 4 + 1;
-            sprintf(v4l2_capture_cfg.device, input_info->device);
+            sprintf(v4l2_capture_cfg.device, "%s", input_info->device);
             input_block->v4l2_obj.v4l2_capture_handle = v4l2_capture_create_handle(&v4l2_capture_cfg);
         }
 
@@ -407,11 +407,11 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             viss_cfg.width = output_width;
             viss_cfg.height = output_height;
 
-            sprintf(viss_cfg.sensor_name, sensor_name);
+            sprintf(viss_cfg.sensor_name, "%s", sensor_name);
             snprintf(viss_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", viss_dcc_path);
 
             sprintf(viss_cfg.target_string,
-                    g_viss_targets[g_viss_target_idx]);
+                    "%s", g_viss_targets[g_viss_target_idx]);
 
             g_viss_target_idx++;
             if(g_viss_target_idx >=
@@ -456,12 +456,12 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
         {
             AewbCfg aewb_cfg;
             aewb_init_cfg(&aewb_cfg);
-            sprintf(aewb_cfg.sensor_name, sensor_name);
+            sprintf(aewb_cfg.sensor_name, "%s", sensor_name);
             aewb_cfg.awb_mode = ALGORITHMS_ISS_AWB_AUTO;
             aewb_cfg.awb_num_skip_frames = 9;
             aewb_cfg.ae_num_skip_frames  = 9;
-            sprintf(aewb_cfg.device, input_info->subdev);
-            sprintf(aewb_cfg.dcc_2a_file, aewb_dcc_path);
+            sprintf(aewb_cfg.device, "%s", input_info->subdev);
+            sprintf(aewb_cfg.dcc_2a_file, "%s", aewb_dcc_path);
             input_block->v4l2_obj.aewb_handle = aewb_create_handle(&aewb_cfg);
         }
 
@@ -477,7 +477,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
             ldc_cfg.input_cfg.height = output_height;
 
             sprintf(ldc_cfg.target_string,
-                    g_ldc_targets[g_ldc_target_idx]);
+                    "%s", g_ldc_targets[g_ldc_target_idx]);
 
             g_ldc_target_idx++;
             if(g_ldc_target_idx >=
@@ -486,7 +486,7 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
                 g_ldc_target_idx = 0;
             }
 
-            sprintf(ldc_cfg.sensor_name, sensor_name);
+            sprintf(ldc_cfg.sensor_name, "%s", sensor_name);
             snprintf(ldc_cfg.dcc_config_file, TIVX_FILEIO_FILE_PATH_LENGTH, "%s", ldc_dcc_path);
             ldc_cfg.ldc_mode = TIOVX_MODULE_LDC_OP_MODE_DCC_DATA;
 
@@ -524,10 +524,10 @@ int32_t create_input_block(GraphObj *graph, InputBlock *input_block)
 
             v4l2_decode_cfg.bufq_depth = 10;
             tee_bufq_depth = v4l2_decode_cfg.bufq_depth;
-            sprintf(v4l2_decode_cfg.file, input_info->video_path);
+            sprintf(v4l2_decode_cfg.file, "%s", input_info->video_path);
 
             sprintf(v4l2_decode_cfg.device,
-                    g_decode_devices[g_decode_devices_idx]);
+                    "%s", g_decode_devices[g_decode_devices_idx]);
 
             g_decode_devices_idx++;
             if(g_decode_devices_idx >=

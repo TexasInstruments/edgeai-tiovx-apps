@@ -40,7 +40,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         return -1;
     }
 
-    sprintf(input_info->source_name, source.data());
+    sprintf(input_info->source_name, "%s", source.data());
 
     input_info->width = input_node["width"].as<uint32_t>();
     input_info->height = input_node["height"].as<uint32_t>();
@@ -64,7 +64,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         if (input_node["sensor-name"])
         {
             sprintf(input_info->sensor_name,
-                    input_node["sensor-name"].as<std::string>().data());
+                    "%s", input_node["sensor-name"].as<std::string>().data());
         }
         else
         {
@@ -105,7 +105,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         if (input_node["sensor-name"])
         {
             sprintf(input_info->sensor_name,
-                    input_node["sensor-name"].as<std::string>().data());
+                    "%s", input_node["sensor-name"].as<std::string>().data());
         }
         else
         {
@@ -118,7 +118,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         if (input_node["device"])
         {
             sprintf(input_info->device,
-                    input_node["device"].as<std::string>().data());
+                    "%s", input_node["device"].as<std::string>().data());
         }
         else
         {
@@ -131,7 +131,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         if (input_node["subdev"])
         {
             sprintf(input_info->subdev,
-                    input_node["subdev"].as<std::string>().data());
+                    "%s", input_node["subdev"].as<std::string>().data());
         }
         else
         {
@@ -153,7 +153,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
                 return -1;
             }
 
-            sprintf(input_info->video_path, video_path.data());
+            sprintf(input_info->video_path, "%s", video_path.data());
         }
         else
         {
@@ -187,7 +187,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
                 {
                     std::string path(filename.path());
                     sprintf(input_info->raw_img_paths[input_info->num_raw_img],
-                            path.data());
+                            "%s", path.data());
                     input_info->num_raw_img++;
                 }
 
@@ -207,7 +207,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
             }
             else
             {
-                sprintf(input_info->raw_img_paths[0], image_path.data());
+                sprintf(input_info->raw_img_paths[0], "%s", image_path.data());
                 input_info->num_raw_img = 1;
             }
         }
@@ -223,7 +223,7 @@ int32_t parse_input_node(InputInfo *input_info, const YAML::Node &input_node)
         {
             std::string format = input_node["format"].as<std::string>();
             transform(format.begin(), format.end(), format.begin(), ::toupper);
-            sprintf(input_info->format,format.data());
+            sprintf(input_info->format, "%s", format.data());
         }
         else
         {
@@ -259,7 +259,7 @@ int32_t parse_model_node(ModelInfo *model_info, const YAML::Node &model_node)
         return -1;
     }
 
-    sprintf(model_info->model_path, model_path.data());
+    sprintf(model_info->model_path, "%s", model_path.data());
 
     /* Parse params.yaml to get io_confing and network file paths. */
     const std::string params_path = model_path + "/param.yaml";
@@ -315,12 +315,12 @@ int32_t parse_model_node(ModelInfo *model_info, const YAML::Node &model_node)
         std::string x(filename.path());
         if(ends_with(x, "_tidl_io_1.bin"))
         {
-            sprintf(model_info->io_config_path, x.data());
+            sprintf(model_info->io_config_path, "%s", x.data());
         }
 
         if(ends_with(x, "_tidl_net.bin"))
         {
-            sprintf(model_info->network_path, x.data());
+            sprintf(model_info->network_path, "%s", x.data());
         }
     }
 
@@ -455,7 +455,7 @@ int32_t parse_model_node(ModelInfo *model_info, const YAML::Node &model_node)
         }
     }
 
-    sprintf(model_info->post_proc_info.task_type, task_node.as<std::string>().data());
+    sprintf(model_info->post_proc_info.task_type, "%s", task_node.as<std::string>().data());
 
     if (model_node["topN"])
     {
@@ -518,7 +518,7 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
         return -1;
     }
 
-    sprintf(output_info->sink_name, sink.data());
+    sprintf(output_info->sink_name, "%s", sink.data());
 
     output_info->width = output_node["width"].as<uint32_t>();
 
@@ -550,7 +550,7 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
         if(output_node["output_path"])
         {
             std::string output_path = output_node["output_path"].as<std::string>();
-            sprintf(output_info->output_path, output_path.data());
+            sprintf(output_info->output_path, "%s", output_path.data());
         }
         else
         {
@@ -575,7 +575,7 @@ int32_t parse_output_node(OutputInfo *output_info, const YAML::Node &output_node
                     return -1;
                 }
             }
-            sprintf(output_info->output_path, output_path.data());
+            sprintf(output_info->output_path, "%s", output_path.data());
         }
         else
         {
@@ -701,7 +701,7 @@ int32_t parse_yaml_file(char       *input_filename,
         }
 
         /* Populate InputInfo*/
-        sprintf(flow_infos[i].input_info.name, input_name.data());
+        sprintf(flow_infos[i].input_info.name, "%s", input_name.data());
 
         status = parse_input_node(&flow_infos[i].input_info,
                                   yaml["inputs"][input_name]);
@@ -741,7 +741,7 @@ int32_t parse_yaml_file(char       *input_filename,
                 }
 
                 sprintf(flow_infos[i].subflow_infos[s_idx].model_info.name,
-                        model_name.data());
+                        "%s", model_name.data());
 
                 status = parse_model_node(&flow_infos[i].subflow_infos[s_idx].model_info,
                                         yaml["models"][model_name]);
@@ -761,12 +761,12 @@ int32_t parse_yaml_file(char       *input_filename,
             }
 
             sprintf(flow_infos[i].subflow_infos[s_idx].output_info.name,
-                    output_name.data());
+                    "%s", output_name.data());
 
             if(yaml["title"])
             {
                 sprintf(flow_infos[i].subflow_infos[s_idx].output_info.title,
-                        yaml["title"].as<std::string>().data());
+                        "%s", yaml["title"].as<std::string>().data());
             }
             else
             {
@@ -917,7 +917,7 @@ int32_t get_classname(char *model_path,
         {
             snprintf(classnames[id],
                      TIVX_DL_POST_PROC_MAX_SIZE_CLASSNAME,
-                     name.data());
+                     "%s", name.data());
         }
     }
 

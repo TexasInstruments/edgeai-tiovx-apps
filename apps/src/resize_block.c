@@ -240,7 +240,7 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
         msc_cfg.num_outputs = resize_block->total_output_group;
         msc_cfg.input_cfg.width = resize_block->input_width;
         msc_cfg.input_cfg.height = resize_block->input_height;
-        sprintf(msc_cfg.target_string, g_msc_targets[g_msc_target_idx]);
+        sprintf(msc_cfg.target_string, "%s", g_msc_targets[g_msc_target_idx]);
 
         sec_msc_target_idx = (sizeof(g_msc_targets)/sizeof(g_msc_targets[0])) - 1 - g_msc_target_idx;
 
@@ -294,7 +294,7 @@ int32_t create_resize_block(GraphObj *graph, ResizeBlock *resize_block)
                 sec_msc_cfg.output_cfgs[0].width = output_width;
                 sec_msc_cfg.output_cfgs[0].height = output_height;
 
-                sprintf(sec_msc_cfg.target_string, g_msc_targets[sec_msc_target_idx]);
+                sprintf(sec_msc_cfg.target_string, "%s", g_msc_targets[sec_msc_target_idx]);
 
                 tiovx_multi_scaler_module_crop_params_init(&sec_msc_cfg);
 
